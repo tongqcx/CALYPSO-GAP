@@ -33,4 +33,22 @@ function crossp(va,vb)
     crossp(2)=va(3)*vb(1)-va(1)*vb(3)
     crossp(3)=va(1)*vb(2)-va(2)*vb(1)
 end function
+
+!function MIV_num_columns( inchar ) result(num)
+!IMPLICIT none
+!character(*)                            :: inchar
+!integer(i4b)                            :: num
+!integer(i4b)                            :: length
+!character(:),allocatable                :: ctp
+!integer(i4b)                            :: i
+!
+!ctp = trim(adjustl(inchar))
+!length = len(ctp)
+!num = 1
+!do i = 2,length-1
+!    if( ctp(i:i) == ' ' .and. ctp(i+1:i+1) /= ' ' )  num = num+1
+!end do
+!return 
+!END FUNCTION MIV_NUM_COLUMNS
+
 end module math

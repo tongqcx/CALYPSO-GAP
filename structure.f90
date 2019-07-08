@@ -7,6 +7,7 @@ type Atoms
     character(2)                       :: name
     integer                            :: atomic_number
     integer                            :: nneighbor
+    integer,allocatable,dimension(:)   :: count
     real(8)                            :: pos(3)
     real(8)                            :: mass
     real(8),allocatable,dimension(:,:,:) :: neighbor
@@ -47,7 +48,7 @@ END SUBROUTINE
 SUBROUTINE Build_neighbor(at, element)
 type(Structure),intent(inout)  :: at
 character(2),intent(in)        :: element(:)
-real(DP)                       :: rcut
+real(DP)                       :: rcut , rmin
 integer                        :: nabc(3)
 real(DP)                       :: xyz(3), dr(3), dis
 integer                        :: i, j, n1, n2, n3, count
@@ -60,15 +61,19 @@ enddo
 !////////////////////////////////////////////////////////////////////
 
 rcut = 9.d0
+rmin = 0.5d0
+
 at%recip_lat = recipvector(at%lat)
 nabc(1)=ceiling(rcut*vectorlength(at%recip_lat(1,:))/pi/2)
 nabc(2)=ceiling(rcut*vectorlength(at%recip_lat(2,:))/pi/2)
 nabc(3)=ceiling(rcut*vectorlength(at%recip_lat(3,:))/pi/2)
 do i = 1, at%natoms
     allocate(at%atom(i)%neighbor(at%nspecies, max_neighbor, 4))
+    allocate(at%atom(i)%count(at%nspecies))
     at%atom(i)%pos = at%pos(i,:)
     at%atom(i)%name = at%symbols(i)
-    count = 0
+    at%atom(i)%count = 0
+    !count = 0
     do j = 1, at%natoms
         do n1 = -nabc(1), nabc(1)
             do n2 = -nabc(2), nabc(2)
@@ -78,14 +83,18 @@ do i = 1, at%natoms
                     dr = at%pos(i,:) - xyz
                     dis = sqrt(dr(1)**2 + dr(2)**2 + dr(3)**2)
                     if ( dis > rcut) cycle
-                    count = count + 1
-                    if (count > max_neighbor) then
-                        print *, 'reset max number of neighbor'
+                    if ( dis < rmin) then
+                        print*, 'The distance of two atoms is very small'
                         stop
                     endif
-                    at%atom(i)%nneighbor = count
-                    at%atom(i)%neighbor(at%index(j),count,1:3) = dr
-                    at%atom(i)%neighbor(at%index(j),count,4) = dis
+                    at%atom(i)%count(at%index(j)) = at%atom(i)%count(at%index(j)) + 1
+                    if (at%atom(i)%count(at%index(j)) > max_neighbor) then
+                        print *, 'Reset max number of neighbor'
+                        stop
+                    endif
+                    !at%atom(i)%nneighbor = count
+                    at%atom(i)%neighbor(at%index(j),at%atom(i)%count(at%index(j)),1:3) = dr
+                    at%atom(i)%neighbor(at%index(j),at%atom(i)%count(at%index(j)),4) = dis
                 enddo
             enddo
         enddo
