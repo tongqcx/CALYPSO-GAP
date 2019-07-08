@@ -2,10 +2,12 @@ module struct
 use constants
 use math
 implicit none
+integer,parameter                      :: max_neighbor = 2000
 type Atoms
     character(2)                       :: name
     integer                            :: atomic_number
-    real(8)                            :: pos
+    integer                            :: nneighbor
+    real(8)                            :: pos(3)
     real(8)                            :: mass
     real(8),allocatable,dimension(:,:,:) :: neighbor
 endtype Atoms
@@ -15,6 +17,7 @@ type Structure
     integer                                :: nspecies
     type(Atoms),allocatable,dimension(:)   :: atom
     character(2),allocatable,dimension(:)  :: symbols
+    integer,allocatable,dimension(:)       :: index
     real(8),dimension(3,3)                 :: lat
     real(8),dimension(3,3)                 :: recip_lat
     real(8),dimension(:,:),allocatable     :: pos
@@ -32,6 +35,7 @@ integer,intent(in)             :: na, ns
 at%natoms = na
 at%nspecies = ns
 allocate(at%symbols( at%natoms))
+allocate(at%index(   at%natoms))
 allocate(at%atom(    at%natoms))
 allocate(at%pos(     at%natoms,3))
 allocate(at%dpos(    at%natoms,3))
@@ -40,16 +44,54 @@ END SUBROUTINE
 
 !------------------------------------------------------
 
-SUBROUTINE Build_neighbor(at)
+SUBROUTINE Build_neighbor(at, element)
 type(Structure),intent(inout)  :: at
+character(2),intent(in)        :: element(:)
 real(DP)                       :: rcut
 integer                        :: nabc(3)
+real(DP)                       :: xyz(3), dr(3), dis
+integer                        :: i, j, n1, n2, n3, count
+!/////////////////////////////////////////////////////////////////////
+do i = 1, at%natoms
+    do j = 1, size(element)
+        if (at%symbols(i) == element(j)) at%index(i) = j
+    enddo
+enddo
+!////////////////////////////////////////////////////////////////////
+
 rcut = 9.d0
 at%recip_lat = recipvector(at%lat)
 nabc(1)=ceiling(rcut*vectorlength(at%recip_lat(1,:))/pi/2)
 nabc(2)=ceiling(rcut*vectorlength(at%recip_lat(2,:))/pi/2)
 nabc(3)=ceiling(rcut*vectorlength(at%recip_lat(3,:))/pi/2)
-print*, nabc
+do i = 1, at%natoms
+    allocate(at%atom(i)%neighbor(at%nspecies, max_neighbor, 4))
+    at%atom(i)%pos = at%pos(i,:)
+    at%atom(i)%name = at%symbols(i)
+    count = 0
+    do j = 1, at%natoms
+        do n1 = -nabc(1), nabc(1)
+            do n2 = -nabc(2), nabc(2)
+                do n3 = -nabc(3), nabc(3)
+                    if ((n1.eq.0).and.(n2.eq.0).and.(n3.eq.0).and.(i.eq.j)) cycle
+                    xyz = at%pos(j,:) + dble(n1)*at%lat(1,:) + dble(n2)*at%lat(2,:) + dble(n3)*at%lat(3,:)
+                    dr = at%pos(i,:) - xyz
+                    dis = sqrt(dr(1)**2 + dr(2)**2 + dr(3)**2)
+                    if ( dis > rcut) cycle
+                    count = count + 1
+                    if (count > max_neighbor) then
+                        print *, 'reset max number of neighbor'
+                        stop
+                    endif
+                    at%atom(i)%nneighbor = count
+                    at%atom(i)%neighbor(at%index(j),count,1:3) = dr
+                    at%atom(i)%neighbor(at%index(j),count,4) = dis
+                enddo
+            enddo
+        enddo
+    enddo
+enddo
+
 end SUBROUTINE
 
 
