@@ -1,4 +1,6 @@
 module constants
 INTEGER,  PARAMETER      :: DP = KIND(1.0D0)
+INTEGER,  PARAMETER      :: QP = KIND(1.0D0)
 REAL(DP), PARAMETER      :: pi=3.141592653589793238462643383279502884197_DP
+REAL(DP), PARAMETER      :: ene_cons = -5.0d0
 end module constants

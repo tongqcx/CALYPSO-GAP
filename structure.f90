@@ -26,7 +26,8 @@ type Structure
     real(8),dimension(:,:),allocatable     :: force
     real(8),dimension(6)                   :: stress
     real(8)                                :: volume
-    real(8)                                :: energy
+    real(8)                                :: energy_ref
+    real(8)                                :: sigma_e
 endtype Structure
 type(Structure),allocatable,dimension(:)   :: at
 contains

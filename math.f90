@@ -51,4 +51,16 @@ end function
 !return 
 !END FUNCTION MIV_NUM_COLUMNS
 
+FUNCTION fcutij(r)
+real(DP)   :: fcutij, r
+if (r < rcut - d_width ) then
+    fcutij = 1.d0
+elseif ( r > rcut) then
+    fcutij = 0.d0
+else
+    fcutij = ((cos(pi*(r - rcut + d_width)/d_width) + 1))/2
+endif
+return
+END FUNCTION fcutij
+
 end module math

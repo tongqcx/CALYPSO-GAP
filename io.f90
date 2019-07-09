@@ -1,6 +1,7 @@
 module io
 use constants
-integer                                :: nspecies
+integer                                :: nsparse
+integer                                :: nspecies, ninteraction
 REAL(DP)                               :: theta, delta, d_width, sigma_jitter
 REAL(DP)                               :: sigma_e, sigma_f, sigma_s
 character(2),allocatable,dimension(:)  :: elements
@@ -84,6 +85,9 @@ do while(.not.eof(60))
 end do
 print *, 'elements', elements
 close(60)
+
+ninteraction = nspecies * (nspecies + 1)/2.d0
+
 end subroutine read_input
 
 subroutine u2l(ce)

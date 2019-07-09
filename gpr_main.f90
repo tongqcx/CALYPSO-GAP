@@ -1,7 +1,8 @@
 module GPR_MAIN
 use constants
+use io
 use math
-use my_line
+use linearalgebra
 
 real(dp), dimension(:,:), allocatable :: c_subYY_sqrtInverseLambda
 real(dp), dimension(:,:), allocatable :: factor_c_subYsubY
@@ -18,6 +19,8 @@ REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: cmm
 REAL(DP),DIMENSION(:,:,:),ALLOCATABLE   :: cmo
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: sparsecut
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: sparseX
+REAL(DP),DIMENSION(:),ALLOCATABLE       :: obe
+REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: coeff
 
 contains
 SUBROUTINE GPR(cmm, cmo, lamdaobe, alpha)
@@ -60,28 +63,31 @@ deallocate(a)
 deallocate(globalY)
 END subroutine
 
-SUBROUTINE INI_GAP(nsparse, nobf)
-integer,intent(in)      :: nsparse
+SUBROUTINE INI_GAP(nobf)
 integer,intent(in)      :: nobf
 !--local--
 integer                 :: ninteraction
-ninteraction = nspecies * (nspecies + 1)/2.d0
+
 allocate(cmm(nsparse, nsparse))
 allocate(cmo(nsparse, nobf, ninteraction))
 allocate(sparseX(nsparse))
+allocate(obe(nobf))
+allocate(coeff(nsparse,ninteraction))
 END SUBROUTINE
 
 SUBROUTINE INI_GAP_2B()
-dr3 = (rcut - rmin)/(n_sparse - 1)
-do i = 1, n_sparse
+integer                :: dr3
+
+dr3 = (rcut - rmin)/(nsparse - 1)
+do i = 1, nsparse
     sparseX(i) = rmin + (i - 1)*dr3
 enddo
 !$OMP parallel do schedule(dynamic) default(shared) private(i,j)
-    do i  = 1, n_sparse
+    do i  = 1, nsparse
         cmm(i,i) = delta**2 
         fc_i = fcutij(sparseX(i))
         cmm(i,i) = cmm(i,i)*fc_i*fc_i + sigma_jitter
-        do j = i + 1, n_sparse
+        do j = i + 1, nsparse
             fc_j = fcutij(sparseX(j))
             cmm(i,j) = covariance(sparseX(i),sparseX(j))
             cmm(i,j) = cmm(i,j) * fc_i * fc_j
@@ -89,5 +95,32 @@ enddo
         enddo
     enddo
 END SUBROUTINE
+
+FUNCTION  covariance(x,y)
+implicit none
+real(8),intent(in)  ::    x
+real(8),intent(in)  ::    y
+real(8)             :: covariance
+integer  i 
+covariance = 0.d0
+covariance = covariance + ((x-y)/theta)**2
+covariance = delta**2*exp(-0.5d0*covariance)
+END FUNCTION covariance
+
+subroutine matmuldiag(x,y)
+real(8),intent(in)   :: x(:)
+real(8),intent(inout) :: y(:,:)
+do i = 1,size(x)
+    y(i,:) = x(i)*y(i,:)
+enddo
+end subroutine matmuldiag
+
+subroutine matmuldiag_T(y,x)
+real(8),intent(in)   :: x(:)
+real(8),intent(inout) :: y(:,:)
+do i = 1,size(x)
+    y(:,i) = x(i)*y(:,i)
+enddo
+end subroutine matmuldiag_T
 
 END module
