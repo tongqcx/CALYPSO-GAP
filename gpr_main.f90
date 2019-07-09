@@ -66,17 +66,20 @@ END subroutine
 SUBROUTINE INI_GAP(nobf)
 integer,intent(in)      :: nobf
 !--local--
-integer                 :: ninteraction
+!integer                 :: ninteraction
 
 allocate(cmm(nsparse, nsparse))
 allocate(cmo(nsparse, nobf, ninteraction))
 allocate(sparseX(nsparse))
 allocate(obe(nobf))
 allocate(coeff(nsparse,ninteraction))
+allocate(lamda(nobf))
+allocate(lamdaobe(nobf))
+allocate(sparsecut(nsparse))
 END SUBROUTINE
 
 SUBROUTINE INI_GAP_2B()
-integer                :: dr3
+real(DP)                :: dr3
 
 dr3 = (rcut - rmin)/(nsparse - 1)
 do i = 1, nsparse
@@ -94,6 +97,7 @@ enddo
             cmm(j,i) = cmm(i,j)
         enddo
     enddo
+call write_array(cmm,'cmm.dat')
 END SUBROUTINE
 
 FUNCTION  covariance(x,y)

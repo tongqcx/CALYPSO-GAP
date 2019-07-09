@@ -4,12 +4,13 @@ use io
 use struct
 use gpr_main
 implicit none
-integer            :: i,j,k,ii,jj,kk
+integer            :: i,j,k,ii,jj,kk,k1, k2
 integer            :: na
 integer            :: nconfig
 real(dp)           :: fc_i, fc_j
 
 call read_input()
+print*, 'nsparse', nsparse
 open(2211,file='config')
 read(2211,*) nconfig
 allocate(at(nconfig))
@@ -45,16 +46,21 @@ call ini_gap_2b()
 !close(2211)
 
 ! Build matrix cmo
-do i = 1, nsparse
-    do j = 1, nconfig
-        do k = 1, ninteraction
-            cmo(i,j,k) = 0.d0
-            do ii = 1, at(j)%natoms
-                do jj = 1, at(j)%atom(ii)%count(k)
-                    fc_i = fcutij(sparseX(i))
-                    fc_j = fcutij(at(j)%atom(ii)%neighbor(k,jj,4))
-                    cmo(i,j,k) = cmo(i,j,k) + &
+print*, 'nspecies',nspecies
+cmo(:,:,:) = 0.d0
+k = 0
+do k1 = 1, nspecies
+    do k2 = k1 , nspecies
+        k = k + 1
+        do i = 1, nsparse
+            do j = 1, nconfig
+                do ii = at(j)%pos_index(k1,1) , at(j)%pos_index(k1,2)
+                    do jj = 1, at(j)%atom(ii)%count(k2)
+                        fc_i = fcutij(sparseX(i))
+                        fc_j = fcutij(at(j)%atom(ii)%neighbor(k2,jj,4))
+                        cmo(i,j,k) = cmo(i,j,k) + &
        covariance(sparseX(i), at(j)%atom(ii)%neighbor(k,jj,4)) * fc_i * fc_j
+                    enddo
                 enddo
             enddo
         enddo
@@ -68,7 +74,9 @@ do i = 1,nconfig
     lamdaobe(i) = obe(i) * sqrt((1.0/lamda(i)))
 enddo
 
+!print*, 'ninteraction', ninteraction
 do k = 1, ninteraction
+!    print*, size(cmo(:,:,k),1), size(cmo(:,:,k),2), size(lamda), size(coeff(:,k))
     call matmuldiag_T(cmo(:,:,k),sqrt(1.0/lamda))
     call gpr(cmm, cmo(:,:,k), lamdaobe, coeff(:,k))
 enddo

@@ -1,5 +1,6 @@
 module io
 use constants
+implicit none
 integer                                :: nsparse
 integer                                :: nspecies, ninteraction
 REAL(DP)                               :: theta, delta, d_width, sigma_jitter
@@ -32,7 +33,7 @@ if(.not.lex) then
 end if
 !>>> INITIAL PARAMETERS LIST <<< 
     nspecies = 1
-    n_sparse = 100
+    nsparse = 100
     sigma_e = 1.d0
     d_width = 1.d0
     rcut = 9.d0
@@ -58,8 +59,9 @@ do while(.not.eof(60))
     select case(rtp(:lv1))
     case('nspecies')
         read(rtp(lv2:),*) nspecies
+        ninteraction = nspecies * (nspecies + 1)/2.d0
     case('nsparse')
-        read(rtp(lv2:),*) n_sparse
+        read(rtp(lv2:),*) nsparse
     case('sigma_e')
         read(rtp(lv2:),*) sigma_e
     case('rcut')
@@ -72,8 +74,6 @@ do while(.not.eof(60))
         read(rtp(lv2:),*) delta
     case('d_width')
         read(rtp(lv2:),*) d_width
-    case('dr')
-        read(rtp(lv2:),*) dr
     case('sigma_jitter')
         read(rtp(lv2:),*) sigma_jitter
     case('elements')
@@ -83,10 +83,7 @@ do while(.not.eof(60))
     end select
     if (.not. allocated(elements)) allocate(elements(nspecies))
 end do
-print *, 'elements', elements
 close(60)
-
-ninteraction = nspecies * (nspecies + 1)/2.d0
 
 end subroutine read_input
 

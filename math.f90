@@ -1,4 +1,5 @@
 module math
+use io
 use constants
 contains
 function vectorlength(vc)
@@ -62,5 +63,20 @@ else
 endif
 return
 END FUNCTION fcutij
+
+SUBROUTINE  write_array(a,name)
+REAL(DP),intent(in),dimension(:,:)       :: a
+character(*),intent(in)                :: name
+integer                                  :: i,j
+open(2244,file=trim(adjustl(name)))
+do i = 1, size(a,1)
+    do j = 1,size(a,2)
+        write(2244,'(F20.10,$)') a(i,j)
+    enddo
+    write(2244,*)
+enddo
+close(2244)
+END SUBROUTINE
+
 
 end module math

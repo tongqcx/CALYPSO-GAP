@@ -19,6 +19,7 @@ type Structure
     type(Atoms),allocatable,dimension(:)   :: atom
     character(2),allocatable,dimension(:)  :: symbols
     integer,allocatable,dimension(:)       :: index
+    integer,allocatable,dimension(:,:)     :: pos_index
     real(8),dimension(3,3)                 :: lat
     real(8),dimension(3,3)                 :: recip_lat
     real(8),dimension(:,:),allocatable     :: pos
@@ -38,6 +39,7 @@ at%natoms = na
 at%nspecies = ns
 allocate(at%symbols( at%natoms))
 allocate(at%index(   at%natoms))
+allocate(at%pos_index(at%nspecies,2))
 allocate(at%atom(    at%natoms))
 allocate(at%pos(     at%natoms,3))
 allocate(at%dpos(    at%natoms,3))
@@ -53,12 +55,30 @@ real(DP)                       :: rcut , rmin
 integer                        :: nabc(3)
 real(DP)                       :: xyz(3), dr(3), dis
 integer                        :: i, j, n1, n2, n3, count
+character(2)                   :: temp
+integer                        :: atom_index
 !/////////////////////////////////////////////////////////////////////
 do i = 1, at%natoms
     do j = 1, size(element)
         if (at%symbols(i) == element(j)) at%index(i) = j
     enddo
 enddo
+at%pos_index = 0
+atom_index = 1
+at%pos_index(atom_index,1) = 1
+temp = at%symbols(1)
+do i = 2, at%natoms
+    if (at%symbols(i) == temp) then
+        at%pos_index(atom_index,2) = i
+    else
+        at%pos_index(atom_index,2) = i - 1
+        atom_index = atom_index + 1
+        at%pos_index(atom_index,1) = i
+        temp = at%symbols(i)
+    endif
+enddo
+!print*, 'at%pos_index', at%pos_index
+!stop
 !////////////////////////////////////////////////////////////////////
 
 rcut = 9.d0

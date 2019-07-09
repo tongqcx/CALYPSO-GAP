@@ -1,6 +1,8 @@
 module linearalgebra
 use constants
   integer, parameter :: NOT_FACTORISED = 0
+  integer, parameter :: CHOLESKY       = 1
+  integer, parameter :: QR             = 2
   interface check_size
      module procedure check_size_int_dim1, check_size_int_dim1_s, check_size_int_dim2  
      module procedure check_size_real_dim1, check_size_real_dim1_s, check_size_real_dim2, check_size_real_dim3
