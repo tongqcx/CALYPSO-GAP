@@ -1,12 +1,6 @@
 module io
 use constants
-implicit none
-integer                                :: nsparse
-integer                                :: nspecies, ninteraction
-REAL(DP)                               :: theta, delta, d_width, sigma_jitter
-REAL(DP)                               :: sigma_e, sigma_f, sigma_s
-character(2),allocatable,dimension(:)  :: elements
-REAL(DP)                               :: Rcut, Rmin
+use struct
 contains
 
 subroutine read_input()
@@ -97,5 +91,29 @@ do i=1,len_trim(ce)
 end do
 end subroutine u2l
 
+SUBROUTINE read_structure(filename, at)
+character(*),intent(in)                     :: filename
+type(Structure),intent(inout),dimension(:)  :: at
+ 
+integer                                     :: n_config
+n_config = size(at)
+
+open(2244,file=trim(adjustl(filename)))
+read(2244,*)
+do i = 1, n_config
+    read(2244,*)  na, nspecies
+    call ini_structure(at(i), na, nspecies)
+    do j = 1,3
+        read(2244,*) at(i)%lat(j,:)
+    enddo
+    read(2244,*) at(i)%stress_ref(:)
+    do j = 1, at(i)%natoms
+        read(2244,*) at(i)%symbols(j), at(i)%pos(j,:), at(i)%force_ref(j,:)
+    enddo
+    read(2244,*) at(i)%energy_ref
+    call build_neighbor(at(i), elements)
+enddo
+close(2244)
+END SUBROUTINE read_structure
 
 end module

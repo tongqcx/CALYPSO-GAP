@@ -1,7 +1,12 @@
 module math
-use io
 use constants
+
+interface  write_array
+    module procedure write_array_2dim, write_array_1dim
+end interface write_array
+
 contains
+
 function vectorlength(vc)
     real(8) :: vc(3),vectorlength
     vectorlength=sqrt(vc(1)**2+vc(2)**2+vc(3)**2)
@@ -76,7 +81,7 @@ endif
 return
 END FUNCTION dfcutij
 
-SUBROUTINE  write_array(a,name)
+SUBROUTINE  write_array_2dim(a,name)
 REAL(DP),intent(in),dimension(:,:)       :: a
 character(*),intent(in)                :: name
 integer                                  :: i,j
@@ -90,5 +95,15 @@ enddo
 close(2244)
 END SUBROUTINE
 
+SUBROUTINE  write_array_1dim(a,name)
+REAL(DP),intent(in),dimension(:)       :: a
+character(*),intent(in)                :: name
+integer                                  :: i,j
+open(2244,file=trim(adjustl(name)))
+do i = 1, size(a)
+        write(2244,'(F20.10)') a(i)
+enddo
+close(2244)
+END SUBROUTINE
 
 end module math

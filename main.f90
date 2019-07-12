@@ -14,47 +14,17 @@ print*, 'nsparse', nsparse
 open(2211,file='config')
 read(2211,*) nconfig
 allocate(at(nconfig))
-do i= 1, nconfig
-    read(2211,*)  na, nspecies
-    call ini_structure(at(i), na, nspecies)
-    do j = 1,3
-        read(2211,*) at(i)%lat(j,:)
-    enddo
-    read(2211,*) at(i)%stress(:)
-    do j = 1, at(i)%natoms
-        read(2211,*) at(i)%symbols(j), at(i)%pos(j,:), at(i)%force(j,:)
-    enddo
-    read(2211,*) at(i)%energy_ref
-    call build_neighbor(at(i), elements)
-enddo
 close(2211)
+call read_structure('config',at)
+
 call ini_gap(nconfig)
 call ini_gap_2b()
-!open(2211,file='11.dat')
-!    write(2211,*) at(1)%atom(1)%pos
-!    write(2211,*) at(1)%atom(1)%count(1)
-!    do i = 1 , at(1)%atom(1)%count(1)
-!        write(2211, '(4F10.5)') at(1)%atom(1)%neighbor(1,i,:)
-!    enddo
-!close(2211)
-!open(2211,file='22.dat')
-!    write(2211,*) at(1)%atom(1)%pos
-!    write(2211,*) at(1)%atom(1)%count(2)
-!    do i = 1 , at(1)%atom(1)%count(2)
-!        write(2211, '(4F10.5)') at(1)%atom(1)%neighbor(2,i,:)
-!    enddo
-!close(2211)
 
 ! Build matrix cmo
 print*, 'nspecies',nspecies
 cmo(:,:,:) = 0.d0
 k = 0
 
-!do k1 = 1, nspecies
-!    do k2 = k1 , nspecies
-!        k = k + 1
-!        do i = 1, nsparse
-!            do j = 1, nconfig
 !$OMP parallel do schedule(dynamic) default(shared) private(i,j,k1,k2,k,fc_i,fc_j, ii, jj)
 do i = 1, nsparse
     do j = 1, nconfig
@@ -67,14 +37,13 @@ do i = 1, nsparse
                         fc_i = fcutij(sparseX(i))
                         fc_j = fcutij(at(j)%atom(ii)%neighbor(k2,jj,4))
                         cmo(i,j,k) = cmo(i,j,k) + &
-       covariance(sparseX(i), at(j)%atom(ii)%neighbor(k,jj,4)) * fc_i * fc_j
+       covariance(sparseX(i), at(j)%atom(ii)%neighbor(k,jj,4)) * fc_i * fc_j * 0.5d0
                     enddo
                 enddo
             enddo
         enddo
     enddo
 enddo
-call write_array(cmo(:,:,1),'cmo.dat')
 
 do i = 1,nconfig
     obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
@@ -83,21 +52,37 @@ do i = 1,nconfig
     lamdaobe(i) = obe(i) * sqrt((1.0/lamda(i)))
 enddo
 
-!print*, 'ninteraction', ninteraction
 do k = 1, ninteraction
-!    print*, size(cmo(:,:,k),1), size(cmo(:,:,k),2), size(lamda), size(coeff(:,k))
     call matmuldiag_T(cmo(:,:,k),sqrt(1.0/lamda))
+call write_array(cmo(:,:,1),'cmo.dat')
+call write_array(lamdaobe,'lamdaobe.dat')
     call gpr(cmm, cmo(:,:,k), lamdaobe, coeff(:,k))
 enddo
+
 open(2234,file='coeffx.dat')
 do i = 1,nsparse
     sparsecut(i) = fcutij(sparseX(i))
     write(2234,'(I3,F25.8,$)') i, sparseX(i)
+    write(2234,'(F25.8, $)') sparsecut(i)
     do k = 1,ninteraction
-        write(2234,'(F25.8,$)') coeff(k,:)
+        write(2234,'(F25.8,$)') coeff(i,k)
     enddo
-    write(2234,'(F25.8)') sparsecut(i)
+    write(2234,*)
 enddo
 close(2234)
+deallocate(at)
+
+print*, '************************************************'
+print*, '*************** BEGIN PREDICTING ***************'
+print*, '************************************************'
+open(2211,file='test')
+read(2211,*) nconfig
+allocate(at(nconfig))
+close(2211)
+call read_structure('test',at)
+!$OMP parallel do schedule(dynamic) default(shared) private(i)
+do i = 1, nconfig
+    call gp_predict(at(i))
+enddo
 end program
 

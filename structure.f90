@@ -24,12 +24,14 @@ type Structure
     real(8),dimension(3,3)                 :: recip_lat
     real(8),dimension(:,:),allocatable     :: pos
     real(8),dimension(:,:),allocatable     :: dpos
-    real(8),dimension(:,:),allocatable     :: force
-    real(8),dimension(6)                   :: stress
-    real(8)                                :: volume
-    real(8)                                :: energy_ref
     real(8)                                :: sigma_e
     integer,dimension(:,:),allocatable     :: interaction_mat
+    ! Properties
+    real(8)                                :: volume_ref, volume_cal
+    real(8),dimension(:,:),allocatable     :: force_ref, force_cal
+    real(8),dimension(6)                   :: stress_ref, stress_cal
+    real(8)                                :: energy_ref, energy_cal
+
 endtype Structure
 type(Structure),allocatable,dimension(:)   :: at
 contains
@@ -47,7 +49,8 @@ allocate(at%pos_index(at%nspecies,2))
 allocate(at%atom(    at%natoms))
 allocate(at%pos(     at%natoms,3))
 allocate(at%dpos(    at%natoms,3))
-allocate(at%force(   at%natoms,3))
+allocate(at%force_ref(   at%natoms,3))
+allocate(at%force_cal(   at%natoms,3))
 allocate(at%interaction_mat(at%nspecies, at%nspecies))
 index = 0
 do i = 1, at%nspecies
