@@ -55,6 +55,7 @@ k = 0
 !        k = k + 1
 !        do i = 1, nsparse
 !            do j = 1, nconfig
+!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k1,k2,k,fc_i,fc_j, ii, jj)
 do i = 1, nsparse
     do j = 1, nconfig
         k = 0
@@ -73,6 +74,7 @@ do i = 1, nsparse
         enddo
     enddo
 enddo
+call write_array(cmo(:,:,1),'cmo.dat')
 
 do i = 1,nconfig
     obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
