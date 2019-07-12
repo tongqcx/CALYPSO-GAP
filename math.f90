@@ -64,6 +64,18 @@ endif
 return
 END FUNCTION fcutij
 
+FUNCTION dfcutij(r)
+real(DP)   :: dfcutij, r
+if (r < rcut - d_width ) then
+    dfcutij = 0.d0
+elseif ( r > rcut) then
+    dfcutij = 0.d0
+else
+    dfcutij = pi * sin(pi*(r - rcut + d_width)/d_width) * r/2.0/d_width * -0.1d0 
+endif
+return
+END FUNCTION dfcutij
+
 SUBROUTINE  write_array(a,name)
 REAL(DP),intent(in),dimension(:,:)       :: a
 character(*),intent(in)                :: name

@@ -29,12 +29,16 @@ type Structure
     real(8)                                :: volume
     real(8)                                :: energy_ref
     real(8)                                :: sigma_e
+    integer,dimension(:,:),allocatable     :: interaction_mat
 endtype Structure
 type(Structure),allocatable,dimension(:)   :: at
 contains
 SUBROUTINE INI_STRUCTURE(at, na, ns)
 type(Structure),intent(inout)  :: at
 integer,intent(in)             :: na, ns
+
+integer                        :: index, i, j
+
 at%natoms = na
 at%nspecies = ns
 allocate(at%symbols( at%natoms))
@@ -44,6 +48,15 @@ allocate(at%atom(    at%natoms))
 allocate(at%pos(     at%natoms,3))
 allocate(at%dpos(    at%natoms,3))
 allocate(at%force(   at%natoms,3))
+allocate(at%interaction_mat(at%nspecies, at%nspecies))
+index = 0
+do i = 1, at%nspecies
+    do j = i,at%nspecies
+        index = index + 1
+        at%interaction_mat(i,j) = index
+        at%interaction_mat(j,i) = at%interaction_mat(i,j)
+    enddo
+enddo
 END SUBROUTINE
 
 !------------------------------------------------------

@@ -3,6 +3,7 @@ use constants
 use io
 use math
 use linearalgebra
+use struct
 
 real(dp), dimension(:,:), allocatable :: c_subYY_sqrtInverseLambda
 real(dp), dimension(:,:), allocatable :: factor_c_subYsubY
@@ -105,11 +106,22 @@ implicit none
 real(8),intent(in)  ::    x
 real(8),intent(in)  ::    y
 real(8)             :: covariance
-integer  i 
+!integer  i 
 covariance = 0.d0
 covariance = covariance + ((x-y)/theta)**2
 covariance = delta**2*exp(-0.5d0*covariance)
 END FUNCTION covariance
+
+FUNCTION  DcovarianceDx(x,y)
+implicit none
+real(8),intent(in)  ::    x
+real(8),intent(in)  ::    y
+real(8)             :: DcovarianceDx
+!integer  i 
+DcovarianceDx = 0.d0
+DcovarianceDx = DcovarianceDx + ((x-y)/theta)**2
+DcovarianceDx = delta**2*exp(-0.5d0*DcovarianceDx) * -1.d0 * (x-y)/theta**2
+END FUNCTION DcovarianceDx
 
 subroutine matmuldiag(x,y)
 real(8),intent(in)   :: x(:)
@@ -126,5 +138,43 @@ do i = 1,size(x)
     y(:,i) = x(i)*y(:,i)
 enddo
 end subroutine matmuldiag_T
+
+SUBROUTINE gp_predict(at, ene, force)
+implicit none
+type(Structure),intent(in)          :: at
+REAL(DP),intent(out)                :: ene
+REAL(DP),intent(out),dimension(:,:) :: force
+
+
+! local 
+integer                             :: i,j,k, k1, k2
+integer                             :: interaction_index
+REAL(DP)                            :: rij, fcut_ij , dfcut_ij
+
+ene = 0.d0
+force = 0.d0
+
+do i = 1,at%natoms
+    do j = 1, nspecies
+        do k = 1, at%atom(i)%count(j)
+            rij = at%atom(i)%neighbor(j,k,4)
+            fcut_ij = fcutij(rij)
+            interaction_index = at%interaction_mat(at%index(i),j)
+            ! get bond energy of rij
+                do k1 = 1, nsparse
+! &&&&&&&&&&&  get total energy                   
+                    ene = ene + covariance(rij, sparseX(k1)) * coeff(k1,interaction_index) * fcut_ij
+! &&&&&&&&&&&  get atomic force                    
+                    do k2 = 1,3
+                        fcut_ij = fcutij(rij)
+                        dfcut_ij = dfcutij(rij)
+                        force(i,k2) = force(i,k2) + dfcut_ij * covariance(rij, sparseX(k1)) * at%atom(i)%pos(k2)/rij &
+                        + DcovarianceDx(rij, sparseX(k1)) * fcut_ij * at%atom(i)%pos(k2)/rij
+                    enddo ! k2
+                enddo ! k1
+        enddo ! k
+    enddo ! j
+enddo
+END SUBROUTINE
 
 END module

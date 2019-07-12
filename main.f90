@@ -49,11 +49,18 @@ call ini_gap_2b()
 print*, 'nspecies',nspecies
 cmo(:,:,:) = 0.d0
 k = 0
-do k1 = 1, nspecies
-    do k2 = k1 , nspecies
-        k = k + 1
-        do i = 1, nsparse
-            do j = 1, nconfig
+
+!do k1 = 1, nspecies
+!    do k2 = k1 , nspecies
+!        k = k + 1
+!        do i = 1, nsparse
+!            do j = 1, nconfig
+do i = 1, nsparse
+    do j = 1, nconfig
+        k = 0
+        do k1 = 1, nspecies
+            do k2 = k1 , nspecies
+                k = k + 1
                 do ii = at(j)%pos_index(k1,1) , at(j)%pos_index(k1,2)
                     do jj = 1, at(j)%atom(ii)%count(k2)
                         fc_i = fcutij(sparseX(i))
