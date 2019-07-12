@@ -149,32 +149,39 @@ type(Structure),intent(inout)          :: at
 integer                             :: i,j,k, k1, k2
 integer                             :: interaction_index
 REAL(DP)                            :: rij, fcut_ij , dfcut_ij
+REAL(DP)                            :: ene
 
 at%energy_cal = 0.d0
 at%force_cal = 0.d0
 
-!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fcut_ij, interaction_index, k1, k2, dfcut_ij)
+!!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fcut_ij, interaction_index, k1, k2, dfcut_ij)
 do i = 1,at%natoms
     do j = 1, nspecies
         do k = 1, at%atom(i)%count(j)
             rij = at%atom(i)%neighbor(j,k,4)
             fcut_ij = fcutij(rij)
             interaction_index = at%interaction_mat(at%index(i),j)
-            ! get bond energy of rij
+            ene = 0.d0
                 do k1 = 1, nsparse
 ! &&&&&&&&&&&  get total energy                   
-                    at%energy_cal = at%energy_cal + covariance(rij, sparseX(k1)) * coeff(k1,interaction_index) * fcut_ij
+                    !at%atomic_energy(i) = at%atomic_energy(i) + covariance(rij, sparseX(k1)) * coeff(k1,interaction_index) * fcut_ij
+                    ene = ene + covariance(rij, sparseX(k1)) * fcutij(sparseX(k1)) * coeff(k1,interaction_index) * fcut_ij
 ! &&&&&&&&&&&  get atomic force                    
                     do k2 = 1,3
 !                        fcut_ij = fcutij(rij)
                         dfcut_ij = dfcutij(rij)
-                        at%force_cal(i,k2) = at%force_cal(i,k2) + dfcut_ij * covariance(rij, sparseX(k1)) * at%atom(i)%pos(k2)/rij &
+                        at%force_cal(i,k2) = at%force_cal(i,k2) + dfcut_ij * covariance(rij, sparseX(k1)) * fcutij(sparseX(k1)) * at%atom(i)%pos(k2)/rij &
                         + DcovarianceDx(rij, sparseX(k1)) * fcut_ij * at%atom(i)%pos(k2)/rij
                     enddo ! k2
                 enddo ! k1
+                print*, rij, ene
+                at%atomic_energy(i) = at%atomic_energy(i) + ene
         enddo ! k
     enddo ! j
+    print*, at%atomic_energy(i)
+    print*, '/////////////////////////////////////////////'
 enddo
+at%energy_cal = sum(at%atomic_energy) * 0.5d0 + at%natoms * ene_cons
 END SUBROUTINE
 
 END module

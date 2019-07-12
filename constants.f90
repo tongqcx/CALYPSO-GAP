@@ -2,7 +2,7 @@ module constants
 INTEGER,  PARAMETER      :: DP = KIND(1.0D0)
 INTEGER,  PARAMETER      :: QP = KIND(1.0D0)
 REAL(DP), PARAMETER      :: pi=3.141592653589793238462643383279502884197_DP
-REAL(DP), PARAMETER      :: ene_cons = -6.0d0
+REAL(DP), PARAMETER      :: ene_cons = -90.040530764400003
 !  *************  Parameters of GPR
 integer                                :: nsparse
 integer                                :: nspecies, ninteraction
@@ -12,4 +12,5 @@ character(2),allocatable,dimension(:)  :: elements
 REAL(DP)                               :: Rcut, Rmin
 REAL(DP)                               :: RMSE_ENERGY, RMSE_FORCE, RMSE_STRESS
 INTEGER                                :: nforce
+logical                                :: ltrain, ltest
 end module constants

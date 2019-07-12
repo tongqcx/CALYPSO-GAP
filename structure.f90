@@ -31,6 +31,7 @@ type Structure
     real(8),dimension(:,:),allocatable     :: force_ref, force_cal
     real(8),dimension(6)                   :: stress_ref, stress_cal
     real(8)                                :: energy_ref, energy_cal
+    real(8),dimension(:),allocatable       :: atomic_energy
 
 endtype Structure
 type(Structure),allocatable,dimension(:)   :: at
@@ -52,6 +53,7 @@ allocate(at%dpos(    at%natoms,3))
 allocate(at%force_ref(   at%natoms,3))
 allocate(at%force_cal(   at%natoms,3))
 allocate(at%interaction_mat(at%nspecies, at%nspecies))
+allocate(at%atomic_energy(at%natoms))
 index = 0
 do i = 1, at%nspecies
     do j = i,at%nspecies
@@ -67,7 +69,7 @@ END SUBROUTINE
 SUBROUTINE Build_neighbor(at, element)
 type(Structure),intent(inout)  :: at
 character(2),intent(in)        :: element(:)
-real(DP)                       :: rcut , rmin
+!real(DP)                       :: rcut , rmin
 integer                        :: nabc(3)
 real(DP)                       :: xyz(3), dr(3), dis
 integer                        :: i, j, n1, n2, n3, count
@@ -97,8 +99,8 @@ enddo
 !stop
 !////////////////////////////////////////////////////////////////////
 
-rcut = 9.d0
-rmin = 0.5d0
+!rcut = 9.d0
+!rmin = 0.5d0
 
 at%recip_lat = recipvector(at%lat)
 nabc(1)=ceiling(rcut*vectorlength(at%recip_lat(1,:))/pi/2)

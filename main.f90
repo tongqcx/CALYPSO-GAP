@@ -8,8 +8,10 @@ integer            :: i,j,k,ii,jj,kk,k1, k2
 integer            :: na
 integer            :: nconfig
 real(dp)           :: fc_i, fc_j
+logical            :: alive
 
 call read_input()
+if (ltrain) then
 print*, 'nsparse', nsparse
 open(2211,file='config')
 read(2211,*) nconfig
@@ -71,10 +73,28 @@ do i = 1,nsparse
 enddo
 close(2234)
 deallocate(at)
+ENDIF  ! ltrain
 
+if (ltest) then
 print*, '************************************************'
 print*, '*************** BEGIN PREDICTING ***************'
 print*, '************************************************'
+if (.not.ltrain) then
+    inquire(file="coeffx.dat",exist=alive)
+    if(.not.alive) then
+        print*, "coeffx.dat file does not exist!"
+        stop
+    endif
+    allocate(sparseX(nsparse))
+    allocate(sparsecut(nsparse))
+    allocate(coeff(nsparse, ninteraction))
+    open(111,file='coeffx.dat')
+    do i = 1, nsparse
+        read(111,*) j, sparseX(i), sparsecut(i), coeff(i,:)
+    enddo
+    close(111)
+endif
+  
 open(2211,file='test')
 read(2211,*) nconfig
 allocate(at(nconfig))
@@ -88,7 +108,8 @@ rmse_energy = 0.d0
 rmse_force = 0.d0
 nforce = 0
 do i = 1, nconfig
-    rmse_energy = rmse_energy + (at(i)%energy_cal - at(i)%energy_cal)**2
+    print*, at(i)%energy_cal/at(i)%natoms, at(i)%energy_ref/at(i)%natoms
+    rmse_energy = rmse_energy + (at(i)%energy_cal/at(i)%natoms - at(i)%energy_ref/at(i)%natoms)**2
     do j = 1, at(i)%natoms
         do k = 1, 3
             nforce = nforce + 1
@@ -98,5 +119,6 @@ do i = 1, nconfig
 enddo
 print *, 'RMSE ENERGY', sqrt(rmse_energy/nconfig)
 print *, 'RMSE FORCE', sqrt(rmse_force/nforce)
+ENDIF ! ltest
 end program
 

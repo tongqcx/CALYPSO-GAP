@@ -22,6 +22,8 @@ if(.not.lex) then
     write(60,fmt=*) '       DELTA =  '
     write(60,fmt=*) 'SIGMA_JITTER =  '
     write(60,fmt=*) '    ELEMENTS =  '
+    write(60,fmt=*) '    TRAINING =  '
+    write(60,fmt=*) '     TESTING =  '
     close(60)
     stop
 end if
@@ -34,6 +36,9 @@ end if
     theta = 1.d0
     delta = 1.d0
     sigma_jitter = 1.0d-8
+    ltrain = .true.
+    ltest = .true.
+    
 !>>>                         <<<
 open(file='control',unit=60)
 do while(.not.eof(60))
@@ -72,6 +77,10 @@ do while(.not.eof(60))
         read(rtp(lv2:),*) sigma_jitter
     case('elements')
         read(rtp(lv2:),*) elements
+    case('training')
+        read(rtp(lv2:),*) ltrain
+    case('testing')
+        read(rtp(lv2:),*) ltest
     case default
         write(*,*) "Warning: '"//trim(cerr)//"' ignored."
     end select
