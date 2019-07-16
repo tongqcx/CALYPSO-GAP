@@ -93,9 +93,9 @@ enddo
         fc_i = fcutij(sparseX(i))
         cmm(i,i) = cmm(i,i)*fc_i*fc_i + sigma_jitter
         do j = i + 1, nsparse
-            fc_j = fcutij(sparseX(j))
+            !fc_j = fcutij(sparseX(j))
             cmm(i,j) = covariance(sparseX(i),sparseX(j))
-            cmm(i,j) = cmm(i,j) * fc_i * fc_j
+            !cmm(i,j) = cmm(i,j) * fc_i * fc_j
             cmm(j,i) = cmm(i,j)
         enddo
     enddo
@@ -104,24 +104,37 @@ END SUBROUTINE
 
 FUNCTION  covariance(x,y)
 implicit none
-real(8),intent(in)  ::    x
-real(8),intent(in)  ::    y
+real(8),intent(in)  :: x
+real(8),intent(in)  :: y
 real(8)             :: covariance
+
 !integer  i 
+REAL(DP)            :: fc_i, fc_j
+fc_i = fcutij(x)
+fc_j = fcutij(y)
 covariance = 0.d0
 covariance = covariance + ((x-y)/theta)**2
-covariance = delta**2*exp(-0.5d0*covariance)
+covariance = delta**2*exp(-0.5d0*covariance) * fc_i * fc_j
 END FUNCTION covariance
 
 FUNCTION  DcovarianceDx(x,y)
 implicit none
-real(8),intent(in)  ::    x
-real(8),intent(in)  ::    y
+real(8),intent(in)  :: x
+real(8),intent(in)  :: y
 real(8)             :: DcovarianceDx
 !integer  i 
+REAL(DP)            :: fc_i, fc_j, dfc_i, exp_part
+
 DcovarianceDx = 0.d0
-DcovarianceDx = DcovarianceDx + ((x-y)/theta)**2
-DcovarianceDx = delta**2*exp(-0.5d0*DcovarianceDx) * -1.d0 * (x-y)/theta**2
+exp_part = 0.d0
+fc_i = fcutij(x)
+fc_j = fcutij(y)
+dfc_i = dfcutij(x)
+exp_part = exp_part + ((x-y)/theta)**2
+exp_part = delta**2 * exp(-0.5d0 * exp_part)
+DcovarianceDx = exp_part * -1.d0 * (x-y)/theta**2
+DcovarianceDx = DcovarianceDx * fc_i + exp_part * dfc_i
+DcovarianceDx = DcovarianceDx * fc_j
 END FUNCTION DcovarianceDx
 
 subroutine matmuldiag(x,y)
@@ -154,34 +167,33 @@ REAL(DP)                            :: ene
 at%energy_cal = 0.d0
 at%force_cal = 0.d0
 
-!!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fcut_ij, interaction_index, k1, k2, dfcut_ij)
+!!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fcut_ij, interaction_index, k1, k2, dfcut_ij, ene)
 do i = 1,at%natoms
     do j = 1, nspecies
         do k = 1, at%atom(i)%count(j)
             rij = at%atom(i)%neighbor(j,k,4)
             fcut_ij = fcutij(rij)
+            dfcut_ij = dfcutij(rij)
             interaction_index = at%interaction_mat(at%index(i),j)
             ene = 0.d0
-                do k1 = 1, nsparse
-! &&&&&&&&&&&  get total energy                   
-                    !at%atomic_energy(i) = at%atomic_energy(i) + covariance(rij, sparseX(k1)) * coeff(k1,interaction_index) * fcut_ij
-                    ene = ene + covariance(rij, sparseX(k1)) * fcutij(sparseX(k1)) * coeff(k1,interaction_index) * fcut_ij
-! &&&&&&&&&&&  get atomic force                    
-                    do k2 = 1,3
-!                        fcut_ij = fcutij(rij)
-                        dfcut_ij = dfcutij(rij)
-                        at%force_cal(i,k2) = at%force_cal(i,k2) + dfcut_ij * covariance(rij, sparseX(k1)) * fcutij(sparseX(k1)) * at%atom(i)%pos(k2)/rij &
-                        + DcovarianceDx(rij, sparseX(k1)) * fcut_ij * at%atom(i)%pos(k2)/rij
-                    enddo ! k2
-                enddo ! k1
-                print*, rij, ene
-                at%atomic_energy(i) = at%atomic_energy(i) + ene
+            do k1 = 1, nsparse
+!***********  get total energy                   
+                ene = ene + covariance(rij, sparseX(k1)) * fcut_ij * coeff(k1,interaction_index) * 0.5d0
+
+!***********  get atomic force                    
+                do k2 = 1,3
+                    at%force_cal(i,k2) = at%force_cal(i,k2) + &
+                    (dfcut_ij * covariance(rij, sparseX(k1)) + DcovarianceDx(rij, sparseX(k1)) * fcut_ij) * &
+                    (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * coeff(k1,interaction_index) * 0.5d0
+
+                enddo ! k2
+            enddo ! k1
+            at%atomic_energy(i) = at%atomic_energy(i) + ene
         enddo ! k
     enddo ! j
-    print*, at%atomic_energy(i)
-    print*, '/////////////////////////////////////////////'
+!    print*, at%atomic_energy(i)
 enddo
-at%energy_cal = sum(at%atomic_energy) * 0.5d0 + at%natoms * ene_cons
+at%energy_cal = sum(at%atomic_energy) + at%natoms * ene_cons
 END SUBROUTINE
 
 END module

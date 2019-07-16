@@ -76,7 +76,7 @@ if (r < rcut - d_width ) then
 elseif ( r > rcut) then
     dfcutij = 0.d0
 else
-    dfcutij = pi * sin(pi*(r - rcut + d_width)/d_width) * r/2.0/d_width * -0.1d0 
+    dfcutij = -0.5d0 * pi * sin(pi*(r - rcut + d_width)/d_width) / d_width 
 endif
 return
 END FUNCTION dfcutij

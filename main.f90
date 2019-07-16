@@ -39,7 +39,7 @@ do i = 1, nsparse
                         fc_i = fcutij(sparseX(i))
                         fc_j = fcutij(at(j)%atom(ii)%neighbor(k2,jj,4))
                         cmo(i,j,k) = cmo(i,j,k) + &
-       covariance(sparseX(i), at(j)%atom(ii)%neighbor(k,jj,4)) * fc_i * fc_j * 0.5d0
+       covariance(sparseX(i), at(j)%atom(ii)%neighbor(k2,jj,4)) * 0.5d0
                     enddo
                 enddo
             enddo
@@ -108,7 +108,7 @@ rmse_energy = 0.d0
 rmse_force = 0.d0
 nforce = 0
 do i = 1, nconfig
-    print*, at(i)%energy_cal/at(i)%natoms, at(i)%energy_ref/at(i)%natoms
+!    print*, at(i)%energy_cal/at(i)%natoms, at(i)%energy_ref/at(i)%natoms
     rmse_energy = rmse_energy + (at(i)%energy_cal/at(i)%natoms - at(i)%energy_ref/at(i)%natoms)**2
     do j = 1, at(i)%natoms
         do k = 1, 3
@@ -117,8 +117,37 @@ do i = 1, nconfig
         enddo
     enddo
 enddo
+print*, at(1)%energy_cal
+print*, at(2)%energy_cal
+print*, at(1)%force_cal(1,1)
+print*, at(2)%force_cal(1,1)
+print*, (at(1)%energy_cal - at(2)%energy_cal)/0.01
 print *, 'RMSE ENERGY', sqrt(rmse_energy/nconfig)
 print *, 'RMSE FORCE', sqrt(rmse_force/nforce)
+open(181,file="predited.datf")
+do ii = 1, nconfig
+        write(181,*) "----------------------------------------------------"
+        write(181,'(A9,X,I5,X,A30)') "Structure",ii
+        write(181,*) "----------------------------------------------------"
+        do i  =1,at(ii)%natoms
+            do j = 1,3
+            if (j==1) then
+            write(181,'(I5,I5,X,A,A,X,3F15.6)') ii,i, "F","X",at(ii)%force_cal(i,j),at(ii)%force_ref(i,j),&
+                                    abs(at(ii)%force_cal(i,j) - at(ii)%force_ref(i,j))
+            elseif(j ==2 ) then
+            write(181,'(I5,I5,X,A,A,X,3F15.6)') ii,i, "F","Y",at(ii)%force_cal(i,j),at(ii)%force_ref(i,j),&
+                                    abs(at(ii)%force_cal(i,j) - at(ii)%force_ref(i,j))
+            else
+            write(181,'(I5,I5,X,A,A,X,3F15.6)') ii,i, "F","Z",at(ii)%force_cal(i,j),at(ii)%force_ref(i,j),&
+                                    abs(at(ii)%force_cal(i,j) - at(ii)%force_ref(i,j))
+            endif
+            enddo
+        enddo
+        write(181,'(A6,X,I5,X,3F15.6)') "ENERGY",ii,at(ii)%energy_cal/at(ii)%natoms, at(ii)%energy_ref/at(ii)%natoms,&
+               abs(at(ii)%energy_cal-at(ii)%energy_ref)/at(ii)%natoms
+        !write(181,'(A10X3F15.8)') 'E-V:', at(i)%volume/at(i)%na, (at(i)%stress_cal(1) + at(i)%stress_cal(4) + at(i)%stress_cal(6))/30.0, &
+        !at(i)%energy_cal/at(i)%na
+enddo
 ENDIF ! ltest
 end program
 
