@@ -167,7 +167,7 @@ REAL(DP)                            :: ene
 at%energy_cal = 0.d0
 at%force_cal = 0.d0
 
-!!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fcut_ij, interaction_index, k1, k2, dfcut_ij, ene)
+!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fcut_ij, interaction_index, k1, k2, dfcut_ij, ene)
 do i = 1,at%natoms
     do j = 1, nspecies
         do k = 1, at%atom(i)%count(j)
@@ -178,13 +178,13 @@ do i = 1,at%natoms
             ene = 0.d0
             do k1 = 1, nsparse
 !***********  get total energy                   
-                ene = ene + covariance(rij, sparseX(k1)) * fcut_ij * coeff(k1,interaction_index) * 0.5d0
+                ene = ene + covariance(rij, sparseX(k1)) * fcut_ij * coeff(k1,interaction_index) 
 
 !***********  get atomic force                    
                 do k2 = 1,3
                     at%force_cal(i,k2) = at%force_cal(i,k2) + &
                     (dfcut_ij * covariance(rij, sparseX(k1)) + DcovarianceDx(rij, sparseX(k1)) * fcut_ij) * &
-                    (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * coeff(k1,interaction_index) * 0.5d0
+                    (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * coeff(k1,interaction_index) 
 
                 enddo ! k2
             enddo ! k1
@@ -193,7 +193,8 @@ do i = 1,at%natoms
     enddo ! j
 !    print*, at%atomic_energy(i)
 enddo
-at%energy_cal = sum(at%atomic_energy) + at%natoms * ene_cons
+at%energy_cal = sum(at%atomic_energy) * 0.5 + at%natoms * ene_cons
+at%force_cal = -1.0 * at%force_cal
 END SUBROUTINE
 
 END module

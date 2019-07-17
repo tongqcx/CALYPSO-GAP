@@ -13,4 +13,5 @@ REAL(DP)                               :: Rcut, Rmin
 REAL(DP)                               :: RMSE_ENERGY, RMSE_FORCE, RMSE_STRESS
 INTEGER                                :: nforce
 logical                                :: ltrain, ltest
+INTEGER                                :: tt1, tt2, it1, it2
 end module constants

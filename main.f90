@@ -11,6 +11,7 @@ real(dp)           :: fc_i, fc_j
 logical            :: alive
 
 call read_input()
+
 if (ltrain) then
 print*, 'nsparse', nsparse
 open(2211,file='config')
@@ -56,8 +57,8 @@ enddo
 
 do k = 1, ninteraction
     call matmuldiag_T(cmo(:,:,k),sqrt(1.0/lamda))
-call write_array(cmo(:,:,1),'cmo.dat')
-call write_array(lamdaobe,'lamdaobe.dat')
+!call write_array(cmo(:,:,1),'cmo.dat')
+!call write_array(lamdaobe,'lamdaobe.dat')
     call gpr(cmm, cmo(:,:,k), lamdaobe, coeff(:,k))
 enddo
 
@@ -99,11 +100,19 @@ open(2211,file='test')
 read(2211,*) nconfig
 allocate(at(nconfig))
 close(2211)
+CALL  SYSTEM_CLOCK(it1)
 call read_structure('test',at)
+CALL  SYSTEM_CLOCK(it2)
+print*, "CPU time used (sec) For converting coord: ",(it2 - it1)/10000.0
+
+CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, nconfig
     call gp_predict(at(i))
 enddo
+CALL  SYSTEM_CLOCK(it2)
+print*, "CPU time used (sec) For GP Predict: ",(it2 - it1)/10000.0
+
 rmse_energy = 0.d0
 rmse_force = 0.d0
 nforce = 0
@@ -117,11 +126,6 @@ do i = 1, nconfig
         enddo
     enddo
 enddo
-print*, at(1)%energy_cal
-print*, at(2)%energy_cal
-print*, at(1)%force_cal(1,1)
-print*, at(2)%force_cal(1,1)
-print*, (at(1)%energy_cal - at(2)%energy_cal)/0.01
 print *, 'RMSE ENERGY', sqrt(rmse_energy/nconfig)
 print *, 'RMSE FORCE', sqrt(rmse_force/nforce)
 open(181,file="predited.datf")

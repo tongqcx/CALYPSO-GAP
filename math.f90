@@ -59,7 +59,7 @@ end function
 
 FUNCTION fcutij(r)
 real(DP)   :: fcutij, r
-if (r < rcut - d_width ) then
+if (r <= rcut - d_width ) then
     fcutij = 1.d0
 elseif ( r > rcut) then
     fcutij = 0.d0
@@ -71,7 +71,7 @@ END FUNCTION fcutij
 
 FUNCTION dfcutij(r)
 real(DP)   :: dfcutij, r
-if (r < rcut - d_width ) then
+if (r <= rcut - d_width ) then
     dfcutij = 0.d0
 elseif ( r > rcut) then
     dfcutij = 0.d0

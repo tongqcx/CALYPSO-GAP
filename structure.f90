@@ -132,7 +132,7 @@ do i = 1, at%natoms
                         stop
                     endif
                     !at%atom(i)%nneighbor = count
-                    at%atom(i)%neighbor(at%index(j),at%atom(i)%count(at%index(j)),1:3) = dr
+                    at%atom(i)%neighbor(at%index(j),at%atom(i)%count(at%index(j)),1:3) = xyz
                     at%atom(i)%neighbor(at%index(j),at%atom(i)%count(at%index(j)),4) = dis
                 enddo
             enddo
