@@ -3,6 +3,8 @@ INTEGER,  PARAMETER      :: DP = KIND(1.0D0)
 INTEGER,  PARAMETER      :: QP = KIND(1.0D0)
 REAL(DP), PARAMETER      :: pi=3.141592653589793238462643383279502884197_DP
 REAL(DP), PARAMETER      :: ene_cons = -90.040530764400003
+REAL(DP), PARAMETER      :: GPa2eVPang =6.24219D-3
+!REAL(DP), PARAMETER      :: ene_cons = -162.0
 !  *************  Parameters of GPR
 integer                                :: nsparse
 integer                                :: nspecies, ninteraction

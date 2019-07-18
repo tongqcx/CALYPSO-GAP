@@ -27,11 +27,12 @@ type Structure
     real(8)                                :: sigma_e
     integer,dimension(:,:),allocatable     :: interaction_mat
     ! Properties
-    real(8)                                :: volume_ref, volume_cal
+    real(8)                                :: volume
     real(8),dimension(:,:),allocatable     :: force_ref, force_cal
     real(8),dimension(6)                   :: stress_ref, stress_cal
     real(8)                                :: energy_ref, energy_cal
     real(8),dimension(:),allocatable       :: atomic_energy
+    real(8),dimension(3,3)                 :: stress         
 
 endtype Structure
 type(Structure),allocatable,dimension(:)   :: at

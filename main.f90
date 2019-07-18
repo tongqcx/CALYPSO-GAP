@@ -115,9 +115,9 @@ print*, "CPU time used (sec) For GP Predict: ",(it2 - it1)/10000.0
 
 rmse_energy = 0.d0
 rmse_force = 0.d0
+rmse_stress = 0.d0
 nforce = 0
 do i = 1, nconfig
-!    print*, at(i)%energy_cal/at(i)%natoms, at(i)%energy_ref/at(i)%natoms
     rmse_energy = rmse_energy + (at(i)%energy_cal/at(i)%natoms - at(i)%energy_ref/at(i)%natoms)**2
     do j = 1, at(i)%natoms
         do k = 1, 3
@@ -125,9 +125,13 @@ do i = 1, nconfig
             rmse_force = rmse_force + (at(i)%force_cal(j,k) - at(i)%force_ref(j,k))**2
         enddo
     enddo
+    do j = 1,6
+        rmse_stress = rmse_stress + (at(i)%stress_cal(j) - at(i)%stress_ref(j))**2
+    enddo
 enddo
-print *, 'RMSE ENERGY', sqrt(rmse_energy/nconfig)
-print *, 'RMSE FORCE', sqrt(rmse_force/nforce)
+print *, 'RMSE ENERGY:', sqrt(rmse_energy/nconfig)
+print *, 'RMSE FORCE:', sqrt(rmse_force/nforce)
+print *, 'RMSE STRESS Units GPa:', sqrt(rmse_stress/nconfig/6.d0)
 open(181,file="predited.datf")
 do ii = 1, nconfig
         write(181,*) "----------------------------------------------------"
@@ -146,6 +150,27 @@ do ii = 1, nconfig
                                     abs(at(ii)%force_cal(i,j) - at(ii)%force_ref(i,j))
             endif
             enddo
+        enddo
+        do j = 1,6
+            if (j==1) then
+            write(181,'(A2,X,3F20.5)') "XX",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            elseif(j==2) then
+            write(181,'(A2,X,3F20.5)') "XY",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            elseif(j==3) then
+            write(181,'(A2,X,3F20.5)') "XZ",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            elseif(j==4) then
+            write(181,'(A2,X,3F20.5)') "YY",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            elseif(j==5) then
+            write(181,'(A2,X,3F20.5)') "YZ",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            else
+            write(181,'(A2,X,3F20.5)') "ZZ",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            endif
         enddo
         write(181,'(A6,X,I5,X,3F15.6)') "ENERGY",ii,at(ii)%energy_cal/at(ii)%natoms, at(ii)%energy_ref/at(ii)%natoms,&
                abs(at(ii)%energy_cal-at(ii)%energy_ref)/at(ii)%natoms

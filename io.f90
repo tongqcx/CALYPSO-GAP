@@ -110,12 +110,14 @@ n_config = size(at)
 open(2244,file=trim(adjustl(filename)))
 read(2244,*)
 do i = 1, n_config
+!    print *, i
     read(2244,*)  na, nspecies
     call ini_structure(at(i), na, nspecies)
     do j = 1,3
         read(2244,*) at(i)%lat(j,:)
     enddo
     read(2244,*) at(i)%stress_ref(:)
+    at(i)%stress_ref = at(i)%stress_ref/10.d0 ! kB to GPa
     do j = 1, at(i)%natoms
         read(2244,*) at(i)%symbols(j), at(i)%pos(j,:), at(i)%force_ref(j,:)
     enddo

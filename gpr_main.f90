@@ -159,15 +159,19 @@ type(Structure),intent(inout)          :: at
 
 
 ! local 
-integer                             :: i,j,k, k1, k2
-integer                             :: interaction_index
-REAL(DP)                            :: rij, fcut_ij , dfcut_ij
-REAL(DP)                            :: ene
+integer                               :: i,j,k, k1, k2, k3, k4
+integer                               :: interaction_index
+REAL(DP)                              :: rij, fcut_ij , dfcut_ij
+REAL(DP)                              :: ene
+REAL(DP),allocatable,dimension(:,:,:) :: stress_i
 
 at%energy_cal = 0.d0
 at%force_cal = 0.d0
+at%stress = 0.d0
+allocate(stress_i(3,3,at%natoms))
+stress_i = 0.d0
 
-!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fcut_ij, interaction_index, k1, k2, dfcut_ij, ene)
+!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fcut_ij, interaction_index, k1, k2, k3, k4, dfcut_ij, ene)
 do i = 1,at%natoms
     do j = 1, nspecies
         do k = 1, at%atom(i)%count(j)
@@ -186,6 +190,13 @@ do i = 1,at%natoms
                     (dfcut_ij * covariance(rij, sparseX(k1)) + DcovarianceDx(rij, sparseX(k1)) * fcut_ij) * &
                     (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * coeff(k1,interaction_index) 
 
+!***********  get atomic cell stress
+                    do k3 = 1,3
+                        stress_i(k3,k2,i) = stress_i(k3,k2,i) + (at%atom(i)%pos(k3) - at%atom(i)%neighbor(j,k,k3)) * &
+                        (dfcut_ij * covariance(rij, sparseX(k1)) + DcovarianceDx(rij, sparseX(k1)) * fcut_ij) * &
+                        (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * coeff(k1,interaction_index) 
+
+                    enddo ! k3
                 enddo ! k2
             enddo ! k1
             at%atomic_energy(i) = at%atomic_energy(i) + ene
@@ -193,8 +204,18 @@ do i = 1,at%natoms
     enddo ! j
 !    print*, at%atomic_energy(i)
 enddo
-at%energy_cal = sum(at%atomic_energy) * 0.5 + at%natoms * ene_cons
+at%energy_cal = sum(at%atomic_energy) * 0.5d0 + at%natoms * ene_cons
 at%force_cal = -1.0 * at%force_cal
+at%volume = volume(at%lat)
+at%stress = sum(stress_i, dim=3) * -0.5d0
+at%stress = at%stress / at%volume * (1.0/GPa2eVPang) 
+at%stress_cal(1) = at%stress(1,1)
+at%stress_cal(2) = at%stress(1,2)
+at%stress_cal(3) = at%stress(1,3)
+at%stress_cal(4) = at%stress(2,2)
+at%stress_cal(5) = at%stress(2,3)
+at%stress_cal(6) = at%stress(3,3)
+deallocate(stress_i)
 END SUBROUTINE
 
 END module
