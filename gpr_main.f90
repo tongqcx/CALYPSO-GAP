@@ -83,7 +83,6 @@ SUBROUTINE INI_GAP_2B()
 real(DP)                :: dr3
 
 dr3 = (rcut - rmin)/(nsparse - 1)
-print * , dr3,'dr3'
 do i = 1, nsparse
     sparseX(i) = rmin + (i - 1)*dr3
 enddo
