@@ -4,11 +4,12 @@ use io
 use struct
 use gpr_main
 implicit none
-integer            :: i,j,k,ii,jj,kk,k1, k2
+integer            :: i,j,k,ii,jj,kk,k1, k2,k3
 integer            :: na
 integer            :: nconfig
-real(dp)           :: fc_i, fc_j
+real(dp)           :: fc_i, fc_j, rij
 logical            :: alive
+integer            :: interaction_index
 
 call read_input()
 
@@ -28,25 +29,46 @@ print*, 'nspecies',nspecies
 cmo(:,:,:) = 0.d0
 k = 0
 
-!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k1,k2,k,fc_i,fc_j, ii, jj)
+!!!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k1,k2,k,k3,fc_i,fc_j, ii, jj)
+!do i = 1, nsparse
+!    do j = 1, nconfig
+!        k = 0
+!        do k1 = 1, nspecies
+!            do k2 = k1 , nspecies
+!                k = k + 1
+!                do ii = at(j)%pos_index(k1,1) , at(j)%pos_index(k1,2)
+!                    do jj = 1, at(j)%atom(ii)%count(k2)
+!                        fc_i = fcutij(sparseX(i))
+!                        fc_j = fcutij(at(j)%atom(ii)%neighbor(k2,jj,4))
+!                        cmo(i,j,k) = cmo(i,j,k) + covariance(sparseX(i), at(j)%atom(ii)%neighbor(k2,jj,4)) * 0.5d0
+!        !                cmo(i,j,k) = cmo(i,j,k) + covariance(sparseX(i), at(j)%atom(ii)%neighbor(k2,jj,4)) * fc_j * 0.5d0
+!                    enddo
+!                enddo
+!            enddo
+!        enddo
+!    enddo
+!enddo
+
+!!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k1,k2,k,fc_i,fc_j, ii, jj, rij)
 do i = 1, nsparse
     do j = 1, nconfig
-        k = 0
-        do k1 = 1, nspecies
-            do k2 = k1 , nspecies
-                k = k + 1
-                do ii = at(j)%pos_index(k1,1) , at(j)%pos_index(k1,2)
-                    do jj = 1, at(j)%atom(ii)%count(k2)
-                        fc_i = fcutij(sparseX(i))
-                        fc_j = fcutij(at(j)%atom(ii)%neighbor(k2,jj,4))
-                        cmo(i,j,k) = cmo(i,j,k) + &
-       covariance(sparseX(i), at(j)%atom(ii)%neighbor(k2,jj,4)) * 0.5d0
-                    enddo
+!***********************************************
+        do k1 = 1, at(j)%natoms
+            do k2 = 1, nspecies
+                do k3 = 1, at(j)%atom(k1)%count(k2)
+                    interaction_index = at(j)%interaction_mat(at(j)%index(k1),k2)
+                    rij = at(j)%atom(k1)%neighbor(k2,k3,4)
+                    cmo(i,j,interaction_index) = cmo(i,j,interaction_index) + covariance(sparseX(i), rij) * 0.5d0
                 enddo
             enddo
         enddo
     enddo
 enddo
+cmo(:,:,2) = cmo(:,:,2)/2.d0
+
+call write_array(cmo(:,:,1),'cmo1.dat')
+call write_array(cmo(:,:,2),'cmo2.dat')
+call write_array(cmo(:,:,3),'cmo3.dat')
 
 do i = 1,nconfig
     obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
@@ -57,7 +79,6 @@ enddo
 
 do k = 1, ninteraction
     call matmuldiag_T(cmo(:,:,k),sqrt(1.0/lamda))
-!call write_array(cmo(:,:,1),'cmo.dat')
 !call write_array(lamdaobe,'lamdaobe.dat')
     call gpr(cmm, cmo(:,:,k), lamdaobe, coeff(:,k))
 enddo

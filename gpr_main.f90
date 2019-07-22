@@ -203,7 +203,9 @@ do i = 1,at%natoms
     enddo ! j
 !    print*, at%atomic_energy(i)
 enddo
+!print*, at%atomic_energy
 at%energy_cal = sum(at%atomic_energy) * 0.5d0 + at%natoms * ene_cons
+!print*, at%energy_cal
 at%force_cal = -1.0 * at%force_cal
 at%volume = volume(at%lat)
 at%stress = sum(stress_i, dim=3) * -0.5d0

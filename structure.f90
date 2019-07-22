@@ -96,7 +96,7 @@ do i = 2, at%natoms
         temp = at%symbols(i)
     endif
 enddo
-!print*, 'at%pos_index', at%pos_index
+!print*, 'at%pos_index', at%index
 !stop
 !////////////////////////////////////////////////////////////////////
 
@@ -108,6 +108,8 @@ nabc(1)=ceiling(rcut*vectorlength(at%recip_lat(1,:))/pi/2)
 nabc(2)=ceiling(rcut*vectorlength(at%recip_lat(2,:))/pi/2)
 nabc(3)=ceiling(rcut*vectorlength(at%recip_lat(3,:))/pi/2)
 do i = 1, at%natoms
+
+!------------------------------------------------
     allocate(at%atom(i)%neighbor(at%nspecies, max_neighbor, 4))
     allocate(at%atom(i)%count(at%nspecies))
     at%atom(i)%pos = at%pos(i,:)
