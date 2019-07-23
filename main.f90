@@ -49,7 +49,7 @@ k = 0
 !    enddo
 !enddo
 
-!!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k1,k2,k,fc_i,fc_j, ii, jj, rij)
+!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k1,k2,k,fc_i,fc_j, ii, jj, rij)
 do i = 1, nsparse
     do j = 1, nconfig
 !***********************************************
