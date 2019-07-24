@@ -8,9 +8,9 @@ use struct
 interface covariance
     module procedure covariance_2B, covariance_MB
 end interface covariance
-interface INI_GAP
-    module procedure INI_GAP_2B, INI_GAP_MB
-end interface INI_GAP
+!interface INI_GAP
+!    module procedure INI_GAP_2B, INI_GAP_MB
+!end interface INI_GAP
 
 real(dp), dimension(:,:), allocatable :: c_subYY_sqrtInverseLambda
 real(dp), dimension(:,:), allocatable :: factor_c_subYsubY
@@ -99,16 +99,16 @@ allocate(GAP%sparsecut(GAP%nsparse))
 
 dr3 = (rcut - rmin)/(GAP%nsparse - 1)
 do i = 1, GAP%nsparse
-    sparseX(i,1) = rmin + (i - 1)*dr3
+    GAP%sparseX(i,1) = rmin + (i - 1)*dr3
 enddo
 !$OMP parallel do schedule(dynamic) default(shared) private(i,j,fc_i,fc_j)
-    do i  = 1, nsparse
+    do i  = 1, GAP%nsparse
         GAP%cmm(i,i) = delta**2 
-        fc_i = fcutij(sparseX(i,1))
+        fc_i = fcutij(GAP%sparseX(i,1))
         GAP%cmm(i,i) = GAP%cmm(i,i)*fc_i*fc_i + sigma_jitter
-        do j = i + 1, nsparse
+        do j = i + 1, GAP%nsparse
             !fc_j = fcutij(sparseX(j))
-            GAP%cmm(i,j) = covariance(sparseX(i, :),sparseX(j, :))
+            GAP%cmm(i,j) = covariance(GAP%sparseX(i,1),GAP%sparseX(j,1))
             !cmm(i,j) = cmm(i,j) * fc_i * fc_j
             GAP%cmm(j,i) = GAP%cmm(i,j)
         enddo
@@ -145,9 +145,9 @@ real(8)             :: covariance_2B
 REAL(DP)            :: fc_i, fc_j
 fc_i = fcutij(x)
 fc_j = fcutij(y)
-covariance = 0.d0
-covariance = covariance + ((x-y)/theta)**2
-covariance = delta**2*exp(-0.5d0*covariance) * fc_i * fc_j
+covariance_2B = 0.d0
+covariance_2B = covariance_2B + ((x-y)/theta)**2
+covariance_2B = delta**2*exp(-0.5d0*covariance_2B) * fc_i * fc_j
 END FUNCTION covariance_2B
 
 FUNCTION  covariance_MB(x,y, theta)
@@ -159,11 +159,11 @@ real(DP)             :: covariance_MB
 
 integer  i 
 !REAL(DP)            :: fc_i, fc_j
-covariance = 0.d0
+covariance_MB = 0.d0
 do i = 1, size(x)
-    covariance = covariance + ((x(i)-y(i))/theta(i))**2
+    covariance_MB = covariance_MB + ((x(i)-y(i))/theta(i))**2
 enddo
-covariance = delta**2*exp(-0.5d0*covariance) 
+covariance_MB = delta**2*exp(-0.5d0*covariance_MB) 
 END FUNCTION covariance_MB
 
 FUNCTION  DcovarianceDx(x,y)
@@ -202,8 +202,9 @@ do i = 1,size(x)
 enddo
 end subroutine matmuldiag_T
 
-SUBROUTINE gp_predict(at)
+SUBROUTINE gp_predict_2B(GAP, at)
 implicit none
+type(GAP_type),intent(in)              :: GAP
 type(Structure),intent(inout)          :: at
 
 
@@ -229,21 +230,21 @@ do i = 1,at%natoms
             dfcut_ij = dfcutij(rij)
             interaction_index = at%interaction_mat(at%index(i),j)
             ene = 0.d0
-            do k1 = 1, nsparse
+            do k1 = 1, GAP%nsparse
 !***********  get total energy                   
-                ene = ene + covariance(rij, sparseX(k1)) * fcut_ij * coeff(k1,interaction_index) 
+                ene = ene + covariance(rij, GAP%sparseX(k1, 1)) * fcut_ij * GAP%coeff(k1,interaction_index) 
 
 !***********  get atomic force                    
                 do k2 = 1,3
                     at%force_cal(i,k2) = at%force_cal(i,k2) + &
-                    (dfcut_ij * covariance(rij, sparseX(k1)) + DcovarianceDx(rij, sparseX(k1)) * fcut_ij) * &
-                    (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * coeff(k1,interaction_index) 
+                    (dfcut_ij * covariance(rij, GAP%sparseX(k1, 1)) + DcovarianceDx(rij, GAP%sparseX(k1, 1)) * fcut_ij) * &
+                    (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * GAP%coeff(k1,interaction_index) 
 
 !***********  get atomic cell stress
                     do k3 = 1,3
                         stress_i(k3,k2,i) = stress_i(k3,k2,i) + (at%atom(i)%pos(k3) - at%atom(i)%neighbor(j,k,k3)) * &
-                        (dfcut_ij * covariance(rij, sparseX(k1)) + DcovarianceDx(rij, sparseX(k1)) * fcut_ij) * &
-                        (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * coeff(k1,interaction_index) 
+                        (dfcut_ij * covariance(rij, GAP%sparseX(k1, 1)) + DcovarianceDx(rij, GAP%sparseX(k1, 1)) * fcut_ij) * &
+                        (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * GAP%coeff(k1,interaction_index) 
 
                     enddo ! k3
                 enddo ! k2
@@ -269,8 +270,8 @@ at%stress_cal(6) = at%stress(3,3)
 deallocate(stress_i)
 END SUBROUTINE
 
-SUBROUTINE get_cmo(GAP)
-type(GAP_type),intent(in)    ::   GAP
+SUBROUTINE get_cmo_2B(GAP)
+type(GAP_type),intent(inout)    ::   GAP
 integer   ::   i, j, k1, k2, k3, interaction_index
 REAL(DP)  ::   rij
 
@@ -283,7 +284,7 @@ do i = 1, GAP%nsparse
                 do k3 = 1, at(j)%atom(k1)%count(k2)
                     interaction_index = at(j)%interaction_mat(at(j)%index(k1),k2)
                     rij = at(j)%atom(k1)%neighbor(k2,k3,4)
-                    GAP%cmo(i,j,interaction_index) = GAP%cmo(i,j,interaction_index) + covariance(sparseX(i,1), rij) * 0.5d0
+                    GAP%cmo(i,j,interaction_index) = GAP%cmo(i,j,interaction_index) + covariance(GAP%sparseX(i,1), rij) * 0.5d0
                 enddo
             enddo
         enddo
