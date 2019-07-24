@@ -21,20 +21,14 @@ allocate(at(nconfig))
 close(2211)
 call read_structure('config',at)
 
-!call ini_gap(nconfig)
 call ini_gap_2b(GAP_2B, nsparse, nconfig)
 
-! Build matrix cmo
-print*, 'nspecies',nspecies
-!cmo(:,:,:) = 0.d0
-k = 0
 call get_cmo_2B(GAP_2B)
 
-call write_array(GAP_2B%cmo(:,:,1),'cmo1.dat')
-call write_array(GAP_2B%cmo(:,:,2),'cmo2.dat')
-call write_array(GAP_2B%cmo(:,:,3),'cmo3.dat')
+!call write_array(GAP_2B%cmo(:,:,1),'cmo1.dat')
+!print *, 'ngalobalY', GAP_2B%nglobalY
 
-do i = 1,nconfig
+do i = 1, GAP_2B%nglobalY
     GAP_2B%obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
     at(i)%sigma_e = sigma_e * sqrt(1.d0 * at(i)%natoms)
     GAP_2B%lamda(i) = at(i)%sigma_e**2
@@ -43,7 +37,6 @@ enddo
 
 do k = 1, ninteraction
     call matmuldiag_T(GAP_2B%cmo(:,:,k),sqrt(1.0/GAP_2B%lamda))
-!call write_array(lamdaobe,'lamdaobe.dat')
     call gpr(GAP_2B%cmm, GAP_2B%cmo(:,:,k), GAP_2B%lamdaobe, GAP_2B%coeff(:,k))
 enddo
 

@@ -14,25 +14,29 @@ type Atoms
 endtype Atoms
 
 type Structure
-    integer                                :: natoms
-    integer                                :: nspecies
-    type(Atoms),allocatable,dimension(:)   :: atom
-    character(2),allocatable,dimension(:)  :: symbols
-    integer,allocatable,dimension(:)       :: index
-    integer,allocatable,dimension(:,:)     :: pos_index
-    real(8),dimension(3,3)                 :: lat
-    real(8),dimension(3,3)                 :: recip_lat
-    real(8),dimension(:,:),allocatable     :: pos
-    real(8),dimension(:,:),allocatable     :: dpos
-    real(8)                                :: sigma_e
-    integer,dimension(:,:),allocatable     :: interaction_mat
+    integer                                 :: natoms
+    integer                                 :: nspecies
+    type(Atoms),allocatable,dimension(:)    :: atom
+    character(2),allocatable,dimension(:)   :: symbols
+    integer,allocatable,dimension(:)        :: index
+    integer,allocatable,dimension(:)        :: mlp_weights
+    integer,allocatable,dimension(:,:)      :: pos_index
+    real(8),dimension(3,3)                  :: lat
+    real(8),dimension(3,3)                  :: recip_lat
+    real(8),dimension(:,:),allocatable      :: pos
+    real(8),dimension(:,:),allocatable      :: dpos
+    real(8)                                 :: sigma_e
+    integer,dimension(:,:),allocatable      :: interaction_mat
     ! Properties
-    real(8)                                :: volume
-    real(8),dimension(:,:),allocatable     :: force_ref, force_cal
-    real(8),dimension(6)                   :: stress_ref, stress_cal
-    real(8)                                :: energy_ref, energy_cal
-    real(8),dimension(:),allocatable       :: atomic_energy
-    real(8),dimension(3,3)                 :: stress         
+    real(8)                                 :: volume
+    real(8),dimension(:,:),allocatable      :: force_ref, force_cal
+    real(8),dimension(6)                    :: stress_ref, stress_cal
+    real(8)                                 :: energy_ref, energy_cal
+    real(8),dimension(:),allocatable        :: atomic_energy
+    real(8),dimension(3,3)                  :: stress         
+    ! for many-body descriptors ACSF
+    REAL(DP),dimension(:,:),allocatable   :: xx
+    REAL(DP),dimension(:,:,:,:),allocatable :: dxdy, strs
 
 endtype Structure
 type(Structure),allocatable,dimension(:)   :: at

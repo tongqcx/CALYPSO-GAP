@@ -87,14 +87,15 @@ integer,intent(in)           :: nsparse, nobf
 real(DP)                     :: dr3
 GAP%dd = 1
 GAP%nsparse = nsparse
+GAP%nglobalY = nobf
 
 allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
-allocate(GAP%cmo(GAP%nsparse, nobf, ninteraction))
+allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, ninteraction))
 allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
-allocate(GAP%obe(nobf))
+allocate(GAP%obe(GAP%nglobalY))
 allocate(GAP%coeff(GAP%nsparse,ninteraction))
-allocate(GAP%lamda(nobf))
-allocate(GAP%lamdaobe(nobf))
+allocate(GAP%lamda(GAP%nglobalY))
+allocate(GAP%lamdaobe(GAP%nglobalY))
 allocate(GAP%sparsecut(GAP%nsparse))
 
 dr3 = (rcut - rmin)/(GAP%nsparse - 1)
@@ -116,24 +117,6 @@ enddo
 call write_array(GAP%cmm,'cmm.dat')
 END SUBROUTINE
 
-SUBROUTINE INI_GAP_MB(GAP, nsparse, dd, nobf)
-type(GAP_type),intent(inout) :: GAP
-integer,intent(in)           :: nsparse, dd, nobf
-
-!local
-GAP%nsparse = nsparse
-GAP%dd = dd
-
-allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
-allocate(GAP%cmo(GAP%nsparse, nobf, ninteraction))
-allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
-allocate(GAP%obe(nobf))
-allocate(GAP%coeff(GAP%nsparse,ninteraction))
-allocate(GAP%lamda(nobf))
-allocate(GAP%lamdaobe(nobf))
-allocate(GAP%sparsecut(GAP%nsparse))
-
-END SUBROUTINE INI_GAP_MB
 
 FUNCTION  covariance_2B(x,y)
 implicit none
@@ -278,7 +261,7 @@ REAL(DP)  ::   rij
 GAP%cmo = 0.d0
 !$OMP parallel do schedule(dynamic) default(shared) private(i, j, k1, k2, k3, interaction_index, rij)
 do i = 1, GAP%nsparse
-    do j = 1, nconfig
+    do j = 1, GAP%nglobalY
 !***********************************************
         do k1 = 1, at(j)%natoms
             do k2 = 1, nspecies

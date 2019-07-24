@@ -116,8 +116,10 @@ do i = 1, n_config
     do j = 1,3
         read(2244,*) at(i)%lat(j,:)
     enddo
+    at(i)%volume = volume(at(i)%lat)
     read(2244,*) at(i)%stress_ref(:)
     at(i)%stress_ref = at(i)%stress_ref/10.d0 ! kB to GPa
+    at(i)%stress_ref = at(i)%stress_ref * GPa2eVPang * at(i)%volume ! to virial stress
     do j = 1, at(i)%natoms
         read(2244,*) at(i)%symbols(j), at(i)%pos(j,:), at(i)%force_ref(j,:)
     enddo
@@ -126,5 +128,21 @@ do i = 1, n_config
 enddo
 close(2244)
 END SUBROUTINE read_structure
+
+SUBROUTINE READ_ACSF(filename, acsf)
+implicit none
+character(*),intent(in)                          :: filename
+type(ACSF_type),intent(inout)                    :: acsf
+! local
+INTEGER                                          :: i
+
+open(2244,file=trim(adjustl(filename)))
+read(2244,*)  acsf%global_cutoff
+read(2244,*)  acsf%nsf
+allocate(acsf%sf(acsf%nsf))
+do i = 1, acsf%nsf
+    read(2244,*) acsf%sf(i)%ntype, acsf%sf(i)%alpha, acsf%sf(i)%cutoff
+enddo
+END SUBROUTINE READ_ACSF
 
 end module

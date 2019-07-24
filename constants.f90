@@ -20,6 +20,7 @@ INTEGER                                :: tt1, tt2, it1, it2
 type GAP_type
 INTEGER                                 :: nsparse
 INTEGER                                 :: dd   ! the dimension of discriptors
+INTEGER                                 :: nglobalY
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: lamda
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: lamdaobe
 REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: cmm
@@ -32,4 +33,19 @@ REAL(DP),DIMENSION(:),ALLOCATABLE       :: theta
 end type GAP_type
 
 type(GAP_type)                          :: GAP_2B
+
+type SF
+INTEGER                                 :: ntype
+REAL(DP)                                :: alpha
+REAL(DP)                                :: cutoff
+end type SF
+
+TYPE ACSF_type
+INTEGER                                 :: nsf
+REAL(DP)                                :: global_cutoff
+type(SF),dimension(:),allocatable       :: sf
+END TYPE ACSF_type
+TYPE(ACSF_type)                         :: ACSF
+
+
 end module constants
