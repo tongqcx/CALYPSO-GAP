@@ -275,6 +275,7 @@ type(GAP_type),intent(inout)    ::   GAP
 integer   ::   i, j, k1, k2, k3, interaction_index
 REAL(DP)  ::   rij
 
+GAP%cmo = 0.d0
 !$OMP parallel do schedule(dynamic) default(shared) private(i, j, k1, k2, k3, interaction_index, rij)
 do i = 1, GAP%nsparse
     do j = 1, nconfig

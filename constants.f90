@@ -16,6 +16,7 @@ REAL(DP)                               :: RMSE_ENERGY, RMSE_FORCE, RMSE_STRESS
 INTEGER                                :: nforce
 logical                                :: ltrain, ltest
 INTEGER                                :: tt1, tt2, it1, it2
+
 type GAP_type
 INTEGER                                 :: nsparse
 INTEGER                                 :: dd   ! the dimension of discriptors
@@ -29,4 +30,6 @@ REAL(DP),DIMENSION(:),ALLOCATABLE       :: obe
 REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: coeff
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: theta
 end type GAP_type
+
+type(GAP_type)                          :: GAP_2B
 end module constants

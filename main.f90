@@ -21,39 +21,39 @@ allocate(at(nconfig))
 close(2211)
 call read_structure('config',at)
 
-call ini_gap(nconfig)
-call ini_gap_2b()
+!call ini_gap(nconfig)
+call ini_gap_2b(GAP_2B, nsparse, nconfig)
 
 ! Build matrix cmo
 print*, 'nspecies',nspecies
-cmo(:,:,:) = 0.d0
+!cmo(:,:,:) = 0.d0
 k = 0
-call get_cmo()
+call get_cmo_2B(GAP_2B)
 
-call write_array(cmo(:,:,1),'cmo1.dat')
-call write_array(cmo(:,:,2),'cmo2.dat')
-call write_array(cmo(:,:,3),'cmo3.dat')
+call write_array(GAP_2B%cmo(:,:,1),'cmo1.dat')
+call write_array(GAP_2B%cmo(:,:,2),'cmo2.dat')
+call write_array(GAP_2B%cmo(:,:,3),'cmo3.dat')
 
 do i = 1,nconfig
-    obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
+    GAP_2B%obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
     at(i)%sigma_e = sigma_e * sqrt(1.d0 * at(i)%natoms)
-    lamda(i) = at(i)%sigma_e**2
-    lamdaobe(i) = obe(i) * sqrt((1.0/lamda(i)))
+    GAP_2B%lamda(i) = at(i)%sigma_e**2
+    GAP_2B%lamdaobe(i) = GAP_2B%obe(i) * sqrt((1.0/GAP_2B%lamda(i)))
 enddo
 
 do k = 1, ninteraction
-    call matmuldiag_T(cmo(:,:,k),sqrt(1.0/lamda))
+    call matmuldiag_T(GAP_2B%cmo(:,:,k),sqrt(1.0/GAP_2B%lamda))
 !call write_array(lamdaobe,'lamdaobe.dat')
-    call gpr(cmm, cmo(:,:,k), lamdaobe, coeff(:,k))
+    call gpr(GAP_2B%cmm, GAP_2B%cmo(:,:,k), GAP_2B%lamdaobe, GAP_2B%coeff(:,k))
 enddo
 
 open(2234,file='coeffx.dat')
 do i = 1,nsparse
-    sparsecut(i) = fcutij(sparseX(i))
-    write(2234,'(I3,F25.8,$)') i, sparseX(i)
-    write(2234,'(F25.8, $)') sparsecut(i)
+    GAP_2B%sparsecut(i) = fcutij(GAP_2B%sparseX(i,1))
+    write(2234,'(I3,F25.8,$)') i, GAP_2B%sparseX(i,1)
+    write(2234,'(F25.8, $)') GAP_2B%sparsecut(i)
     do k = 1,ninteraction
-        write(2234,'(F25.8,$)') coeff(i,k)
+        write(2234,'(F25.8,$)') GAP_2B%coeff(i,k)
     enddo
     write(2234,*)
 enddo
@@ -71,12 +71,12 @@ if (.not.ltrain) then
         print*, "coeffx.dat file does not exist!"
         stop
     endif
-    allocate(sparseX(nsparse))
-    allocate(sparsecut(nsparse))
-    allocate(coeff(nsparse, ninteraction))
+    allocate(GAP_2B%sparseX(nsparse, 1))
+    allocate(GAP_2B%sparsecut(nsparse))
+    allocate(GAP_2B%coeff(nsparse, ninteraction))
     open(111,file='coeffx.dat')
     do i = 1, nsparse
-        read(111,*) j, sparseX(i), sparsecut(i), coeff(i,:)
+        read(111,*) j, GAP_2B%sparseX(i,1), GAP_2B%sparsecut(i), GAP_2B%coeff(i,:)
     enddo
     close(111)
 endif
@@ -93,7 +93,7 @@ print*, "CPU time used (sec) For converting coord: ",(it2 - it1)/10000.0
 CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, nconfig
-    call gp_predict(at(i))
+    call gp_predict_2B(GAP_2B, at(i))
 enddo
 CALL  SYSTEM_CLOCK(it2)
 print*, "CPU time used (sec) For GP Predict: ",(it2 - it1)/10000.0
