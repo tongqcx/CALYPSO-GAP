@@ -2,6 +2,7 @@ Program  test_nGAP
 use constants
 use io
 use struct
+use gpr_mb
 use gpr_main
 implicit none
 integer            :: i,j,k,ii,jj,kk,k1, k2,k3
@@ -21,8 +22,14 @@ allocate(at(nconfig))
 close(2211)
 call read_structure('config',at)
 
+call ini_gap_mb(GAP_MB, ACSF, nsparse, data_c%nob)
+print*, 'ini_gap_mb finished'
+do i = 1, nconfig
+call car2acsf(at(i), GAP_MB, ACSF)
+enddo
+call write_array(at(1)%xx, 'xx.dat')
+stop
 call ini_gap_2b(GAP_2B, nsparse, nconfig)
-
 call get_cmo_2B(GAP_2B)
 
 !call write_array(GAP_2B%cmo(:,:,1),'cmo1.dat')

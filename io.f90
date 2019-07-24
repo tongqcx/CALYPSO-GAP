@@ -109,9 +109,11 @@ n_config = size(at)
 
 open(2244,file=trim(adjustl(filename)))
 read(2244,*)
+data_c%nf = 0
 do i = 1, n_config
 !    print *, i
     read(2244,*)  na, nspecies
+    data_c%nf = data_c%nf + 3*na
     call ini_structure(at(i), na, nspecies)
     do j = 1,3
         read(2244,*) at(i)%lat(j,:)
@@ -122,10 +124,14 @@ do i = 1, n_config
     at(i)%stress_ref = at(i)%stress_ref * GPa2eVPang * at(i)%volume ! to virial stress
     do j = 1, at(i)%natoms
         read(2244,*) at(i)%symbols(j), at(i)%pos(j,:), at(i)%force_ref(j,:)
+        call get_ele_weights(at(i)%symbols(j),at(i)%mlp_weights(j))
     enddo
     read(2244,*) at(i)%energy_ref
     call build_neighbor(at(i), elements)
 enddo
+data_c%ns = n_config*6
+data_c%ne = n_config
+data_c%nob = data_c%ne + data_c%nf + data_c%ns
 close(2244)
 END SUBROUTINE read_structure
 

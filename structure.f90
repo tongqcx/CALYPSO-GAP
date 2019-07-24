@@ -14,29 +14,29 @@ type Atoms
 endtype Atoms
 
 type Structure
-    integer                                 :: natoms
-    integer                                 :: nspecies
-    type(Atoms),allocatable,dimension(:)    :: atom
-    character(2),allocatable,dimension(:)   :: symbols
-    integer,allocatable,dimension(:)        :: index
-    integer,allocatable,dimension(:)        :: mlp_weights
-    integer,allocatable,dimension(:,:)      :: pos_index
-    real(8),dimension(3,3)                  :: lat
-    real(8),dimension(3,3)                  :: recip_lat
-    real(8),dimension(:,:),allocatable      :: pos
-    real(8),dimension(:,:),allocatable      :: dpos
-    real(8)                                 :: sigma_e
-    integer,dimension(:,:),allocatable      :: interaction_mat
+    integer                                  :: natoms
+    integer                                  :: nspecies
+    type(Atoms),allocatable,dimension(:)     :: atom
+    character(2),allocatable,dimension(:)    :: symbols
+    integer,allocatable,dimension(:)         :: index
+    real(DP),allocatable,dimension(:)        :: mlp_weights
+    integer,allocatable,dimension(:,:)       :: pos_index
+    real(DP),dimension(3,3)                  :: lat
+    real(DP),dimension(3,3)                  :: recip_lat
+    real(DP),dimension(:,:),allocatable      :: pos
+    real(DP),dimension(:,:),allocatable      :: dpos
+    real(DP)                                 :: sigma_e
+    integer,dimension(:,:),allocatable       :: interaction_mat
     ! Properties
-    real(8)                                 :: volume
-    real(8),dimension(:,:),allocatable      :: force_ref, force_cal
-    real(8),dimension(6)                    :: stress_ref, stress_cal
-    real(8)                                 :: energy_ref, energy_cal
-    real(8),dimension(:),allocatable        :: atomic_energy
-    real(8),dimension(3,3)                  :: stress         
+    real(DP)                                 :: volume
+    real(DP),dimension(:,:),allocatable      :: force_ref, force_cal
+    real(DP),dimension(6)                    :: stress_ref, stress_cal
+    real(DP)                                 :: energy_ref, energy_cal
+    real(DP),dimension(:),allocatable        :: atomic_energy
+    real(DP),dimension(3,3)                  :: stress         
     ! for many-body descriptors ACSF
-    REAL(DP),dimension(:,:),allocatable   :: xx
-    REAL(DP),dimension(:,:,:,:),allocatable :: dxdy, strs
+    REAL(DP),dimension(:,:),allocatable      :: xx
+    REAL(DP),dimension(:,:,:,:),allocatable  :: dxdy, strs
 
 endtype Structure
 type(Structure),allocatable,dimension(:)   :: at
@@ -49,12 +49,13 @@ integer                        :: index, i, j
 
 at%natoms = na
 at%nspecies = ns
-allocate(at%symbols( at%natoms))
-allocate(at%index(   at%natoms))
+allocate(at%symbols(     at%natoms))
+allocate(at%mlp_weights( at%natoms))
+allocate(at%index(       at%natoms))
 allocate(at%pos_index(at%nspecies,2))
-allocate(at%atom(    at%natoms))
-allocate(at%pos(     at%natoms,3))
-allocate(at%dpos(    at%natoms,3))
+allocate(at%atom(        at%natoms))
+allocate(at%pos(         at%natoms,3))
+allocate(at%dpos(        at%natoms,3))
 allocate(at%force_ref(   at%natoms,3))
 allocate(at%force_cal(   at%natoms,3))
 allocate(at%interaction_mat(at%nspecies, at%nspecies))
@@ -114,7 +115,7 @@ nabc(3)=ceiling(rcut*vectorlength(at%recip_lat(3,:))/pi/2)
 do i = 1, at%natoms
 
 !------------------------------------------------
-    allocate(at%atom(i)%neighbor(at%nspecies, max_neighbor, 4))
+    allocate(at%atom(i)%neighbor(at%nspecies, max_neighbor, 5))
     allocate(at%atom(i)%count(at%nspecies))
     at%atom(i)%pos = at%pos(i,:)
     at%atom(i)%name = at%symbols(i)
@@ -141,6 +142,7 @@ do i = 1, at%natoms
                     !at%atom(i)%nneighbor = count
                     at%atom(i)%neighbor(at%index(j),at%atom(i)%count(at%index(j)),1:3) = xyz
                     at%atom(i)%neighbor(at%index(j),at%atom(i)%count(at%index(j)),4) = dis
+                    at%atom(i)%neighbor(at%index(j),at%atom(i)%count(at%index(j)),5) = real(j)
                 enddo
             enddo
         enddo
