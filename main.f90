@@ -42,7 +42,7 @@ enddo
 
 open(2234,file='coeffx.dat')
 do i = 1,nsparse
-    GAP_2B%sparsecut(i) = fcutij(GAP_2B%sparseX(i,1))
+    GAP_2B%sparsecut(i) = fcut_ij(GAP_2B%sparseX(i,1))
     write(2234,'(I3,F25.8,$)') i, GAP_2B%sparseX(i,1)
     write(2234,'(F25.8, $)') GAP_2B%sparsecut(i)
     do k = 1,ninteraction

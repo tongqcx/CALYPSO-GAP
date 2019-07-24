@@ -57,29 +57,29 @@ end function
 !return 
 !END FUNCTION MIV_NUM_COLUMNS
 
-FUNCTION fcutij(r)
-real(DP)   :: fcutij, r
+FUNCTION fcut_ij(r)
+real(DP)   :: fcut_ij, r
 if (r <= rcut - d_width ) then
-    fcutij = 1.d0
+    fcut_ij = 1.d0
 elseif ( r > rcut) then
-    fcutij = 0.d0
+    fcut_ij = 0.d0
 else
-    fcutij = ((cos(pi*(r - rcut + d_width)/d_width) + 1))/2
+    fcut_ij = ((cos(pi*(r - rcut + d_width)/d_width) + 1))/2
 endif
 return
-END FUNCTION fcutij
+END FUNCTION fcut_ij
 
-FUNCTION dfcutij(r)
-real(DP)   :: dfcutij, r
+FUNCTION dfcut_ij(r)
+real(DP)   :: dfcut_ij, r
 if (r <= rcut - d_width ) then
-    dfcutij = 0.d0
+    dfcut_ij = 0.d0
 elseif ( r > rcut) then
-    dfcutij = 0.d0
+    dfcut_ij = 0.d0
 else
-    dfcutij = -0.5d0 * pi * sin(pi*(r - rcut + d_width)/d_width) / d_width 
+    dfcut_ij = -0.5d0 * pi * sin(pi*(r - rcut + d_width)/d_width) / d_width 
 endif
 return
-END FUNCTION dfcutij
+END FUNCTION dfcut_ij
 
 SUBROUTINE  write_array_2dim(a,name)
 REAL(DP),intent(in),dimension(:,:)       :: a
