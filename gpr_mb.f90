@@ -11,29 +11,65 @@ use io
 use math
 use linearalgebra
 use struct
+use gpr_base
 
 CONTAINS
-SUBROUTINE INI_GAP_MB(GAP, ACSF, nsparse, nobf)
+SUBROUTINE INI_GAP_MB(GAP, ACSF, DATA_C, nsparse)
 type(GAP_type),intent(inout)           :: GAP
 type(ACSF_type),intent(inout)          :: ACSF
-integer,intent(in)                     :: nsparse, nobf
+type(DATA_type),intent(in)             :: DATA_C
+integer,intent(in)                     :: nsparse
 
 !local
 
 call READ_ACSF('neural.in', ACSF)
 GAP%nsparse = nsparse
 GAP%dd = ACSF%NSF * 2     ! D_tot = D_topology + D_species
-GAP%nglobalY = nobf
+GAP%nglobalY = DATA_C%nob
 
 allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
 allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
-allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
 allocate(GAP%obe(GAP%nglobalY))
 allocate(GAP%coeff(GAP%nsparse, 1))
 allocate(GAP%lamda(GAP%nglobalY))
 allocate(GAP%lamdaobe(GAP%nglobalY))
 
+allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
+allocate(GAP%MM(GAP%nsparse, GAP%dd))
+allocate(GAP%DescriptorX(GAP%nsparse, GAP%dd))
+allocate(GAP%sparsex_index(GAP%nsparse))
+
 END SUBROUTINE INI_GAP_MB
+
+SUBROUTINE GAP_Sparse(GAP, AT, DATA_C)
+type(GAP_type),intent(inout)             :: GAP
+type(Structure),intent(in),dimension(:)  :: at
+type(DATA_type),intent(in)               :: DATA_C
+
+spaese_index = 0
+k = 0
+do i_struc = 1, DATA_C%ne
+    do i_atom = 1, at(i_struc)%natoms
+        k = k + 1
+        GAP%descriptorx(k,:) = at(i_struc)%xx(:,i_atom)
+    enddo
+enddo
+call cur_decomposition(transpose(GAP%descriptorx), GAP%sparseX_index)
+do i = 1, GAP%nsparse
+    GAP%MM(i,:) = GAP%descriptorx(GAP%sparsex_index(i),:)
+enddo
+call GAP_SET_THETA(GAP%MM, GAP%theta)
+
+GAP%cmm = 0.0
+do i = 1, GAP%nsparse
+    GAP%cmm(i,i) = delta_w*1.d0 + delta_jitter
+    do  j = i+1 , GAP%nsparse
+        GAP%cmm(i,j) = delta_w*covariance(GAP%MM(i,:),GAP%MM(j,:), GAP%theta)
+        GAP%cmm(j,i) = GAP%cmm(i,j)
+    enddo
+enddo
+END SUBROUTINE
+
 
 SUBROUTINE CAR2ACSF(at, GAP, ACSF)
 
@@ -774,11 +810,5 @@ do ii = 1, nnn
     endif
 enddo  ! types
 END SUBROUTINE 
-
-
-
-    
-
-
 
 END MODULE

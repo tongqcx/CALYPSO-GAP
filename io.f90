@@ -110,10 +110,12 @@ n_config = size(at)
 open(2244,file=trim(adjustl(filename)))
 read(2244,*)
 data_c%nf = 0
+data_c%natoms = 0
 do i = 1, n_config
 !    print *, i
     read(2244,*)  na, nspecies
     data_c%nf = data_c%nf + 3*na
+    data_c%natoms = data_c%natoms + na
     call ini_structure(at(i), na, nspecies)
     do j = 1,3
         read(2244,*) at(i)%lat(j,:)

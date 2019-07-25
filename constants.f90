@@ -32,6 +32,9 @@ REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: sparseX
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: obe
 REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: coeff
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: theta
+REAL(DP),DIMENSION(:),ALLOCATABLE       :: SparseX_index
+REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: DescriptorX, MM
+
 END TYPE GAP_type
 
 !
@@ -51,6 +54,7 @@ END TYPE ACSF_type
 !
 TYPE data_type
 INTEGER                                 :: ne, nf, ns
+INTEGER                                 :: natoms
 INTEGER                                 :: nob
 END TYPE data_type
 

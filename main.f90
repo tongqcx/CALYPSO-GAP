@@ -2,8 +2,8 @@ Program  test_nGAP
 use constants
 use io
 use struct
+use gpr_base
 use gpr_mb
-use gpr_main
 implicit none
 integer            :: i,j,k,ii,jj,kk,k1, k2,k3
 integer            :: na
@@ -22,7 +22,7 @@ allocate(at(nconfig))
 close(2211)
 call read_structure('config',at)
 
-call ini_gap_mb(GAP_MB, ACSF, nsparse, data_c%nob)
+call ini_gap_mb(GAP_MB, ACSF, DATA_C, nsparse)
 print*, 'ini_gap_mb finished'
 do i = 1, nconfig
 call car2acsf(at(i), GAP_MB, ACSF)
