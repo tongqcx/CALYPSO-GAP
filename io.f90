@@ -9,9 +9,9 @@ logical :: lex
 character(len=150) :: rtp,cerr, ele
 integer :: lv1,lv2
 
-inquire(file='control',exist=lex)
+inquire(file='contral',exist=lex)
 if(.not.lex) then
-    open(file='control',unit=60)
+    open(file='contral',unit=60)
     write(60,fmt=*) '    NSPECIES =  '
     write(60,fmt=*) '     NSPARSE =  '
     write(60,fmt=*) '     SIGMA_E =  '
@@ -40,7 +40,7 @@ end if
     ltest = .true.
     
 !>>>                         <<<
-open(file='control',unit=60)
+open(file='contral',unit=60)
 do while(.not.eof(60))
     read(60,'(a150)') rtp
     rtp=adjustl(rtp)

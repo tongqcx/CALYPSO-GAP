@@ -164,7 +164,7 @@ print*, 'BBBBBBBBBBBBBBB'
                     n = int(at%atom(i)%neighbor(j_type,j_neighbor,5))
                     weights_j = at%mlp_weights(n)
                     if (rij.gt.cutoff) cycle
-                    print*,  xyz_j,'j'
+                    !print*,  xyz_j,'j'
                     deltaxj = -1.d0*(at%atom(i)%pos(1) - xyz_j(1))
                     deltayj = -1.d0*(at%atom(i)%pos(2) - xyz_j(2))
                     deltazj = -1.d0*(at%atom(i)%pos(3) - xyz_j(3))
@@ -195,7 +195,7 @@ print*, 'BBBBBBBBBBBBBBB'
                             if (rik.gt.cutoff) cycle
                             lllll = lllll + 1
                             xyz_k = at%atom(i)%neighbor(k_type,k_neighbor,1:3)
-                            print*, xyz_k,'k'
+                    !        print*, xyz_k,'k'
                             m = int(at%atom(i)%neighbor(k_type,k_neighbor,5))
                             weights_k = at%mlp_weights(m)
 
@@ -254,7 +254,9 @@ print*, 'BBBBBBBBBBBBBBB'
                             f=rjk**2 - rij**2 -rik**2
                             g=-2.d0*rij*rik
                             costheta=f/g
-                            costheta=costheta+1.d0 ! avoid negative values
+                            !!!!  2^1-eta (1+lamda coseta_ijk)^eta 
+                            !!!!  eta = 1 lamda = +1.d0
+                            costheta=1.d0 + costheta
                             dfdxi=-2.d0*rij*drijdxi - 2.d0*rik*drikdxi
                             dfdyi=-2.d0*rij*drijdyi - 2.d0*rik*drikdyi
                             dfdzi=-2.d0*rij*drijdzi - 2.d0*rik*drikdzi
@@ -515,10 +517,10 @@ print*, 'BBBBBBBBBBBBBBB'
             do j_type = 1, nspecies
                 do j_neighbor = 1, at%atom(i)%count(j_type)
                     rij = at%atom(i)%neighbor(j_type,j_neighbor,4)
+                    if (rij.gt.cutoff) cycle
                     xyz_j = at%atom(i)%neighbor(j_type,j_neighbor,1:3)
                     n = int(at%atom(i)%neighbor(j_type,j_neighbor,5))
                     weights_j = at%mlp_weights(n)
-                    if (rij.gt.cutoff) cycle
                     deltaxj = -1.d0*(at%atom(i)%pos(1) - xyz_j(1))
                     deltayj = -1.d0*(at%atom(i)%pos(2) - xyz_j(2))
                     deltazj = -1.d0*(at%atom(i)%pos(3) - xyz_j(3))
@@ -531,6 +533,7 @@ print*, 'BBBBBBBBBBBBBBB'
                     drijdxk = 0.d0
                     drijdyk = 0.d0
                     drijdzk = 0.d0
+
                     fcutij=0.5d0*(dcos(pi*rij/cutoff)+1.d0)
                     temp1=0.5d0*(-dsin(pi*rij/cutoff))*(pi/cutoff)
                     dfcutijdxi=temp1*drijdxi
@@ -550,6 +553,7 @@ print*, 'BBBBBBBBBBBBBBB'
                             xyz_k = at%atom(i)%neighbor(k_type,k_neighbor,1:3)
                             m = int(at%atom(i)%neighbor(k_type,k_neighbor,5))
                             weights_k = at%mlp_weights(m)
+
                             deltaxk = -1.d0*(at%atom(i)%pos(1) - xyz_k(1))
                             deltayk = -1.d0*(at%atom(i)%pos(2) - xyz_k(2))
                             deltazk = -1.d0*(at%atom(i)%pos(3) - xyz_k(3))
@@ -576,8 +580,8 @@ print*, 'BBBBBBBBBBBBBBB'
                             rjk = (xyz_j(1) - xyz_k(1))**2 + (xyz_j(2) - xyz_k(2))**2 + (xyz_j(3) - xyz_k(3))**2
                             rjk = dsqrt(rjk)
 
-                            if (rjk.gt.cutoff) cycle  ! CAUTAINS STUPID!!!
-                            if (rij < Rmin) then
+                            if (rjk.gt.cutoff) cycle  ! Be careful STUPID!!!
+                            if (rjk < Rmin) then
                                 print*, 'Rjk', rjk,' smaller than Rmin'
                                 stop
                             endif
@@ -631,15 +635,17 @@ print*, 'BBBBBBBBBBBBBBB'
                             dgdzk=-2.d0*rij*drikdzk
 
                             temp1=1.d0/g**2
-                            dcosthetadxi=(dfdxi*g - f*dgdxi)*temp1
-                            dcosthetadyi=(dfdyi*g - f*dgdyi)*temp1
-                            dcosthetadzi=(dfdzi*g - f*dgdzi)*temp1
-                            dcosthetadxj=(dfdxj*g - f*dgdxj)*temp1
-                            dcosthetadyj=(dfdyj*g - f*dgdyj)*temp1
-                            dcosthetadzj=(dfdzj*g - f*dgdzj)*temp1
-                            dcosthetadxk=(dfdxk*g - f*dgdxk)*temp1
-                            dcosthetadyk=(dfdyk*g - f*dgdyk)*temp1
-                            dcosthetadzk=(dfdzk*g - f*dgdzk)*temp1
+                            !!!! Be careful costheta = 1.d0 - costheta 2019.07.25
+                            dcosthetadxi=-1.d0 * (dfdxi*g - f*dgdxi)*temp1  
+                            dcosthetadyi=-1.d0 * (dfdyi*g - f*dgdyi)*temp1 
+                            dcosthetadzi=-1.d0 * (dfdzi*g - f*dgdzi)*temp1 
+                            dcosthetadxj=-1.d0 * (dfdxj*g - f*dgdxj)*temp1 
+                            dcosthetadyj=-1.d0 * (dfdyj*g - f*dgdyj)*temp1 
+                            dcosthetadzj=-1.d0 * (dfdzj*g - f*dgdzj)*temp1 
+                            dcosthetadxk=-1.d0 * (dfdxk*g - f*dgdxk)*temp1 
+                            dcosthetadyk=-1.d0 * (dfdyk*g - f*dgdyk)*temp1 
+                            dcosthetadzk=-1.d0 * (dfdzk*g - f*dgdzk)*temp1 
+
                             expxyz=dexp(-alpha*(rij**2+rik**2+rjk**2))
                             temp1=-alpha*2.0d0*expxyz
                             dexpxyzdxi=(rij*drijdxi+rik*drikdxi+rjk*drjkdxi)*temp1
@@ -651,6 +657,7 @@ print*, 'BBBBBBBBBBBBBBB'
                             dexpxyzdxk=(rij*drijdxk+rik*drikdxk+rjk*drjkdxk)*temp1
                             dexpxyzdyk=(rij*drijdyk+rik*drikdyk+rjk*drjkdyk)*temp1
                             dexpxyzdzk=(rij*drijdzk+rik*drikdzk+rjk*drjkdzk)*temp1
+
                             at%xx(ii,i)=at%xx(ii,i)+costheta*expxyz*fcutij*fcutik*fcutjk
                             at%xx(ii + nnn,i)=at%xx(ii + nnn,i)+&
                             costheta*expxyz*fcutij*fcutik*fcutjk*weights_j*weights_k

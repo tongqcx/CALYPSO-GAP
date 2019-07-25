@@ -27,7 +27,9 @@ print*, 'ini_gap_mb finished'
 do i = 1, nconfig
 call car2acsf(at(i), GAP_MB, ACSF)
 enddo
-call write_array(at(1)%xx, 'xx.dat')
+call write_array(at(1)%xx(:,:), 'xx.dat')
+call write_array(at(1)%dxdy(:,:,1,1), 'dxx.dat')
+call write_array(at(1)%strs(:,:,1,1), 'sdxx.dat')
 stop
 call ini_gap_2b(GAP_2B, nsparse, nconfig)
 call get_cmo_2B(GAP_2B)
