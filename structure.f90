@@ -128,7 +128,7 @@ do i = 1, at%natoms
                     if ((n1.eq.0).and.(n2.eq.0).and.(n3.eq.0).and.(i.eq.j)) cycle
                     xyz = at%pos(j,:) + dble(n1)*at%lat(1,:) + dble(n2)*at%lat(2,:) + dble(n3)*at%lat(3,:)
                     dr = at%pos(i,:) - xyz
-                    dis = sqrt(dr(1)**2 + dr(2)**2 + dr(3)**2)
+                    dis = dsqrt(dr(1)**2 + dr(2)**2 + dr(3)**2)
                     if ( dis > rcut) cycle
                     if ( dis < rmin) then
                         print*, 'The distance of two atoms is very small'

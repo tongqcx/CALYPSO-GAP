@@ -52,6 +52,7 @@ allocate(at%strs(3, 3, GAP%dd, at%natoms))
 
 nnn = ACSF%nsf
 do ii = 1, nnn
+print*, 'BBBBBBBBBBBBBBB'
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 !G1 = SUM_j{exp(-alpha*rij**2)*fc(rij)}
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -151,16 +152,19 @@ do ii = 1, nnn
 ! exp(-alpha*(rij**2+rik**2+rjk**2))*fc(rij)*fc(rik)*fc(rjk)}
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     elseif (ACSF%sf(ii)%ntype.eq.2) then
+        cutoff = ACSF%sf(ii)%cutoff
+        alpha = ACSF%sf(ii)%alpha
+        print*, 'cutoff',cutoff,'alpha',alpha
         do i = 1, at%natoms
+            lllll = 0
             do j_type = 1, nspecies
                 do j_neighbor = 1, at%atom(i)%count(j_type)
                     rij = at%atom(i)%neighbor(j_type,j_neighbor,4)
                     xyz_j = at%atom(i)%neighbor(j_type,j_neighbor,1:3)
                     n = int(at%atom(i)%neighbor(j_type,j_neighbor,5))
-                    cutoff = ACSF%sf(ii)%cutoff
-                    alpha = ACSF%sf(ii)%alpha
                     weights_j = at%mlp_weights(n)
                     if (rij.gt.cutoff) cycle
+                    print*,  xyz_j,'j'
                     deltaxj = -1.d0*(at%atom(i)%pos(1) - xyz_j(1))
                     deltayj = -1.d0*(at%atom(i)%pos(2) - xyz_j(2))
                     deltazj = -1.d0*(at%atom(i)%pos(3) - xyz_j(3))
@@ -186,11 +190,15 @@ do ii = 1, nnn
                     dfcutijdzk=0.0d0
                     do k_type = 1, nspecies
                         do k_neighbor = 1, at%atom(i)%count(k_type)
-                            if ((k_type == j_type) .and. (k_neighbor <= j_neighbor)) cycle
-                            rik = at%atom(i)%neighbor(j_type,j_neighbor,4)
-                            xyz_k = at%atom(i)%neighbor(j_type,j_neighbor,1:3)
-                            m = int(at%atom(i)%neighbor(j_type,j_neighbor,5))
+                            if ((k_type <= j_type) .and. (k_neighbor <= j_neighbor)) cycle
+                            rik = at%atom(i)%neighbor(k_type,k_neighbor,4)
+                            if (rik.gt.cutoff) cycle
+                            lllll = lllll + 1
+                            xyz_k = at%atom(i)%neighbor(k_type,k_neighbor,1:3)
+                            print*, xyz_k,'k'
+                            m = int(at%atom(i)%neighbor(k_type,k_neighbor,5))
                             weights_k = at%mlp_weights(m)
+
                             deltaxk = -1.d0*(at%atom(i)%pos(1) - xyz_k(1))
                             deltayk = -1.d0*(at%atom(i)%pos(2) - xyz_k(2))
                             deltazk = -1.d0*(at%atom(i)%pos(3) - xyz_k(3))
@@ -217,8 +225,9 @@ do ii = 1, nnn
                             rjk = (xyz_j(1) - xyz_k(1))**2 + (xyz_j(2) - xyz_k(2))**2 + (xyz_j(3) - xyz_k(3))**2
                             rjk = dsqrt(rjk)
 
-                            if (rij < Rmin) then
-                                print*, ''
+                            if (rjk.gt.cutoff) cycle  ! CAUTAINS STUPID!!!
+                            if (rjk < Rmin) then
+                                print*, 'Rjk', rjk,' smaller than Rmin'
                                 stop
                             endif
                             drjkdxj = (xyz_j(1) - xyz_k(1))/rjk
@@ -396,11 +405,13 @@ do ii = 1, nnn
                     enddo ! k_type       
                 enddo ! j_neighbor
             enddo ! j_type
+            print*, 'lllll',lllll
         enddo ! i
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 !G3 = SUM_j{exp(-alpha*(rij-rshift)**2)*fc(rij)}
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     elseif (ACSF%sf(ii)%ntype.eq.3) then
+        cutoff = ACSF%sf(ii)%cutoff
         rshift = ACSF%sf(ii)%alpha
         alpha = 4.d0
         do i = 1, at%natoms
@@ -409,8 +420,8 @@ do ii = 1, nnn
                     rij = at%atom(i)%neighbor(i_type,i_neighbor,4)
                     xyz = at%atom(i)%neighbor(i_type,i_neighbor,1:3)
                     n = int(at%atom(i)%neighbor(i_type,i_neighbor,5))
-                    cutoff = ACSF%sf(ii)%cutoff
-                    alpha = ACSF%sf(ii)%alpha
+                    !cutoff = ACSF%sf(ii)%cutoff
+                    !alpha = ACSF%sf(ii)%alpha
                     weights = at%mlp_weights(n)
                     if (rij.gt.cutoff) cycle
                     deltaxj = -1.d0*(at%atom(i)%pos(1) - xyz(1))
@@ -432,6 +443,8 @@ do ii = 1, nnn
                     dfcutijdzj=-1.d0*dfcutijdzi
                     at%xx(ii,i)=at%xx(ii,i)+dexp(-1.d0*alpha*(rij-rshift)**2)*fcutij
                     at%xx(ii + nnn,i)=at%xx(ii + nnn,i)+dexp(-1.d0*alpha*(rij-rshift)**2)*fcutij*weights
+                    temp1=-2.d0*alpha*(rij-rshift)
+                    temp2=dexp(-1.d0*alpha*(rij-rshift)**2)
                     ! dxx/dx
                     at%dxdy(ii,i,i,1)=at%dxdy(ii,i,i,1)+&
                            (temp1*drijdxi*temp2*fcutij&
@@ -496,14 +509,14 @@ do ii = 1, nnn
 ! exp(-alpha*(rij**2+rik**2+rjk**2))*fc(rij)*fc(rik)*fc(rjk)}
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     elseif (ACSF%sf(ii)%ntype.eq.4) then
+        cutoff = ACSF%sf(ii)%cutoff
+        alpha = ACSF%sf(ii)%alpha
         do i = 1, at%natoms
             do j_type = 1, nspecies
                 do j_neighbor = 1, at%atom(i)%count(j_type)
                     rij = at%atom(i)%neighbor(j_type,j_neighbor,4)
                     xyz_j = at%atom(i)%neighbor(j_type,j_neighbor,1:3)
                     n = int(at%atom(i)%neighbor(j_type,j_neighbor,5))
-                    cutoff = ACSF%sf(ii)%cutoff
-                    alpha = ACSF%sf(ii)%alpha
                     weights_j = at%mlp_weights(n)
                     if (rij.gt.cutoff) cycle
                     deltaxj = -1.d0*(at%atom(i)%pos(1) - xyz_j(1))
@@ -531,10 +544,11 @@ do ii = 1, nnn
                     dfcutijdzk=0.0d0
                     do k_type = 1, nspecies
                         do k_neighbor = 1, at%atom(i)%count(k_type)
-                            if ((k_type == j_type) .and. (k_neighbor <= j_neighbor)) cycle
-                            rik = at%atom(i)%neighbor(j_type,j_neighbor,4)
-                            xyz_k = at%atom(i)%neighbor(j_type,j_neighbor,1:3)
-                            m = int(at%atom(i)%neighbor(j_type,j_neighbor,5))
+                            if ((k_type <= j_type) .and. (k_neighbor <= j_neighbor)) cycle
+                            rik = at%atom(i)%neighbor(k_type,k_neighbor,4)
+                            if (rik.gt.cutoff) cycle
+                            xyz_k = at%atom(i)%neighbor(k_type,k_neighbor,1:3)
+                            m = int(at%atom(i)%neighbor(k_type,k_neighbor,5))
                             weights_k = at%mlp_weights(m)
                             deltaxk = -1.d0*(at%atom(i)%pos(1) - xyz_k(1))
                             deltayk = -1.d0*(at%atom(i)%pos(2) - xyz_k(2))
@@ -562,8 +576,9 @@ do ii = 1, nnn
                             rjk = (xyz_j(1) - xyz_k(1))**2 + (xyz_j(2) - xyz_k(2))**2 + (xyz_j(3) - xyz_k(3))**2
                             rjk = dsqrt(rjk)
 
+                            if (rjk.gt.cutoff) cycle  ! CAUTAINS STUPID!!!
                             if (rij < Rmin) then
-                                print*, ''
+                                print*, 'Rjk', rjk,' smaller than Rmin'
                                 stop
                             endif
                             drjkdxj = (xyz_j(1) - xyz_k(1))/rjk
