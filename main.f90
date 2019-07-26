@@ -34,7 +34,7 @@ call gap_coeff_mb(GAP_MB,AT,DATA_C)
 !*****************************************************
 !
 call gap_ini_2b(GAP_2B, AT, DATA_C)
-call gap_cmo_2b(GAP_2B)
+call gap_cmo_2b(GAP_2B, AT, DATA_C)
 call gap_coeff_2b(GAP_2B, DATA_C)
 
 
@@ -42,11 +42,11 @@ call gap_coeff_2b(GAP_2B, DATA_C)
 
 
 open(2234,file='coeffx.dat')
-do i = 1,nsparse
+do i = 1,GAP_2B%nsparse
     GAP_2B%sparsecut(i) = fcut_ij(GAP_2B%sparseX(i,1))
     write(2234,'(I3,F25.8,$)') i, GAP_2B%sparseX(i,1)
     write(2234,'(F25.8, $)') GAP_2B%sparsecut(i)
-    do k = 1,ninteraction
+    do k = 1,DATA_C%ninteraction
         write(2234,'(F25.8,$)') GAP_2B%coeff(i,k)
     enddo
     write(2234,*)
@@ -65,11 +65,11 @@ if (.not.ltrain) then
         print*, "coeffx.dat file does not exist!"
         stop
     endif
-    allocate(GAP_2B%sparseX(nsparse, 1))
-    allocate(GAP_2B%sparsecut(nsparse))
-    allocate(GAP_2B%coeff(nsparse, ninteraction))
+    allocate(GAP_2B%sparseX(GAP_2B%nsparse, 1))
+    allocate(GAP_2B%sparsecut(GAP_2B%nsparse))
+    allocate(GAP_2B%coeff(GAP_2B%nsparse, DATA_C%ninteraction))
     open(111,file='coeffx.dat')
-    do i = 1, nsparse
+    do i = 1, GAP_2B%nsparse
         read(111,*) j, GAP_2B%sparseX(i,1), GAP_2B%sparsecut(i), GAP_2B%coeff(i,:)
     enddo
     close(111)
