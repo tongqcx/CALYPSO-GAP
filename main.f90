@@ -21,34 +21,30 @@ open(2211,file='config')
 read(2211,*) nconfig
 allocate(at(nconfig))
 close(2211)
+
 call read_structure('config',at)
 
+!*****************************************************
+!
+!*****************************************************
 call ini_gap_mb(GAP_MB, ACSF, DATA_C, nsparse)
-print*, 'ini_gap_mb finished'
 do i = 1, nconfig
-call car2acsf(at(i), GAP_MB, ACSF)
+    call car2acsf(at(i), GAP_MB, ACSF)
 enddo
-call write_array(at(1)%xx(:,:), 'xx.dat')
-call write_array(at(1)%dxdy(:,:,1,1), 'dxx.dat')
-call write_array(at(1)%strs(:,:,1,1), 'sdxx.dat')
-stop
-call ini_gap_2b(GAP_2B, nsparse, nconfig)
+call gap_sparse(GAP_MB, AT, DATA_C)
+call gap_set_matrix_cmo(GAP_MB, AT, DATA_C)
+call gap_set_coeff(GAP_MB,AT,DATA_C)
+!*****************************************************
+!call write_array(at(1)%xx(:,:), 'xx.dat')
+!call write_array(at(1)%dxdy(:,:,1,1), 'dxx.dat')
+!call write_array(at(1)%strs(:,:,1,1), 'sdxx.dat')
+!
+call ini_gap_2b(GAP_2B, DATA_C, nsparse)
 call get_cmo_2B(GAP_2B)
+call gap_set_coeff_2B(GAP_2B, DATA_C)
 
-!call write_array(GAP_2B%cmo(:,:,1),'cmo1.dat')
-!print *, 'ngalobalY', GAP_2B%nglobalY
 
-do i = 1, GAP_2B%nglobalY
-    GAP_2B%obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
-    at(i)%sigma_e = sigma_e * sqrt(1.d0 * at(i)%natoms)
-    GAP_2B%lamda(i) = at(i)%sigma_e**2
-    GAP_2B%lamdaobe(i,1) = GAP_2B%obe(i) * sqrt((1.0/GAP_2B%lamda(i)))
-enddo
 
-do k = 1, ninteraction
-    call matmuldiag_T(GAP_2B%cmo(:,:,k),sqrt(1.0/GAP_2B%lamda))
-    call gpr(GAP_2B%cmm, GAP_2B%cmo(:,:,k), GAP_2B%lamdaobe(:,1), GAP_2B%coeff(:,k))
-enddo
 
 open(2234,file='coeffx.dat')
 do i = 1,nsparse
