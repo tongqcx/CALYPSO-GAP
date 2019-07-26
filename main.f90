@@ -4,6 +4,7 @@ use io
 use struct
 use gpr_base
 use gpr_mb
+use gpr_2b
 implicit none
 integer            :: i,j,k,ii,jj,kk,k1, k2,k3
 integer            :: na
@@ -41,12 +42,12 @@ do i = 1, GAP_2B%nglobalY
     GAP_2B%obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
     at(i)%sigma_e = sigma_e * sqrt(1.d0 * at(i)%natoms)
     GAP_2B%lamda(i) = at(i)%sigma_e**2
-    GAP_2B%lamdaobe(i) = GAP_2B%obe(i) * sqrt((1.0/GAP_2B%lamda(i)))
+    GAP_2B%lamdaobe(i,1) = GAP_2B%obe(i) * sqrt((1.0/GAP_2B%lamda(i)))
 enddo
 
 do k = 1, ninteraction
     call matmuldiag_T(GAP_2B%cmo(:,:,k),sqrt(1.0/GAP_2B%lamda))
-    call gpr(GAP_2B%cmm, GAP_2B%cmo(:,:,k), GAP_2B%lamdaobe, GAP_2B%coeff(:,k))
+    call gpr(GAP_2B%cmm, GAP_2B%cmo(:,:,k), GAP_2B%lamdaobe(:,1), GAP_2B%coeff(:,k))
 enddo
 
 open(2234,file='coeffx.dat')

@@ -32,7 +32,7 @@ allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
 allocate(GAP%obe(GAP%nglobalY))
 allocate(GAP%coeff(GAP%nsparse, 1))
 allocate(GAP%lamda(GAP%nglobalY))
-allocate(GAP%lamdaobe(GAP%nglobalY))
+allocate(GAP%lamdaobe(GAP%nglobalY, 1))
 
 allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
 allocate(GAP%MM(GAP%nsparse, GAP%dd))
@@ -98,7 +98,7 @@ do i = 1, DATA_C%nob
     GAP%lamdaobe(i,1) = sqrt(1.d0/GAP%lamda(i)) * DATA_C%ob(i)
 enddo
 call matmuldiag_T(GAP%cmo(:,:,1), sqrt(1.d0/GAP%lamda))
-call gpr(GAP%cmm, GAP%cmo, GAP%lamdaobe(:,1), GAP%coeff(:,1))
+call gpr(GAP%cmm, GAP%cmo(:,:,1), GAP%lamdaobe(:,1), GAP%coeff(:,1))
 END SUBROUTINE GAP_SET_COEFF
 
 SUBROUTINE GAP_SET_MATRIX_CMO(GAP, at, DATA_C)
@@ -111,12 +111,12 @@ REAL(DP),allocatable,dimension(:)        :: cov
 INTEGER                                  :: i,j,k1,kf
 allocate(cov(DATA_C%nob))
 !$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
-do i_sparse = GAP%nsparse
+do i_sparse = 1, GAP%nsparse
     kf = 1
     do i_struc = 1, DATA_C%ne
-        call new_COV(GAP%MM(i_sparse,:), AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov)
+        call new_COV(GAP%MM(i_sparse,:), GAP%theta, AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov)
         do i_ob = 1, 3*at(j)%natoms + 7
-            GAP%cmo(i_sparse, kf) = cov(i_ob)
+            GAP%cmo(i_sparse, kf, 1) = cov(i_ob)
             kf = kf + 1
         enddo
     enddo
@@ -124,13 +124,13 @@ enddo
 deallocate(cov)
 END SUBROUTINE GAP_SET_MATRIX_CMO
 
-SUBROUTINE   new_cov(x,xx,dxdy,strs,covf)
+SUBROUTINE   new_cov(x, theta, xx, dxdy, strs, covf)
 implicit none
-real(DP),intent(in),dimension(:)         :: x
+real(DP),intent(in),dimension(:)         :: x, theta
 real(DP),intent(in),dimension(:,:)       :: xx
 real(DP),intent(in),dimension(:,:,:,:)   :: dxdy, strs
 real(DP),intent(out),dimension(:)        :: covf
-real(DP),allocatable,dimension(:)        :: for
+real(DP),allocatable,dimension(:,:)      :: for
 real(DP)                                 :: ene
 real(DP)                                 :: factor
 real(DP)                                 :: stress(6)
@@ -146,9 +146,9 @@ factor = 0.d0
 covf = 0.d0
 
 do i = 1,na  ! number of atoms
-    ene = ene + delta_w*covariance(x,xx(:,i))
+    ene = ene + delta_w*covariance(x,xx(:,i), theta)
     do j = 1,nf  ! number of symmetry function
-        factor = (x(j) - xx(j,i))/theta(j)**2*delta_w*covariance(x,xx(:,i))
+        factor = (x(j) - xx(j,i))/theta(j)**2*delta_w*covariance(x,xx(:,i), theta)
         do k1 = 1,na
             do k2 = 1,3
                 !write(111,'(4I4X3F10.6)') i,j,k1,k2,(x(j) - xx(j,1,i))/theta(j)**2,covariance(x,xx(:,1,i)),dxdy(j,i,k1,k2)

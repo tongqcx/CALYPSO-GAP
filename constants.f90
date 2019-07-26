@@ -9,7 +9,7 @@ REAL(DP), PARAMETER      :: GPa2eVPang =6.24219D-3
 !  *************  Parameters of GPR
 integer                                :: nsparse
 integer                                :: nspecies, ninteraction
-REAL(DP)                               :: theta, delta, d_width, sigma_jitter
+REAL(DP)                               :: theta, delta, delta_w, d_width, sigma_jitter
 REAL(DP)                               :: sigma_e, sigma_f, sigma_s
 character(2),allocatable,dimension(:)  :: elements
 REAL(DP)                               :: Rcut, Rmin
@@ -24,7 +24,7 @@ INTEGER                                 :: nsparse
 INTEGER                                 :: dd   ! the dimension of discriptors
 INTEGER                                 :: nglobalY
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: lamda
-REAL(DP),DIMENSION(:),ALLOCATABLE       :: lamdaobe
+REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: lamdaobe
 REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: cmm
 REAL(DP),DIMENSION(:,:,:),ALLOCATABLE   :: cmo
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: sparsecut
