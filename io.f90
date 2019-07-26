@@ -32,13 +32,17 @@ if(.not.lex) then
     stop
 end if
 !>>> INITIAL PARAMETERS LIST <<< 
-    nspecies = 1
-    nsparse = 100
-    sigma_e = 1.d0
-    d_width = 1.d0
-    rcut = 9.d0
-    theta = 1.d0
-    delta = 1.d0
+    DATA_C%nspecies = 1
+    DATA_C%nsparse_2B = 100
+    DATA_C%nsparse_MB = 1000
+    DATA_C%sigma_e = 1.d0
+    DATA_C%sigma_f = 1.d0
+    DATA_C%sigma_s = 1.d0
+    DATA_C%d_width = 1.d0
+    DATA_C%rcut = 9.d0
+    DATA_C%theta_2B = 1.d0
+    DATA_C%delta_2B = 1.d0
+    DATA_C%delta_MB = 1.d0
     sigma_jitter = 1.0d-8
     ltrain = .true.
     ltest = .true.

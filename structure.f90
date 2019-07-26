@@ -94,9 +94,9 @@ enddo
 !rmin = 0.5d0
 
 at%recip_lat = recipvector(at%lat)
-nabc(1)=ceiling(rcut*vectorlength(at%recip_lat(1,:))/pi/2)
-nabc(2)=ceiling(rcut*vectorlength(at%recip_lat(2,:))/pi/2)
-nabc(3)=ceiling(rcut*vectorlength(at%recip_lat(3,:))/pi/2)
+nabc(1)=ceiling(data_c%rcut*vectorlength(at%recip_lat(1,:))/pi/2)
+nabc(2)=ceiling(data_c%rcut*vectorlength(at%recip_lat(2,:))/pi/2)
+nabc(3)=ceiling(data_c%rcut*vectorlength(at%recip_lat(3,:))/pi/2)
 do i = 1, at%natoms
 
 !------------------------------------------------
@@ -135,8 +135,6 @@ do i = 1, at%natoms
 enddo
 
 end SUBROUTINE
-
-
 
 end module
 

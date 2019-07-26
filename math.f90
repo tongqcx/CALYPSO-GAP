@@ -59,24 +59,24 @@ end function
 
 FUNCTION fcut_ij(r)
 real(DP)   :: fcut_ij, r
-if (r <= rcut - d_width ) then
+if (r <= DATA_C%rcut - DATA_C%d_width ) then
     fcut_ij = 1.d0
-elseif ( r > rcut) then
+elseif ( r > DATA_C%rcut) then
     fcut_ij = 0.d0
 else
-    fcut_ij = ((cos(pi*(r - rcut + d_width)/d_width) + 1))/2
+    fcut_ij = ((cos(pi*(r - DATA_C%rcut + DATA_C%d_width)/DATA_C%d_width) + 1))/2
 endif
 return
 END FUNCTION fcut_ij
 
 FUNCTION dfcut_ij(r)
 real(DP)   :: dfcut_ij, r
-if (r <= rcut - d_width ) then
+if (r <= DATA_C%rcut - DATA_C%d_width ) then
     dfcut_ij = 0.d0
-elseif ( r > rcut) then
+elseif ( r > DATA_C%rcut) then
     dfcut_ij = 0.d0
 else
-    dfcut_ij = -0.5d0 * pi * sin(pi*(r - rcut + d_width)/d_width) / d_width 
+    dfcut_ij = -0.5d0 * pi * sin(pi*(r - DATA_C%rcut + DATA_C%d_width)/DATA_C%d_width) / DATA_C%d_width 
 endif
 return
 END FUNCTION dfcut_ij

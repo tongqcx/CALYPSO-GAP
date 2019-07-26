@@ -34,9 +34,9 @@ allocate(GAP%lamda(GAP%nglobalY))
 allocate(GAP%lamdaobe(GAP%nglobalY, 1))
 allocate(GAP%sparsecut(GAP%nsparse))
 
-dr3 = (rcut - rmin)/(GAP%nsparse - 1)
+dr3 = (data_c%rcut - data_c%rmin)/(GAP%nsparse - 1)
 do i = 1, GAP%nsparse
-    GAP%sparseX(i,1) = rmin + (i - 1)*dr3
+    GAP%sparseX(i,1) = data_c%rmin + (i - 1)*dr3
 enddo
 !$OMP parallel do schedule(dynamic) default(shared) private(i,j,fc_i,fc_j)
     do i  = 1, GAP%nsparse

@@ -74,8 +74,8 @@ REAL(DP)            :: fc_i, fc_j
 fc_i = fcut_ij(x)
 fc_j = fcut_ij(y)
 covariance_2B = 0.d0
-covariance_2B = covariance_2B + ((x-y)/theta)**2
-covariance_2B = delta**2*exp(-0.5d0*covariance_2B) * fc_i * fc_j
+covariance_2B = covariance_2B + ((x-y)/DATA_C%theta_2B)**2
+covariance_2B = DATA_C%delta_2B**2*exp(-0.5d0*covariance_2B) * fc_i * fc_j
 END FUNCTION covariance_2B
 
 FUNCTION  covariance_MB(x,y, theta)
@@ -91,7 +91,7 @@ covariance_MB = 0.d0
 do i = 1, size(x)
     covariance_MB = covariance_MB + ((x(i)-y(i))/theta(i))**2
 enddo
-covariance_MB = delta**2*exp(-0.5d0*covariance_MB) 
+covariance_MB = DATA_C%delta_2B**2*exp(-0.5d0*covariance_MB) 
 END FUNCTION covariance_MB
 
 FUNCTION  DcovarianceDx(x,y)
@@ -107,9 +107,9 @@ exp_part = 0.d0
 fc_i = fcut_ij(x)
 fc_j = fcut_ij(y)
 dfc_i = dfcut_ij(x)
-exp_part = exp_part + ((x-y)/theta)**2
-exp_part = delta**2 * exp(-0.5d0 * exp_part)
-DcovarianceDx = exp_part * -1.d0 * (x-y)/theta**2
+exp_part = exp_part + ((x-y)/DATA_C%theta_2B)**2
+exp_part = DATA_C%delta_2B**2 * exp(-0.5d0 * exp_part)
+DcovarianceDx = exp_part * -1.d0 * (x-y)/DATA_C%theta_2B**2
 DcovarianceDx = DcovarianceDx * fc_i + exp_part * dfc_i
 DcovarianceDx = DcovarianceDx * fc_j
 END FUNCTION DcovarianceDx

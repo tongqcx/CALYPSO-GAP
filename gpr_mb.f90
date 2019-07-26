@@ -14,7 +14,7 @@ use struct
 use gpr_base
 
 CONTAINS
-SUBROUTINE INI_GAP_MB(GAP, AT, ACSF, DATA_C)
+SUBROUTINE GAP_INI_MB(GAP, AT, ACSF, DATA_C)
 type(GAP_type),intent(inout)                :: GAP
 type(Structure),intent(inout),dimension(:)  :: at
 type(ACSF_type),intent(inout)               :: ACSF
@@ -84,9 +84,9 @@ do i = 1, DATA_C%ne
         GAP%lamda(kf) = sigma_s**2
     enddo
 enddo
-END SUBROUTINE INI_GAP_MB
+END SUBROUTINE GAP_INI_MB
 
-SUBROUTINE GAP_SET_COEFF(GAP,AT,DATA_C)
+SUBROUTINE GAP_COEFF_MB(GAP,AT,DATA_C)
 type(GAP_type),intent(inout)             :: GAP
 type(Structure),intent(in),dimension(:)  :: at
 type(DATA_type),intent(in)               :: DATA_C
@@ -96,9 +96,9 @@ do i = 1, DATA_C%nob
 enddo
 call matmuldiag_T(GAP%cmo(:,:,1), sqrt(1.d0/GAP%lamda))
 call gpr(GAP%cmm, GAP%cmo(:,:,1), GAP%lamdaobe(:,1), GAP%coeff(:,1))
-END SUBROUTINE GAP_SET_COEFF
+END SUBROUTINE GAP_COEFF_MB
 
-SUBROUTINE GAP_SET_MATRIX_CMO(GAP, at, DATA_C)
+SUBROUTINE GAP_CMO_MB(GAP, at, DATA_C)
 type(GAP_type),intent(inout)             :: GAP
 type(Structure),intent(in),dimension(:)  :: at
 type(DATA_type),intent(in)               :: DATA_C
@@ -119,7 +119,7 @@ do i_sparse = 1, GAP%nsparse
     enddo
 enddo
 deallocate(cov)
-END SUBROUTINE GAP_SET_MATRIX_CMO
+END SUBROUTINE GAP_CMO_MB
 
 SUBROUTINE   new_cov(x, theta, xx, dxdy, strs, covf)
 implicit none
