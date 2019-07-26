@@ -14,15 +14,17 @@ use struct
 use gpr_base
 
 CONTAINS
-SUBROUTINE INI_GAP_2B(GAP, nsparse, nobf)
-type(GAP_type),intent(inout) :: GAP
-integer,intent(in)           :: nsparse, nobf
+SUBROUTINE INI_GAP_2B(GAP, DATA_C, nsparse)
+type(GAP_type),intent(inout)             :: GAP
+!type(Structure),intent(in),dimension(:)  :: at
+type(DATA_type),intent(in)               :: DATA_C
+integer,intent(in)                       :: nsparse
 
 !local
 real(DP)                     :: dr3
 GAP%dd = 1
 GAP%nsparse = nsparse
-GAP%nglobalY = nobf
+GAP%nglobalY = DATA_C%ne
 
 allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
 allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, ninteraction))
@@ -50,7 +52,24 @@ enddo
         enddo
     enddo
 call write_array(GAP%cmm,'cmm.dat')
+do i = 1, DATA_C%ne
+    GAP%lamda(i) = (sigma_e * (sqrt(1.d0 * at(i)%natoms)))**2
+enddo
 END SUBROUTINE
+
+SUBROUTINE GAP_SET_COEFF_2B(GAP, DATA_C)
+type(GAP_type),intent(inout)             :: GAP
+type(DATA_type),intent(in)               :: DATA_C
+
+do i = 1, DATA_C%ne
+    GAP%obe(i) = DATA_C%obe(i)
+    GAP%lamdaobe(i, 1) = GAP%obe(i) * sqrt(1.d0/GAP%lamda(i))
+enddo
+do k = 1, ninteraction
+    call matmuldiag_T(GAP%cmo(:,:,k),sqrt(1.0/GAP%lamda))
+    call gpr(GAP%cmm, GAP%cmo(:,:,k), GAP%lamdaobe(:,1), GAP%coeff(:,k))
+enddo
+END SUBROUTINE GAP_SET_COEFF_2B
 
 SUBROUTINE gp_predict_2B(GAP, at)
 implicit none
