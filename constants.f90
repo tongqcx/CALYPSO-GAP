@@ -6,13 +6,8 @@ REAL(DP), PARAMETER      :: pi=3.141592654d0
 REAL(DP), PARAMETER      :: ene_cons = -90.040530764400003
 REAL(DP), PARAMETER      :: GPa2eVPang =6.24219D-3
 !REAL(DP), PARAMETER      :: ene_cons = -162.0
+
 !  *************  Parameters of GPR
-integer                                :: nsparse
-integer                                :: nspecies, ninteraction
-REAL(DP)                               :: theta, delta, delta_w, d_width, sigma_jitter
-REAL(DP)                               :: sigma_e, sigma_f, sigma_s
-character(2),allocatable,dimension(:)  :: elements
-REAL(DP)                               :: Rcut, Rmin
 REAL(DP)                               :: RMSE_ENERGY, RMSE_FORCE, RMSE_STRESS
 INTEGER                                :: nforce
 logical                                :: ltrain, ltest
@@ -53,6 +48,15 @@ END TYPE ACSF_type
 
 !
 TYPE data_type
+integer                                 :: nsparse_2b, nsparse_mb
+integer                                 :: nspecies  ! this nspecies is global
+integer                                 :: ninteraction
+REAL(DP)                                :: theta_2b, delta_2b, delta_mb, d_width, sigma_jitter
+REAL(DP)                                :: sigma_e, sigma_f, sigma_s
+REAL(DP)                                :: Rcut, Rmin
+character(2),allocatable,dimension(:)   :: elements
+INTEGER,allocatable,dimension(:,:)      :: interaction_mat
+
 INTEGER                                 :: ne, nf, ns
 INTEGER                                 :: natoms
 INTEGER                                 :: nob

@@ -14,16 +14,16 @@ use struct
 use gpr_base
 
 CONTAINS
-SUBROUTINE INI_GAP_MB(GAP, ACSF, DATA_C, nsparse)
-type(GAP_type),intent(inout)           :: GAP
-type(ACSF_type),intent(inout)          :: ACSF
-type(DATA_type),intent(in)             :: DATA_C
-integer,intent(in)                     :: nsparse
+SUBROUTINE INI_GAP_MB(GAP, AT, ACSF, DATA_C)
+type(GAP_type),intent(inout)                :: GAP
+type(Structure),intent(inout),dimension(:)  :: at
+type(ACSF_type),intent(inout)               :: ACSF
+type(DATA_type),intent(in)                  :: DATA_C
 
 !local
 
 call READ_ACSF('neural.in', ACSF)
-GAP%nsparse = nsparse
+GAP%nsparse = DATA_C%nsparse_mb
 GAP%dd = ACSF%NSF * 2     ! D_tot = D_topology + D_species
 GAP%nglobalY = DATA_C%nob
 
@@ -39,12 +39,9 @@ allocate(GAP%MM(GAP%nsparse, GAP%dd))
 allocate(GAP%DescriptorX(GAP%nsparse, GAP%dd))
 allocate(GAP%sparsex_index(GAP%nsparse))
 
-END SUBROUTINE INI_GAP_MB
-
-SUBROUTINE GAP_Sparse(GAP, AT, DATA_C)
-type(GAP_type),intent(inout)             :: GAP
-type(Structure),intent(in),dimension(:)  :: at
-type(DATA_type),intent(in)               :: DATA_C
+do i = 1, DATA_C%ne
+    call car2acsf(at(i), GAP, ACSF)
+enddo
 
 spaese_index = 0
 k = 0
@@ -87,7 +84,7 @@ do i = 1, DATA_C%ne
         GAP%lamda(kf) = sigma_s**2
     enddo
 enddo
-END SUBROUTINE
+END SUBROUTINE INI_GAP_MB
 
 SUBROUTINE GAP_SET_COEFF(GAP,AT,DATA_C)
 type(GAP_type),intent(inout)             :: GAP
@@ -146,9 +143,9 @@ factor = 0.d0
 covf = 0.d0
 
 do i = 1,na  ! number of atoms
-    ene = ene + delta_w*covariance(x,xx(:,i), theta)
+    ene = ene + covariance(x,xx(:,i), theta)
     do j = 1,nf  ! number of symmetry function
-        factor = (x(j) - xx(j,i))/theta(j)**2*delta_w*covariance(x,xx(:,i), theta)
+        factor = (x(j) - xx(j,i))/theta(j)**2 * covariance(x,xx(:,i), theta)
         do k1 = 1,na
             do k2 = 1,3
                 !write(111,'(4I4X3F10.6)') i,j,k1,k2,(x(j) - xx(j,1,i))/theta(j)**2,covariance(x,xx(:,1,i)),dxdy(j,i,k1,k2)

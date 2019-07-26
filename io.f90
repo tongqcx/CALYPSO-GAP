@@ -13,13 +13,17 @@ inquire(file='contral',exist=lex)
 if(.not.lex) then
     open(file='contral',unit=60)
     write(60,fmt=*) '    NSPECIES =  '
-    write(60,fmt=*) '     NSPARSE =  '
+    write(60,fmt=*) '  NSPARSE_2B =  '
+    write(60,fmt=*) '  NSPARSE_MB =  '
     write(60,fmt=*) '     SIGMA_E =  '
+    write(60,fmt=*) '     SIGMA_F =  '
+    write(60,fmt=*) '     SIGMA_S =  '
     write(60,fmt=*) '     D_WIDTH =  '
     write(60,fmt=*) '        Rcut =  '
     write(60,fmt=*) '        Rmin =  '
     write(60,fmt=*) '       THETA =  '
-    write(60,fmt=*) '       DELTA =  '
+    write(60,fmt=*) '    DELTA_2B =  '
+    write(60,fmt=*) '    DELTA_MB =  '
     write(60,fmt=*) 'SIGMA_JITTER =  '
     write(60,fmt=*) '    ELEMENTS =  '
     write(60,fmt=*) '    TRAINING =  '
@@ -57,26 +61,35 @@ do while(.not.eof(60))
     if(len_trim(rtp(lv2:))==0) cycle
     select case(rtp(:lv1))
     case('nspecies')
-        read(rtp(lv2:),*) nspecies
-        ninteraction = nspecies * (nspecies + 1)/2.d0
-    case('nsparse')
-        read(rtp(lv2:),*) nsparse
+        read(rtp(lv2:),*) DATA_C%nspecies
+        DATA_C%ninteraction = DATA_C%nspecies * (DATA_C%nspecies + 1)/2.d0
+        if (.not. allocated(DATA_C%elements)) allocate(DATA_C%elements(nspecies))
+    case('nsparse_2b')
+        read(rtp(lv2:),*) DATA_C%nsparse_2b
+    case('nsparse_mb')
+        read(rtp(lv2:),*) DATA_C%nsparse_mb
     case('sigma_e')
-        read(rtp(lv2:),*) sigma_e
+        read(rtp(lv2:),*) DATA_C%sigma_e
+    case('sigma_f')
+        read(rtp(lv2:),*) DATA_C%sigma_f
+    case('sigma_s')
+        read(rtp(lv2:),*) DATA_C%sigma_s
     case('rcut')
-        read(rtp(lv2:),*) rcut
+        read(rtp(lv2:),*) DATA_C%rcut
     case('rmin')
-        read(rtp(lv2:),*) rmin
-    case('theta')
-        read(rtp(lv2:),*) theta
-    case('delta')
-        read(rtp(lv2:),*) delta
+        read(rtp(lv2:),*) DATA_C%rmin
+    case('theta_2b')
+        read(rtp(lv2:),*) DATA_C%theta_2b
+    case('delta_2b')
+        read(rtp(lv2:),*) DATA_C%delta_2b
+    case('delta_mb')
+        read(rtp(lv2:),*) DATA_C%delta_mb
     case('d_width')
-        read(rtp(lv2:),*) d_width
+        read(rtp(lv2:),*) DATA_C%d_width
     case('sigma_jitter')
-        read(rtp(lv2:),*) sigma_jitter
+        read(rtp(lv2:),*) DATA_C%sigma_jitter
     case('elements')
-        read(rtp(lv2:),*) elements
+        read(rtp(lv2:),*) DATA_C%elements
     case('training')
         read(rtp(lv2:),*) ltrain
     case('testing')
@@ -84,9 +97,17 @@ do while(.not.eof(60))
     case default
         write(*,*) "Warning: '"//trim(cerr)//"' ignored."
     end select
-    if (.not. allocated(elements)) allocate(elements(nspecies))
 end do
 close(60)
+
+iindex = 0
+do i = 1, data_c%nspecies
+    do j = i,data_c%nspecies
+        iindex = iindex + 1
+        data_c%interaction_mat(i,j) = iindex
+        data_c%interaction_mat(j,i) = data_c%interaction_mat(i,j)
+    enddo
+enddo
 
 end subroutine read_input
 
@@ -100,9 +121,10 @@ do i=1,len_trim(ce)
 end do
 end subroutine u2l
 
-SUBROUTINE read_structure(filename, at)
+SUBROUTINE read_structure(filename, at, data_c)
 character(*),intent(in)                     :: filename
 type(Structure),intent(inout),dimension(:)  :: at
+type(DATA_TYPE),intent(inout)               :: data_c
  
 integer                                     :: n_config
 n_config = size(at)
@@ -113,10 +135,10 @@ data_c%nf = 0
 data_c%natoms = 0
 do i = 1, n_config
 !    print *, i
-    read(2244,*)  na, nspecies
+    read(2244,*)  at(i)%natoms, at(i)%nspecies
     data_c%nf = data_c%nf + 3*na
     data_c%natoms = data_c%natoms + na
-    call ini_structure(at(i), na, nspecies)
+    call ini_structure(at(i))
     do j = 1,3
         read(2244,*) at(i)%lat(j,:)
     enddo
@@ -129,7 +151,7 @@ do i = 1, n_config
         call get_ele_weights(at(i)%symbols(j),at(i)%mlp_weights(j))
     enddo
     read(2244,*) at(i)%energy_ref
-    call build_neighbor(at(i), elements)
+    call build_neighbor(at(i), data_c)
 enddo
 close(2244)
 data_c%ns = n_config*6

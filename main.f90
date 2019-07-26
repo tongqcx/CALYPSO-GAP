@@ -16,32 +16,27 @@ integer            :: interaction_index
 call read_input()
 
 if (ltrain) then
-print*, 'nsparse', nsparse
 open(2211,file='config')
 read(2211,*) nconfig
 allocate(at(nconfig))
 close(2211)
 
-call read_structure('config',at)
+call read_structure('config',at, data_c)
 
 !*****************************************************
 !
 !*****************************************************
-call ini_gap_mb(GAP_MB, ACSF, DATA_C, nsparse)
-do i = 1, nconfig
-    call car2acsf(at(i), GAP_MB, ACSF)
-enddo
-call gap_sparse(GAP_MB, AT, DATA_C)
-call gap_set_matrix_cmo(GAP_MB, AT, DATA_C)
-call gap_set_coeff(GAP_MB,AT,DATA_C)
+call gap_ini_mb(GAP_MB, AT, ACSF, DATA_C)
+call gap_cmo_mb(GAP_MB, AT, DATA_C)
+call gap_coeff_mb(GAP_MB,AT,DATA_C)
+
+
 !*****************************************************
-!call write_array(at(1)%xx(:,:), 'xx.dat')
-!call write_array(at(1)%dxdy(:,:,1,1), 'dxx.dat')
-!call write_array(at(1)%strs(:,:,1,1), 'sdxx.dat')
 !
-call ini_gap_2b(GAP_2B, DATA_C, nsparse)
-call get_cmo_2B(GAP_2B)
-call gap_set_coeff_2B(GAP_2B, DATA_C)
+call gap_ini_2b(GAP_2B, AT, DATA_C)
+call gap_cmo_2b(GAP_2B)
+call gap_coeff_2b(GAP_2B, DATA_C)
+
 
 
 
@@ -85,7 +80,7 @@ read(2211,*) nconfig
 allocate(at(nconfig))
 close(2211)
 CALL  SYSTEM_CLOCK(it1)
-call read_structure('test',at)
+call read_structure('test',at, data_c)
 CALL  SYSTEM_CLOCK(it2)
 print*, "CPU time used (sec) For converting coord: ",(it2 - it1)/10000.0
 

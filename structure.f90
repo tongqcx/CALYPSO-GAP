@@ -41,14 +41,9 @@ type Structure
 endtype Structure
 type(Structure),allocatable,dimension(:)   :: at
 contains
-SUBROUTINE INI_STRUCTURE(at, na, ns)
+SUBROUTINE INI_STRUCTURE(at)
 type(Structure),intent(inout)  :: at
-integer,intent(in)             :: na, ns
 
-integer                        :: index, i, j
-
-at%natoms = na
-at%nspecies = ns
 allocate(at%symbols(     at%natoms))
 allocate(at%mlp_weights( at%natoms))
 allocate(at%index(       at%natoms))
@@ -58,24 +53,14 @@ allocate(at%pos(         at%natoms,3))
 allocate(at%dpos(        at%natoms,3))
 allocate(at%force_ref(   at%natoms,3))
 allocate(at%force_cal(   at%natoms,3))
-allocate(at%interaction_mat(at%nspecies, at%nspecies))
 allocate(at%atomic_energy(at%natoms))
-index = 0
-do i = 1, at%nspecies
-    do j = i,at%nspecies
-        index = index + 1
-        at%interaction_mat(i,j) = index
-        at%interaction_mat(j,i) = at%interaction_mat(i,j)
-    enddo
-enddo
 END SUBROUTINE
 
 !------------------------------------------------------
 
-SUBROUTINE Build_neighbor(at, element)
+SUBROUTINE Build_neighbor(at, data_c)
 type(Structure),intent(inout)  :: at
-character(2),intent(in)        :: element(:)
-!real(DP)                       :: rcut , rmin
+type(data_type),intent(in)     :: data_c
 integer                        :: nabc(3)
 real(DP)                       :: xyz(3), dr(3), dis
 integer                        :: i, j, n1, n2, n3, count
@@ -83,8 +68,8 @@ character(2)                   :: temp
 integer                        :: atom_index
 !/////////////////////////////////////////////////////////////////////
 do i = 1, at%natoms
-    do j = 1, size(element)
-        if (at%symbols(i) == element(j)) at%index(i) = j
+    do j = 1, data_c%nspecies
+        if (at%symbols(i) == data_c%elements(j)) at%index(i) = j
     enddo
 enddo
 at%pos_index = 0
@@ -129,8 +114,8 @@ do i = 1, at%natoms
                     xyz = at%pos(j,:) + dble(n1)*at%lat(1,:) + dble(n2)*at%lat(2,:) + dble(n3)*at%lat(3,:)
                     dr = at%pos(i,:) - xyz
                     dis = dsqrt(dr(1)**2 + dr(2)**2 + dr(3)**2)
-                    if ( dis > rcut) cycle
-                    if ( dis < rmin) then
+                    if ( dis > data_c%rcut) cycle
+                    if ( dis < data_c%rmin) then
                         print*, 'The distance of two atoms is very small'
                         stop
                     endif

@@ -14,16 +14,15 @@ use struct
 use gpr_base
 
 CONTAINS
-SUBROUTINE INI_GAP_2B(GAP, DATA_C, nsparse)
+SUBROUTINE GAP_INI_2B(GAP, AT, DATA_C)
 type(GAP_type),intent(inout)             :: GAP
-!type(Structure),intent(in),dimension(:)  :: at
+type(Structure),intent(in),dimension(:)  :: at
 type(DATA_type),intent(in)               :: DATA_C
-integer,intent(in)                       :: nsparse
 
 !local
 real(DP)                     :: dr3
 GAP%dd = 1
-GAP%nsparse = nsparse
+GAP%nsparse = DATA_C%nsparse_2B
 GAP%nglobalY = DATA_C%ne
 
 allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
@@ -41,7 +40,7 @@ do i = 1, GAP%nsparse
 enddo
 !$OMP parallel do schedule(dynamic) default(shared) private(i,j,fc_i,fc_j)
     do i  = 1, GAP%nsparse
-        GAP%cmm(i,i) = delta**2 
+        GAP%cmm(i,i) = DATA_C%delta_2B**2 
         fc_i = fcut_ij(GAP%sparseX(i,1))
         GAP%cmm(i,i) = GAP%cmm(i,i)*fc_i*fc_i + sigma_jitter
         do j = i + 1, GAP%nsparse
@@ -53,11 +52,11 @@ enddo
     enddo
 call write_array(GAP%cmm,'cmm.dat')
 do i = 1, DATA_C%ne
-    GAP%lamda(i) = (sigma_e * (sqrt(1.d0 * at(i)%natoms)))**2
+    GAP%lamda(i) = (DATA_C%sigma_e * (sqrt(1.d0 * at(i)%natoms)))**2
 enddo
 END SUBROUTINE
 
-SUBROUTINE GAP_SET_COEFF_2B(GAP, DATA_C)
+SUBROUTINE GAP_COEFF_2B(GAP, DATA_C)
 type(GAP_type),intent(inout)             :: GAP
 type(DATA_type),intent(in)               :: DATA_C
 
@@ -69,7 +68,7 @@ do k = 1, ninteraction
     call matmuldiag_T(GAP%cmo(:,:,k),sqrt(1.0/GAP%lamda))
     call gpr(GAP%cmm, GAP%cmo(:,:,k), GAP%lamdaobe(:,1), GAP%coeff(:,k))
 enddo
-END SUBROUTINE GAP_SET_COEFF_2B
+END SUBROUTINE GAP_COEFF_2B
 
 SUBROUTINE gp_predict_2B(GAP, at)
 implicit none
@@ -92,7 +91,7 @@ stress_i = 0.d0
 
 !$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fc_ij, interaction_index, k1, k2, k3, k4, dfc_ij, ene)
 do i = 1,at%natoms
-    do j = 1, nspecies
+    do j = 1, at%nspecies
         do k = 1, at%atom(i)%count(j)
             rij = at%atom(i)%neighbor(j,k,4)
             fc_ij = fcut_ij(rij)
@@ -139,8 +138,10 @@ at%stress_cal(6) = at%stress(3,3)
 deallocate(stress_i)
 END SUBROUTINE
 
-SUBROUTINE get_cmo_2B(GAP)
-type(GAP_type),intent(inout)    ::   GAP
+SUBROUTINE GAP_cmo_2B(GAP, AT, DATA_C)
+type(GAP_type),intent(inout)             :: GAP
+type(Structure),intent(in),dimension(:)  :: at
+type(DATA_type),intent(in)               :: DATA_C
 integer   ::   i, j, k1, k2, k3, interaction_index
 REAL(DP)  ::   rij
 
