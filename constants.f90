@@ -56,6 +56,7 @@ TYPE data_type
 INTEGER                                 :: ne, nf, ns
 INTEGER                                 :: natoms
 INTEGER                                 :: nob
+REAL(DP),dimension(:),allocatable       :: obe, ob
 END TYPE data_type
 
 TYPE(ACSF_type)                         :: ACSF

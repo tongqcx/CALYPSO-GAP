@@ -68,8 +68,115 @@ do i = 1, GAP%nsparse
         GAP%cmm(j,i) = GAP%cmm(i,j)
     enddo
 enddo
+
+!!!!!!!!!!!!!!!!!!!!!!
+! initial GAP%lamda
+!!!!!!!!!!!!!!!!!!!!!!
+kf = 0
+do i = 1, DATA_C%ne
+    kf = kf + 1
+    GAP%lamda(kf) = (sigma_e * (sqrt(1.d0 * at(i)%natoms)))**2
+    do j = 1,at(i)%natoms
+        do k1 = 1,3
+            kf = kf + 1
+            GAP%lamda(kf) = sigma_f**2
+        enddo
+    enddo
+    do j = 1,6
+        kf = kf + 1
+        GAP%lamda(kf) = sigma_s**2
+    enddo
+enddo
 END SUBROUTINE
 
+SUBROUTINE GAP_SET_COEFF(GAP,AT,DATA_C)
+type(GAP_type),intent(inout)             :: GAP
+type(Structure),intent(in),dimension(:)  :: at
+type(DATA_type),intent(in)               :: DATA_C
+
+do i = 1, DATA_C%nob
+    GAP%lamdaobe(i,1) = sqrt(1.d0/GAP%lamda(i)) * DATA_C%ob(i)
+enddo
+call matmuldiag_T(GAP%cmo(:,:,1), sqrt(1.d0/GAP%lamda))
+call gpr(GAP%cmm, GAP%cmo, GAP%lamdaobe(:,1), GAP%coeff(:,1))
+END SUBROUTINE GAP_SET_COEFF
+
+SUBROUTINE GAP_SET_MATRIX_CMO(GAP, at, DATA_C)
+type(GAP_type),intent(inout)             :: GAP
+type(Structure),intent(in),dimension(:)  :: at
+type(DATA_type),intent(in)               :: DATA_C
+
+!local
+REAL(DP),allocatable,dimension(:)        :: cov
+INTEGER                                  :: i,j,k1,kf
+allocate(cov(DATA_C%nob))
+!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
+do i_sparse = GAP%nsparse
+    kf = 1
+    do i_struc = 1, DATA_C%ne
+        call new_COV(GAP%MM(i_sparse,:), AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov)
+        do i_ob = 1, 3*at(j)%natoms + 7
+            GAP%cmo(i_sparse, kf) = cov(i_ob)
+            kf = kf + 1
+        enddo
+    enddo
+enddo
+deallocate(cov)
+END SUBROUTINE GAP_SET_MATRIX_CMO
+
+SUBROUTINE   new_cov(x,xx,dxdy,strs,covf)
+implicit none
+real(DP),intent(in),dimension(:)         :: x
+real(DP),intent(in),dimension(:,:)       :: xx
+real(DP),intent(in),dimension(:,:,:,:)   :: dxdy, strs
+real(DP),intent(out),dimension(:)        :: covf
+real(DP),allocatable,dimension(:)        :: for
+real(DP)                                 :: ene
+real(DP)                                 :: factor
+real(DP)                                 :: stress(6)
+integer                                  :: i,j,k1,k2,k,na,nf,kf
+
+na = size(xx,2)
+nf = size(xx,1)
+allocate(for(na,3))
+ene = 0.d0
+for = 0.d0
+stress = 0.d0
+factor = 0.d0
+covf = 0.d0
+
+do i = 1,na  ! number of atoms
+    ene = ene + delta_w*covariance(x,xx(:,i))
+    do j = 1,nf  ! number of symmetry function
+        factor = (x(j) - xx(j,i))/theta(j)**2*delta_w*covariance(x,xx(:,i))
+        do k1 = 1,na
+            do k2 = 1,3
+                !write(111,'(4I4X3F10.6)') i,j,k1,k2,(x(j) - xx(j,1,i))/theta(j)**2,covariance(x,xx(:,1,i)),dxdy(j,i,k1,k2)
+                for(k1,k2) = for(k1,k2) - factor*dxdy(j,i,k1,k2)
+            enddo
+        enddo
+        stress(1) = stress(1) - factor * strs(1,1,j,i)
+        stress(2) = stress(2) - factor * strs(1,2,j,i)
+        stress(3) = stress(3) - factor * strs(1,3,j,i)
+        stress(4) = stress(4) - factor * strs(2,2,j,i)
+        stress(5) = stress(5) - factor * strs(2,3,j,i)
+        stress(6) = stress(6) - factor * strs(3,3,j,i)
+    enddo
+enddo
+kf = 2
+covf(1) = ene
+do k1 = 1,na
+    do k2 = 1,3
+        covf(kf) = for(k1,k2)
+        kf = kf + 1
+    enddo
+enddo
+do i = 1,6
+    covf(kf) = stress(i)
+    kf = kf + 1
+enddo
+deallocate(for)
+end subroutine new_cov
 
 SUBROUTINE CAR2ACSF(at, GAP, ACSF)
 
