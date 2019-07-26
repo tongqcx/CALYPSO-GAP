@@ -121,6 +121,12 @@ enddo
 deallocate(cov)
 END SUBROUTINE GAP_CMO_MB
 
+SUBROUTINE GAP_PREDICT_MB(GAP,AT)
+type(GAP_type),intent(inout)             :: GAP
+type(Structure),intent(in),dimension(:)  :: at
+
+END SUBROUTINE GAP_PREDICT_MB
+
 SUBROUTINE   new_cov(x, theta, xx, dxdy, strs, covf)
 implicit none
 real(DP),intent(in),dimension(:)         :: x, theta

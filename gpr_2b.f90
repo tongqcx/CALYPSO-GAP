@@ -70,7 +70,7 @@ do k = 1, ninteraction
 enddo
 END SUBROUTINE GAP_COEFF_2B
 
-SUBROUTINE gp_predict_2B(GAP, at)
+SUBROUTINE GAP_predict_2B(GAP, at)
 implicit none
 type(GAP_type),intent(in)              :: GAP
 type(Structure),intent(inout)          :: at

@@ -167,6 +167,31 @@ my_cov = my_cov + 1.0d0
 deallocate(t2)
 END FUNCTION
 
+SUBROUTINE GET_COV(xx,yy,cov)
+integer i,j,k
+real(8),intent(in),dimension(:,:)  :: xx, yy
+real(8),intent(out),dimension(:,:) :: cov
+!local
+
+real(8),allocatable,dimension(:,:) :: temp
+integer                            :: nf
+n = size(xx,1)
+m = size(yy,1)
+allocate(temp(n,m))
+nf = size(xx,2)
+temp = 0.d0
+
+do i = 1,n
+    do  j=1,m 
+        do k = 1,nf
+            temp(i,j) = temp(i,j)+((xx(i,k)-yy(j,k))/GAP_MB%theta(k))**2
+        enddo
+        cov(i,j) = DATA_C%delta_MB*exp(-0.5d0*temp(i,j))
+    enddo
+enddo
+deallocate(temp)
+END SUBROUTINE
+
   subroutine cur_decomposition(this, index_out, rank, n_iter)
     ! based on 10.1073/pnas.0803205106
 
