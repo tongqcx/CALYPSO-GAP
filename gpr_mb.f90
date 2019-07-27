@@ -26,6 +26,9 @@ call READ_ACSF('neural.in', ACSF)
 GAP%nsparse = DATA_C%nsparse_mb
 GAP%dd = ACSF%NSF * 2     ! D_tot = D_topology + D_species
 GAP%nglobalY = DATA_C%nob
+GAP%sigma_e = DATA_C%sigma_e
+GAP%sigma_f = DATA_C%sigma_f
+GAP%sigma_s = DATA_C%sigma_s
 
 allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
 allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
@@ -60,9 +63,9 @@ call GAP_SET_THETA(GAP%sparseX, GAP%theta)
 
 GAP%cmm = 0.0
 do i = 1, GAP%nsparse
-    GAP%cmm(i,i) = delta_w*1.d0 + delta_jitter
+    GAP%cmm(i,i) = 1.d0 + DATA_C%sigma_jitter
     do  j = i+1 , GAP%nsparse
-        GAP%cmm(i,j) = delta_w*covariance_MB(GAP%delta, GAP%sparseX(i,:),GAP%sparseX(j,:), GAP%theta)
+        GAP%cmm(i,j) = covariance_MB(GAP%delta, GAP%sparseX(i,:),GAP%sparseX(j,:), GAP%theta)
         GAP%cmm(j,i) = GAP%cmm(i,j)
     enddo
 enddo
@@ -73,18 +76,19 @@ enddo
 kf = 0
 do i = 1, DATA_C%ne
     kf = kf + 1
-    GAP%lamda(kf) = (sigma_e * (sqrt(1.d0 * at(i)%natoms)))**2
+    GAP%lamda(kf) = (GAP%sigma_e * (sqrt(1.d0 * at(i)%natoms)))**2
     do j = 1,at(i)%natoms
         do k1 = 1,3
             kf = kf + 1
-            GAP%lamda(kf) = sigma_f**2
+            GAP%lamda(kf) = GAP%sigma_f**2
         enddo
     enddo
     do j = 1,6
         kf = kf + 1
-        GAP%lamda(kf) = sigma_s**2
+        GAP%lamda(kf) = GAP%sigma_s**2
     enddo
 enddo
+print*, 'GAP INI FINISHED'
 END SUBROUTINE GAP_INI_MB
 
 SUBROUTINE GAP_COEFF_MB(GAP,AT,DATA_C)
@@ -96,6 +100,7 @@ do i = 1, DATA_C%nob
     GAP%lamdaobe(i,1) = sqrt(1.d0/GAP%lamda(i)) * DATA_C%ob(i)
 enddo
 call matmuldiag_T(GAP%cmo(:,:,1), sqrt(1.d0/GAP%lamda))
+print*, 'begin gpr'
 call gpr(GAP%cmm, GAP%cmo(:,:,1), GAP%lamdaobe(:,1), GAP%coeff(:,1))
 END SUBROUTINE GAP_COEFF_MB
 
@@ -108,12 +113,12 @@ type(DATA_type),intent(in)               :: DATA_C
 REAL(DP),allocatable,dimension(:)        :: cov
 INTEGER                                  :: i,j,k1,kf
 allocate(cov(DATA_C%nob))
-!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
+!!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
 do i_sparse = 1, GAP%nsparse
     kf = 1
     do i_struc = 1, DATA_C%ne
         call new_COV(GAP%delta, GAP%sparseX(i_sparse,:), GAP%theta, AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov)
-        do i_ob = 1, 3*at(j)%natoms + 7
+        do i_ob = 1, 3*at(i_struc)%natoms + 7
             GAP%cmo(i_sparse, kf, 1) = cov(i_ob)
             kf = kf + 1
         enddo
@@ -121,6 +126,7 @@ do i_sparse = 1, GAP%nsparse
 enddo
 
 deallocate(cov)
+print*, 'GAP CMO MB FINISHED'
 END SUBROUTINE GAP_CMO_MB
 
 SUBROUTINE GAP_PREDICT_MB(GAP,AT)
@@ -250,6 +256,7 @@ allocate(at%xx(GAP%dd, at%natoms))
 allocate(at%dxdy(GAP%dd, at%natoms, at%natoms, 3))
 allocate(at%strs(3, 3, GAP%dd, at%natoms))
 
+rmin = 0.5d0
 nnn = ACSF%nsf
 do ii = 1, nnn
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
@@ -259,7 +266,7 @@ do ii = 1, nnn
         cutoff = ACSF%sf(ii)%cutoff
         alpha = ACSF%sf(ii)%alpha
         do i = 1, at%natoms
-            do i_type = 1, nspecies
+            do i_type = 1, at%nspecies
                 do i_neighbor = 1, at%atom(i)%count(i_type)
                     rij = at%atom(i)%neighbor(i_type,i_neighbor,4)
                     if (rij.gt.cutoff) cycle
@@ -356,7 +363,7 @@ do ii = 1, nnn
 !        print*, 'cutoff',cutoff,'alpha',alpha
         do i = 1, at%natoms
 !            lllll = 0
-            do j_type = 1, nspecies
+            do j_type = 1, at%nspecies
                 do j_neighbor = 1, at%atom(i)%count(j_type)
                     rij = at%atom(i)%neighbor(j_type,j_neighbor,4)
                     if (rij.gt.cutoff) cycle
@@ -387,7 +394,7 @@ do ii = 1, nnn
                     dfcutijdxk=0.0d0
                     dfcutijdyk=0.0d0
                     dfcutijdzk=0.0d0
-                    do k_type = 1, nspecies
+                    do k_type = 1, at%nspecies
                         do k_neighbor = 1, at%atom(i)%count(k_type)
                             !if ((k_type <= j_type) .and. (k_neighbor <= j_neighbor)) cycle
                             ! ******************
@@ -621,7 +628,7 @@ do ii = 1, nnn
         rshift = ACSF%sf(ii)%alpha
         alpha = 4.d0
         do i = 1, at%natoms
-            do i_type = 1, nspecies
+            do i_type = 1, at%nspecies
                 do i_neighbor = 1, at%atom(i)%count(i_type)
                     rij = at%atom(i)%neighbor(i_type,i_neighbor,4)
 
@@ -717,7 +724,7 @@ do ii = 1, nnn
         cutoff = ACSF%sf(ii)%cutoff
         alpha = ACSF%sf(ii)%alpha
         do i = 1, at%natoms
-            do j_type = 1, nspecies
+            do j_type = 1, at%nspecies
                 do j_neighbor = 1, at%atom(i)%count(j_type)
                     rij = at%atom(i)%neighbor(j_type,j_neighbor,4)
                     if (rij.gt.cutoff) cycle
@@ -748,7 +755,7 @@ do ii = 1, nnn
                     dfcutijdxk=0.0d0
                     dfcutijdyk=0.0d0
                     dfcutijdzk=0.0d0
-                    do k_type = 1, nspecies
+                    do k_type = 1, at%nspecies
                         do k_neighbor = 1, at%atom(i)%count(k_type)
                             !if ((k_type <= j_type) .and. (k_neighbor <= j_neighbor)) cycle
                             if (k_type < j_type) cycle

@@ -19,6 +19,7 @@ INTEGER                                 :: nsparse
 INTEGER                                 :: dd   ! the dimension of discriptors
 INTEGER                                 :: nglobalY
 REAL(DP)                                :: delta
+REAL(DP)                                :: sigma_e, sigma_f, sigma_s
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: lamda
 REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: lamdaobe
 REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: cmm

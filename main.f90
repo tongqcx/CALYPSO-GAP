@@ -29,13 +29,19 @@ call read_structure('config',at, data_c)
 call gap_ini_mb(GAP_MB, AT, ACSF, DATA_C)
 call gap_cmo_mb(GAP_MB, AT, DATA_C)
 call gap_coeff_mb(GAP_MB,AT,DATA_C)
+print *, 'finished mb'
 
 
 !*****************************************************
 !
+print*, 'gap_ini_2b'
 call gap_ini_2b(GAP_2B, AT, DATA_C)
+print*, 'gap_cmo_2b'
 call gap_cmo_2b(GAP_2B, AT, DATA_C)
+print*, 'gap_coeff_2b'
 call gap_coeff_2b(GAP_2B, DATA_C)
+print *, 'finished 2b'
+stop
 
 
 

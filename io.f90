@@ -67,7 +67,7 @@ do while(.not.eof(60))
     case('nspecies')
         read(rtp(lv2:),*) DATA_C%nspecies
         DATA_C%ninteraction = DATA_C%nspecies * (DATA_C%nspecies + 1)/2.d0
-        if (.not. allocated(DATA_C%elements)) allocate(DATA_C%elements(nspecies))
+        if (.not. allocated(DATA_C%elements)) allocate(DATA_C%elements(DATA_C%nspecies))
     case('nsparse_2b')
         read(rtp(lv2:),*) DATA_C%nsparse_2b
     case('nsparse_mb')
@@ -104,6 +104,8 @@ do while(.not.eof(60))
 end do
 close(60)
 
+
+if (.not. allocated(data_c%interaction_mat)) allocate(data_c%interaction_mat(data_c%nspecies, data_c%nspecies))
 iindex = 0
 do i = 1, data_c%nspecies
     do j = i,data_c%nspecies
@@ -140,8 +142,8 @@ data_c%natoms = 0
 do i = 1, n_config
 !    print *, i
     read(2244,*)  at(i)%natoms, at(i)%nspecies
-    data_c%nf = data_c%nf + 3*na
-    data_c%natoms = data_c%natoms + na
+    data_c%nf = data_c%nf + 3*at(i)%natoms
+    data_c%natoms = data_c%natoms + at(i)%natoms
     call ini_structure(at(i))
     do j = 1,3
         read(2244,*) at(i)%lat(j,:)

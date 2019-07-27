@@ -68,6 +68,7 @@ integer                        :: i, j, n1, n2, n3, count
 character(2)                   :: temp
 integer                        :: atom_index
 !/////////////////////////////////////////////////////////////////////
+!print*, 'data_c%nspecies',data_c%nspecies
 do i = 1, at%natoms
     do j = 1, data_c%nspecies
         if (at%symbols(i) == data_c%elements(j)) at%index(i) = j

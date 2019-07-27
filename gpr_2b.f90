@@ -27,13 +27,13 @@ GAP%nglobalY = DATA_C%ne
 GAP%delta = DATA_C%delta_2B
 allocate(GAP%theta(1))
 allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
-allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, ninteraction))
-allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
+allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, DATA_C%ninteraction))
 allocate(GAP%obe(GAP%nglobalY))
-allocate(GAP%coeff(GAP%nsparse,ninteraction))
+allocate(GAP%coeff(GAP%nsparse,DATA_C%ninteraction))
 allocate(GAP%lamda(GAP%nglobalY))
 allocate(GAP%lamdaobe(GAP%nglobalY, 1))
 allocate(GAP%sparsecut(GAP%nsparse))
+allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
 
 GAP%theta(1)  = 1.d0
 
@@ -64,7 +64,7 @@ type(DATA_type),intent(in)               :: DATA_C
 
 do i = 1, DATA_C%ne
     GAP%obe(i) = DATA_C%obe(i)
-    GAP%lamdaobe(i, 1) = GAP%obe(i) * sqrt(1.d0/GAP%lamda(i))
+    GAP%lamdaobe(i, 1) = DATA_C%obe(i) * sqrt(1.d0/GAP%lamda(i))
 enddo
 do k = 1, DATA_C%ninteraction
     call matmuldiag_T(GAP%cmo(:,:,k),sqrt(1.0/GAP%lamda))
@@ -154,7 +154,7 @@ integer                                  :: n, interaction_index
 REAL(DP)                                 :: rij
 
 GAP%cmo = 0.d0
-!$OMP parallel do schedule(dynamic) default(shared) private(i, j, k1, k2, k3, interaction_index, rij, n)
+!!$OMP parallel do schedule(dynamic) default(shared) private(i, j, k1, k2, k3, interaction_index, rij, n)
 do i = 1, GAP%nsparse
     do j = 1, GAP%nglobalY
 !***********************************************
