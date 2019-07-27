@@ -35,9 +35,10 @@ allocate(GAP%lamda(GAP%nglobalY))
 allocate(GAP%lamdaobe(GAP%nglobalY, 1))
 
 allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
-allocate(GAP%MM(GAP%nsparse, GAP%dd))
+!allocate(GAP%MM(GAP%nsparse, GAP%dd))
 allocate(GAP%DescriptorX(GAP%nsparse, GAP%dd))
 allocate(GAP%sparsex_index(GAP%nsparse))
+allocate(GAP%theta(GAP%dd))
 
 do i = 1, DATA_C%ne
     call car2acsf(at(i), GAP, ACSF)
@@ -53,15 +54,15 @@ do i_struc = 1, DATA_C%ne
 enddo
 call cur_decomposition(transpose(GAP%descriptorx), GAP%sparseX_index)
 do i = 1, GAP%nsparse
-    GAP%MM(i,:) = GAP%descriptorx(GAP%sparsex_index(i),:)
+    GAP%sparseX(i,:) = GAP%descriptorx(GAP%sparsex_index(i),:)
 enddo
-call GAP_SET_THETA(GAP%MM, GAP%theta)
+call GAP_SET_THETA(GAP%sparseX, GAP%theta)
 
 GAP%cmm = 0.0
 do i = 1, GAP%nsparse
     GAP%cmm(i,i) = delta_w*1.d0 + delta_jitter
     do  j = i+1 , GAP%nsparse
-        GAP%cmm(i,j) = delta_w*covariance(GAP%MM(i,:),GAP%MM(j,:), GAP%theta)
+        GAP%cmm(i,j) = delta_w*covariance(GAP%sparseX(i,:),GAP%sparseX(j,:), GAP%theta)
         GAP%cmm(j,i) = GAP%cmm(i,j)
     enddo
 enddo
@@ -111,13 +112,14 @@ allocate(cov(DATA_C%nob))
 do i_sparse = 1, GAP%nsparse
     kf = 1
     do i_struc = 1, DATA_C%ne
-        call new_COV(GAP%MM(i_sparse,:), GAP%theta, AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov)
+        call new_COV(GAP%sparseX(i_sparse,:), GAP%theta, AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov)
         do i_ob = 1, 3*at(j)%natoms + 7
             GAP%cmo(i_sparse, kf, 1) = cov(i_ob)
             kf = kf + 1
         enddo
     enddo
 enddo
+
 deallocate(cov)
 END SUBROUTINE GAP_CMO_MB
 

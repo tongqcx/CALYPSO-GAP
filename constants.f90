@@ -18,6 +18,7 @@ TYPE GAP_type
 INTEGER                                 :: nsparse
 INTEGER                                 :: dd   ! the dimension of discriptors
 INTEGER                                 :: nglobalY
+REAL(DP)                                :: delta
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: lamda
 REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: lamdaobe
 REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: cmm
@@ -51,7 +52,7 @@ TYPE data_type
 integer                                 :: nsparse_2b, nsparse_mb
 integer                                 :: nspecies  ! this nspecies is global
 integer                                 :: ninteraction
-REAL(DP)                                :: theta_2b, delta_2b, delta_mb, d_width, sigma_jitter
+REAL(DP)                                :: delta_2b, delta_mb, d_width, sigma_jitter
 REAL(DP)                                :: sigma_e, sigma_f, sigma_s
 REAL(DP)                                :: Rcut, Rmin
 character(2),allocatable,dimension(:)   :: elements

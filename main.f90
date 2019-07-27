@@ -87,7 +87,7 @@ print*, "CPU time used (sec) For converting coord: ",(it2 - it1)/10000.0
 CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, nconfig
-    call gp_predict_2B(GAP_2B, at(i))
+    call gap_predict_2B(GAP_2B, at(i), DATA_C)
 enddo
 CALL  SYSTEM_CLOCK(it2)
 print*, "CPU time used (sec) For GP Predict: ",(it2 - it1)/10000.0
