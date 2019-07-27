@@ -53,6 +53,7 @@ integer                                 :: nsparse_2b, nsparse_mb
 integer                                 :: nspecies  ! this nspecies is global
 integer                                 :: ninteraction
 REAL(DP)                                :: delta_2b, delta_mb, d_width, sigma_jitter
+REAL(DP)                                :: theta_2b
 REAL(DP)                                :: sigma_e, sigma_f, sigma_s
 REAL(DP)                                :: Rcut, Rmin
 character(2),allocatable,dimension(:)   :: elements

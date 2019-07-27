@@ -62,7 +62,7 @@ GAP%cmm = 0.0
 do i = 1, GAP%nsparse
     GAP%cmm(i,i) = delta_w*1.d0 + delta_jitter
     do  j = i+1 , GAP%nsparse
-        GAP%cmm(i,j) = delta_w*covariance(GAP%sparseX(i,:),GAP%sparseX(j,:), GAP%theta)
+        GAP%cmm(i,j) = delta_w*covariance_MB(GAP%delta, GAP%sparseX(i,:),GAP%sparseX(j,:), GAP%theta)
         GAP%cmm(j,i) = GAP%cmm(i,j)
     enddo
 enddo
@@ -112,7 +112,7 @@ allocate(cov(DATA_C%nob))
 do i_sparse = 1, GAP%nsparse
     kf = 1
     do i_struc = 1, DATA_C%ne
-        call new_COV(GAP%sparseX(i_sparse,:), GAP%theta, AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov)
+        call new_COV(GAP%delta, GAP%sparseX(i_sparse,:), GAP%theta, AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov)
         do i_ob = 1, 3*at(j)%natoms + 7
             GAP%cmo(i_sparse, kf, 1) = cov(i_ob)
             kf = kf + 1
@@ -124,13 +124,65 @@ deallocate(cov)
 END SUBROUTINE GAP_CMO_MB
 
 SUBROUTINE GAP_PREDICT_MB(GAP,AT)
-type(GAP_type),intent(inout)             :: GAP
-type(Structure),intent(in),dimension(:)  :: at
+type(GAP_type),intent(in)                   :: GAP
+type(Structure),intent(inout)               :: at
 
+call car2acsf(at, GAP, ACSF)
+
+allocate(at%kk(at%natoms, GAP%dd))
+allocate(at%ckm(at%natoms, GAP%nsparse))
+allocate(at%dedg(at%natoms, GAP%dd))
+
+at%kk = 0.d0
+at%ckm = 0.d0
+
+do i = 1,at%natoms
+    at%kk(i,:) = at%xx(:,i)
+enddo
+call get_cov(GAP%delta, at%kk, GAP%sparseX, GAP%theta, at%ckm)
+
+at%atomic_energy = matmul(at%ckm, GAP%coeff(:,1))
+at%energy_cal = sum(at%atomic_energy)
+at%dedg = 0.d0
+do i = 1, at%natoms
+    do j = 1, GAP%dd
+        do k = 1, GAP%nsparse
+            at%dedg(i,j) = at%dedg(i,j) - 1.d0 * (at%kk(i,j) - GAP%sparsex(k,j))/GAP%theta(j)**2 &
+            * at%ckm(i,k) * GAP%coeff(k,1)
+        enddo
+    enddo
+enddo
+
+!!for force calculation
+at%force_cal = 0.d0
+do i = 1, at%natoms
+    do n = 1, at%natoms
+        do j = 1,3
+            do k = 1, GAP%dd
+                at%force_cal(i,j) = at%force_cal(i,j) - at%dedg(n,k) * at%dxdy(k,n,i,j)
+            enddo
+        enddo
+    enddo
+enddo
+!! for stress calculation
+at%stress_cal = 0.d0
+at%volume = volume(at%lat)
+do i = 1, 3
+    do j = i, 3
+        do n = 1, at%natoms
+            do k = 1, GAP%dd
+                at%stress_cal(k1) = at%stress_cal(k1) - at%dedg(n,k) * at%strs(i,j,k,n)
+            enddo
+        enddo
+        k1 = k1 + 1
+    enddo
+enddo
+at%stress_cal = at%stress_cal * (1.0/GPa2eVPang) * 10.0 / at%volume
 END SUBROUTINE GAP_PREDICT_MB
 
-SUBROUTINE   new_cov(x, theta, xx, dxdy, strs, covf)
+SUBROUTINE   new_cov(delta, x, theta, xx, dxdy, strs, covf)
 implicit none
+REAL(DP),intent(in)                      :: delta   
 real(DP),intent(in),dimension(:)         :: x, theta
 real(DP),intent(in),dimension(:,:)       :: xx
 real(DP),intent(in),dimension(:,:,:,:)   :: dxdy, strs
@@ -151,9 +203,9 @@ factor = 0.d0
 covf = 0.d0
 
 do i = 1,na  ! number of atoms
-    ene = ene + covariance(x,xx(:,i), theta)
+    ene = ene + covariance_mb(delta, x, xx(:,i), theta)
     do j = 1,nf  ! number of symmetry function
-        factor = (x(j) - xx(j,i))/theta(j)**2 * covariance(x,xx(:,i), theta)
+        factor = (x(j) - xx(j,i))/theta(j)**2 * covariance_mb(delta, x,xx(:,i), theta)
         do k1 = 1,na
             do k2 = 1,3
                 !write(111,'(4I4X3F10.6)') i,j,k1,k2,(x(j) - xx(j,1,i))/theta(j)**2,covariance(x,xx(:,1,i)),dxdy(j,i,k1,k2)

@@ -35,7 +35,8 @@ type Structure
     real(DP),dimension(:),allocatable        :: atomic_energy
     real(DP),dimension(3,3)                  :: stress         
     ! for many-body descriptors ACSF
-    REAL(DP),dimension(:,:),allocatable      :: xx
+    REAL(DP),dimension(:,:),allocatable      :: xx, kk, ckm
+    REAL(DP),dimension(:,:),allocatable      :: dedg
     REAL(DP),dimension(:,:,:,:),allocatable  :: dxdy, strs
 
 endtype Structure

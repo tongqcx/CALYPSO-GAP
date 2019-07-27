@@ -5,9 +5,9 @@ use math
 use linearalgebra
 use struct
 
-interface covariance
-    module procedure covariance_2B, covariance_MB
-end interface covariance
+!interface covariance
+!    module procedure covariance_2B, covariance_MB
+!end interface covariance
 !interface INI_GAP
 !    module procedure INI_GAP_2B, INI_GAP_MB
 !end interface INI_GAP
@@ -63,23 +63,26 @@ deallocate(a)
 deallocate(globalY)
 END subroutine
 
-FUNCTION  covariance_2B(x,y)
+FUNCTION  covariance_2B(delta, x, y, theta)
 implicit none
-real(8),intent(in)  :: x
-real(8),intent(in)  :: y
-real(8)             :: covariance_2B
+REAL(DP),intent(in)  :: delta
+real(DP),intent(in)  :: x
+real(DP),intent(in)  :: y
+REAL(DP),intent(in)  :: theta
+real(DP)             :: covariance_2B
 
 !integer  i 
-REAL(DP)            :: fc_i, fc_j
+REAL(DP)             :: fc_i, fc_j
 fc_i = fcut_ij(x)
 fc_j = fcut_ij(y)
 covariance_2B = 0.d0
-covariance_2B = covariance_2B + ((x-y)/DATA_C%theta_2B)**2
-covariance_2B = DATA_C%delta_2B**2*exp(-0.5d0*covariance_2B) * fc_i * fc_j
+covariance_2B = covariance_2B + ((x-y)/theta)**2
+covariance_2B = delta**2*exp(-0.5d0*covariance_2B) * fc_i * fc_j
 END FUNCTION covariance_2B
 
-FUNCTION  covariance_MB(x,y, theta)
+FUNCTION  covariance_MB(delta, x,y, theta)
 implicit none
+real(DP),intent(in)  :: delta
 real(DP),intent(in)  :: x(:)
 real(DP),intent(in)  :: y(:)
 real(DP),intent(in)  :: theta(:)
@@ -91,28 +94,30 @@ covariance_MB = 0.d0
 do i = 1, size(x)
     covariance_MB = covariance_MB + ((x(i)-y(i))/theta(i))**2
 enddo
-covariance_MB = DATA_C%delta_2B**2*exp(-0.5d0*covariance_MB) 
+covariance_MB = delta**2*exp(-0.5d0*covariance_MB) 
 END FUNCTION covariance_MB
 
-FUNCTION  DcovarianceDx(x,y)
+FUNCTION  dcovdx_2B(delta, x, y, theta)
 implicit none
-real(8),intent(in)  :: x
-real(8),intent(in)  :: y
-real(8)             :: DcovarianceDx
+REAL(DP),intent(in)  :: delta
+real(DP),intent(in)  :: x
+real(DP),intent(in)  :: y
+REAL(DP),intent(in)  :: theta
+real(DP)             :: dcovdx_2B
 !integer  i 
 REAL(DP)            :: fc_i, fc_j, dfc_i, exp_part
 
-DcovarianceDx = 0.d0
+dcovdx_2B = 0.d0
 exp_part = 0.d0
 fc_i = fcut_ij(x)
 fc_j = fcut_ij(y)
 dfc_i = dfcut_ij(x)
-exp_part = exp_part + ((x-y)/DATA_C%theta_2B)**2
-exp_part = DATA_C%delta_2B**2 * exp(-0.5d0 * exp_part)
-DcovarianceDx = exp_part * -1.d0 * (x-y)/DATA_C%theta_2B**2
-DcovarianceDx = DcovarianceDx * fc_i + exp_part * dfc_i
-DcovarianceDx = DcovarianceDx * fc_j
-END FUNCTION DcovarianceDx
+exp_part = exp_part + ((x-y)/theta)**2
+exp_part = delta**2 * exp(-0.5d0 * exp_part)
+dcovdx_2B = exp_part * -1.d0 * (x-y)/theta**2
+dcovdx_2B = dcovdx_2B * fc_i + exp_part * dfc_i
+dcovdx_2B = dcovdx_2B * fc_j
+END FUNCTION dcovdx_2B
 
 subroutine matmuldiag(x,y)
 real(8),intent(in)   :: x(:)
@@ -167,14 +172,16 @@ my_cov = my_cov + 1.0d0
 deallocate(t2)
 END FUNCTION
 
-SUBROUTINE GET_COV(xx,yy,cov)
+SUBROUTINE GET_COV(delta, xx, yy, theta, cov)
 integer i,j,k
-real(8),intent(in),dimension(:,:)  :: xx, yy
-real(8),intent(out),dimension(:,:) :: cov
+REAL(DP),intent(in)                 :: delta
+real(DP),intent(in),dimension(:,:)  :: xx, yy
+REAL(DP),intent(in),dimension(:)    :: theta
+real(DP),intent(out),dimension(:,:) :: cov
 !local
 
-real(8),allocatable,dimension(:,:) :: temp
-integer                            :: nf
+real(DP),allocatable,dimension(:,:) :: temp
+integer                             :: nf
 n = size(xx,1)
 m = size(yy,1)
 allocate(temp(n,m))
@@ -184,9 +191,9 @@ temp = 0.d0
 do i = 1,n
     do  j=1,m 
         do k = 1,nf
-            temp(i,j) = temp(i,j)+((xx(i,k)-yy(j,k))/GAP_MB%theta(k))**2
+            temp(i,j) = temp(i,j)+((xx(i,k)-yy(j,k))/theta(k))**2
         enddo
-        cov(i,j) = DATA_C%delta_MB*exp(-0.5d0*temp(i,j))
+        cov(i,j) = delta * exp(-0.5d0*temp(i,j))
     enddo
 enddo
 deallocate(temp)

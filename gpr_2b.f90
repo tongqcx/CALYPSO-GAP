@@ -47,9 +47,8 @@ enddo
         fc_i = fcut_ij(GAP%sparseX(i,1))
         GAP%cmm(i,i) = GAP%cmm(i,i)*fc_i*fc_i + DATA_C%sigma_jitter
         do j = i + 1, GAP%nsparse
-            !fc_j = fcutij(sparseX(j))
-            GAP%cmm(i,j) = covariance(GAP%sparseX(i,1),GAP%sparseX(j,1))
-            !cmm(i,j) = cmm(i,j) * fc_i * fc_j
+
+            GAP%cmm(i,j) = covariance_2B(GAP%delta, GAP%sparseX(i,1), GAP%sparseX(j,1),GAP%theta(1))
             GAP%cmm(j,i) = GAP%cmm(i,j)
         enddo
     enddo
@@ -81,10 +80,11 @@ type(DATA_type),intent(in)             :: DATA_C
 
 
 ! local 
-integer                               :: i,j,k, k1, k2, k3, k4
+integer                               :: i,j,k, k1, k2, k3
 integer                               :: interaction_index, n
 REAL(DP)                              :: rij, fc_ij , dfc_ij
 REAL(DP)                              :: ene
+REAL(DP)                              :: cov, dcov
 REAL(DP),allocatable,dimension(:,:,:) :: stress_i
 
 at%energy_cal = 0.d0
@@ -93,7 +93,7 @@ at%stress = 0.d0
 allocate(stress_i(3,3,at%natoms))
 stress_i = 0.d0
 
-!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fc_ij, interaction_index, k1, k2, k3, k4, dfc_ij, ene)
+!$OMP parallel do schedule(dynamic) default(shared) private(i,j,k,rij, fc_ij, interaction_index, k1, k2, k3, dfc_ij, ene, cov, dcov)
 do i = 1,at%natoms
     do j = 1, at%nspecies
         do k = 1, at%atom(i)%count(j)
@@ -105,18 +105,19 @@ do i = 1,at%natoms
             ene = 0.d0
             do k1 = 1, GAP%nsparse
 !***********  get total energy                   
-                ene = ene + covariance(rij, GAP%sparseX(k1, 1)) * fc_ij * GAP%coeff(k1,interaction_index) 
+                cov = covariance_2B(GAP%delta, rij, GAP%sparseX(k1, 1), GAP%theta(1))
+                dcov = dcovdx_2B(GAP%delta, rij, GAP%sparseX(k1, 1), GAP%theta(1))
+                ene = ene + cov * fc_ij * GAP%coeff(k1,interaction_index) 
 
 !***********  get atomic force                    
                 do k2 = 1,3
-                    at%force_cal(i,k2) = at%force_cal(i,k2) + &
-                    (dfc_ij * covariance(rij, GAP%sparseX(k1, 1)) + DcovarianceDx(rij, GAP%sparseX(k1, 1)) * fc_ij) * &
+                    at%force_cal(i,k2) = at%force_cal(i,k2) + (dfc_ij * cov + dcov * fc_ij) * &
                     (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * GAP%coeff(k1,interaction_index) 
 
 !***********  get atomic cell stress
                     do k3 = 1,3
                         stress_i(k3,k2,i) = stress_i(k3,k2,i) + (at%atom(i)%pos(k3) - at%atom(i)%neighbor(j,k,k3)) * &
-                        (dfc_ij * covariance(rij, GAP%sparseX(k1, 1)) + DcovarianceDx(rij, GAP%sparseX(k1, 1)) * fc_ij) * &
+                        (dfc_ij * cov + dcov * fc_ij) * &
                         (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * GAP%coeff(k1,interaction_index) 
 
                     enddo ! k3
@@ -163,7 +164,8 @@ do i = 1, GAP%nsparse
                     rij = at(j)%atom(k1)%neighbor(k2, k3, 4)
                     n = int(at(j)%atom(k1)%neighbor(k2, k3, 5))
                     interaction_index = data_c%interaction_mat(at(j)%index(k1),at(j)%index(n))
-                    GAP%cmo(i,j,interaction_index) = GAP%cmo(i,j,interaction_index) + covariance(GAP%sparseX(i,1), rij) * 0.5d0
+                    GAP%cmo(i,j,interaction_index) = GAP%cmo(i,j,interaction_index) + &
+                    covariance_2B(GAP%delta, GAP%sparseX(i,1), rij, GAP%theta(1)) * 0.5d0
                 enddo
             enddo
         enddo
