@@ -183,7 +183,9 @@ type(DATA_type),intent(in)               :: DATA_C
 REAL(DP),allocatable,dimension(:)        :: cov
 INTEGER                                  :: i,j,k1,kf
 allocate(cov(DATA_C%nob))
-!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
+!!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
+!$OMP parallel private(i_sparse, i_struc ,i_ob, kf, cov)
+!$OMP DO
 do i_sparse = 1, GAP%nsparse
     kf = 1
     do i_struc = 1, DATA_C%ne
@@ -194,6 +196,7 @@ do i_sparse = 1, GAP%nsparse
         enddo
     enddo
 enddo
+!$OMP END PARALLEL 
 
 deallocate(cov)
 print*, 'GAP CMO MB FINISHED'

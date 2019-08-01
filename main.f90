@@ -10,9 +10,11 @@ integer            :: i,j,k,ii,jj,kk,k1, k2,k3
 integer            :: na
 integer            :: nconfig
 real(dp)           :: fc_i, fc_j, rij
-logical            :: alive
+logical            :: alive, T_MB, T_2B
 integer            :: interaction_index
 integer            :: ran_seed(1)
+T_MB = .false.
+T_2B = .true.
 ran_seed=1
 call random_seed(put=ran_seed)
 
@@ -29,38 +31,26 @@ call read_structure('config',at, data_c)
 !*****************************************************
 !
 !*****************************************************
-call gap_ini_mb(GAP_MB, AT, ACSF, DATA_C)
-CALL  SYSTEM_CLOCK(it1)
-call gap_cmo_mb(GAP_MB, AT, DATA_C)
-CALL  SYSTEM_CLOCK(it2)
-print*, "CPU time used (sec) For matrix CMO: ",(it2 - it1)/10000.0
-call gap_coeff_mb(GAP_MB,AT,DATA_C)
-call gap_write_paras_mb(GAP_MB)
+if (T_MB) then
+    call gap_ini_mb(GAP_MB, AT, ACSF, DATA_C)
+    CALL  SYSTEM_CLOCK(it1)
+    call gap_cmo_mb(GAP_MB, AT, DATA_C)
+    CALL  SYSTEM_CLOCK(it2)
+    print*, "CPU time used (sec) For matrix CMO: ",(it2 - it1)/10000.0
+    call gap_coeff_mb(GAP_MB,AT,DATA_C)
+    call gap_write_paras_mb(GAP_MB)
+endif
 
 
 !*****************************************************
 !
-!call gap_ini_2b(GAP_2B, AT, DATA_C)
-!call gap_cmo_2b(GAP_2B, AT, DATA_C)
-!call gap_coeff_2b(GAP_2B, DATA_C)
+if (T_2B) then
+    call gap_ini_2b(GAP_2B, AT, DATA_C)
+    call gap_cmo_2b(GAP_2B, AT, DATA_C)
+    call gap_coeff_2b(GAP_2B, DATA_C)
+endif
 !print*, GAP_2B%coeff(:,1)
 !stop
-
-
-
-
-
-!open(2234,file='coeffx.dat')
-!do i = 1,GAP_2B%nsparse
-!    GAP_2B%sparsecut(i) = fcut_ij(GAP_2B%sparseX(i,1))
-!    write(2234,'(I3,F25.8,$)') i, GAP_2B%sparseX(i,1)
-!    write(2234,'(F25.8, $)') GAP_2B%sparsecut(i)
-!    do k = 1,DATA_C%ninteraction
-!        write(2234,'(F25.8,$)') GAP_2B%coeff(i,k)
-!    enddo
-!    write(2234,*)
-!enddo
-!close(2234)
 deallocate(at)
 call destropy_data_type(DATA_C)
 ENDIF  ! ltrain

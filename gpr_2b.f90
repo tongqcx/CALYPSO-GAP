@@ -48,6 +48,7 @@ GAP%theta(1)  = 1.d0
 dr3 = (data_c%rcut - data_c%rmin)/(GAP%nsparse - 1)
 do i = 1, GAP%nsparse
     GAP%sparseX(i,1) = data_c%rmin + (i - 1)*dr3
+    GAP%sparsecut(i) = fcut_ij(GAP%sparseX(i,1))
 enddo
 !$OMP parallel do schedule(dynamic) default(shared) private(i,j,fc_i,fc_j)
     do i  = 1, GAP%nsparse
@@ -79,6 +80,22 @@ do k = 1, DATA_C%ninteraction
     call gpr(GAP%cmm, GAP%cmo(:,:,k), GAP%lamdaobe(:,1), GAP%coeff(:,k))
 enddo
 END SUBROUTINE GAP_COEFF_2B
+
+SUBROUTINE GAP_WRITE_PARAS_2B(GAP)
+type(GAP_type),intent(inout)             :: GAP
+
+open(2234, file='gap_paras_2b.dat')
+do i = 1,GAP%nsparse
+    write(2234,'(I3,F25.8,$)') i, GAP%sparseX(i,1)
+    write(2234,'(F25.8, $)') GAP%sparsecut(i)
+    do k = 1,DATA_C%ninteraction
+        write(2234,'(F25.8,$)') GAP%coeff(i,k)
+    enddo
+    write(2234,*)
+enddo
+close(2234)
+ENDSUBROUTINE GAP_WRITE_PARAS_2B
+
 
 SUBROUTINE GAP_predict_2B(GAP, at, DATA_C)
 implicit none
