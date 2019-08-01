@@ -29,6 +29,7 @@ GAP%nglobalY = DATA_C%nob
 GAP%sigma_e = DATA_C%sigma_e
 GAP%sigma_f = DATA_C%sigma_f
 GAP%sigma_s = DATA_C%sigma_s
+GAP%delta = 1.d0
 print*, '&&&& '
 print*, 'Parameters for MANY_BODY interaction'
 print*, 'The size of sparse set:', GAP%nsparse
@@ -67,7 +68,9 @@ call cur_decomposition(transpose(GAP%descriptorx), GAP%sparseX_index)
 do i = 1, GAP%nsparse
     GAP%sparseX(i,:) = GAP%descriptorx(GAP%sparsex_index(i),:)
 enddo
+call write_array(GAP%sparseX,'sparseX.dat')
 call GAP_SET_THETA(GAP%sparseX, GAP%theta)
+
 
 GAP%cmm = 0.0
 do i = 1, GAP%nsparse
@@ -77,6 +80,7 @@ do i = 1, GAP%nsparse
         GAP%cmm(j,i) = GAP%cmm(i,j)
     enddo
 enddo
+call write_array(GAP%cmm,'cmm.dat')
 
 !!!!!!!!!!!!!!!!!!!!!!
 ! initial GAP%lamda
@@ -98,6 +102,61 @@ do i = 1, DATA_C%ne
 enddo
 print*, 'GAP INI FINISHED'
 END SUBROUTINE GAP_INI_MB
+
+SUBROUTINE GAP_WRITE_PARAS_MB(GAP)
+type(GAP_type),intent(in)             :: GAP
+
+open(2234,file='gap_paras_mb.dat')
+write(2234,*) GAP%nsparse, GAP%dd
+write(2234,*)
+write(2234,*)
+write(2234,*)
+do i = 1, GAP%dd
+    write(2234,'(F25.10,$)') GAP%theta(i)
+enddo
+write(2234,*)
+do i = 1, GAP%nsparse
+    do j = 1, GAP%dd
+        write(2234,'(F25.10,$)') GAP%sparseX(i,j)
+    enddo
+    write(2234,*)
+enddo
+do i = 1, GAP%nsparse
+    write(2234,'(F25.10,$)') GAP%coeff(i,1)
+enddo
+write(2234,*)
+close(2234)
+END SUBROUTINE GAP_WRITE_PARAS_MB
+
+SUBROUTINE GAP_READ_PARAS_MB(GAP, ACSF)
+type(GAP_type),intent(inout)             :: GAP
+type(ACSF_type),intent(inout)            :: ACSF
+
+! local
+logical                                  :: alive
+
+inquire(file="gap_paras_mb.dat",exist=alive)
+if(.not.alive) then
+    print*, "FILES-> gap_paras_mb.dat does not exist!"
+    stop
+endif
+open(2234,file='gap_paras_mb.dat')
+read(2234,*) GAP%nsparse, GAP%dd
+allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
+allocate(GAP%theta(GAP%dd))
+allocate(GAP%coeff(GAP%nsparse, 1))
+read(2234,*)
+read(2234,*)
+read(2234,*)
+read(2234,*) GAP%theta(:)
+do i = 1, GAP%nsparse
+    read(2234,*)  GAP%sparseX(i,:)
+enddo
+read(2234,*) GAP%coeff(:,1)
+close(2234)
+call READ_ACSF('neural.in', ACSF)
+GAP%delta = 1.d0
+END SUBROUTINE GAP_READ_PARAS_MB
 
 SUBROUTINE GAP_COEFF_MB(GAP,AT,DATA_C)
 type(GAP_type),intent(inout)             :: GAP
@@ -121,7 +180,7 @@ type(DATA_type),intent(in)               :: DATA_C
 REAL(DP),allocatable,dimension(:)        :: cov
 INTEGER                                  :: i,j,k1,kf
 allocate(cov(DATA_C%nob))
-!!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
+!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
 do i_sparse = 1, GAP%nsparse
     kf = 1
     do i_struc = 1, DATA_C%ne
@@ -181,6 +240,7 @@ enddo
 !! for stress calculation
 at%stress_cal = 0.d0
 at%volume = volume(at%lat)
+k1 = 1
 do i = 1, 3
     do j = i, 3
         do n = 1, at%natoms

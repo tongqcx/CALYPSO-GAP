@@ -12,6 +12,9 @@ integer            :: nconfig
 real(dp)           :: fc_i, fc_j, rij
 logical            :: alive
 integer            :: interaction_index
+integer            :: ran_seed(1)
+ran_seed=1
+call random_seed(put=ran_seed)
 
 call read_input()
 
@@ -27,18 +30,16 @@ call read_structure('config',at, data_c)
 !
 !*****************************************************
 call gap_ini_mb(GAP_MB, AT, ACSF, DATA_C)
-call write_array(GAP_MB%cmm,'cmm.dat')
 call gap_cmo_mb(GAP_MB, AT, DATA_C)
 call gap_coeff_mb(GAP_MB,AT,DATA_C)
-print*, GAP_MB%coeff(:,1)
-stop
+call gap_write_paras_mb(GAP_MB)
 
 
 !*****************************************************
 !
-call gap_ini_2b(GAP_2B, AT, DATA_C)
-call gap_cmo_2b(GAP_2B, AT, DATA_C)
-call gap_coeff_2b(GAP_2B, DATA_C)
+!call gap_ini_2b(GAP_2B, AT, DATA_C)
+!call gap_cmo_2b(GAP_2B, AT, DATA_C)
+!call gap_coeff_2b(GAP_2B, DATA_C)
 !print*, GAP_2B%coeff(:,1)
 !stop
 
@@ -46,17 +47,17 @@ call gap_coeff_2b(GAP_2B, DATA_C)
 
 
 
-open(2234,file='coeffx.dat')
-do i = 1,GAP_2B%nsparse
-    GAP_2B%sparsecut(i) = fcut_ij(GAP_2B%sparseX(i,1))
-    write(2234,'(I3,F25.8,$)') i, GAP_2B%sparseX(i,1)
-    write(2234,'(F25.8, $)') GAP_2B%sparsecut(i)
-    do k = 1,DATA_C%ninteraction
-        write(2234,'(F25.8,$)') GAP_2B%coeff(i,k)
-    enddo
-    write(2234,*)
-enddo
-close(2234)
+!open(2234,file='coeffx.dat')
+!do i = 1,GAP_2B%nsparse
+!    GAP_2B%sparsecut(i) = fcut_ij(GAP_2B%sparseX(i,1))
+!    write(2234,'(I3,F25.8,$)') i, GAP_2B%sparseX(i,1)
+!    write(2234,'(F25.8, $)') GAP_2B%sparsecut(i)
+!    do k = 1,DATA_C%ninteraction
+!        write(2234,'(F25.8,$)') GAP_2B%coeff(i,k)
+!    enddo
+!    write(2234,*)
+!enddo
+!close(2234)
 deallocate(at)
 call destropy_data_type(DATA_C)
 ENDIF  ! ltrain
@@ -66,19 +67,7 @@ print*, '************************************************'
 print*, '*************** BEGIN PREDICTING ***************'
 print*, '************************************************'
 if (.not.ltrain) then
-    inquire(file="coeffx.dat",exist=alive)
-    if(.not.alive) then
-        print*, "coeffx.dat file does not exist!"
-        stop
-    endif
-    allocate(GAP_2B%sparseX(GAP_2B%nsparse, 1))
-    allocate(GAP_2B%sparsecut(GAP_2B%nsparse))
-    allocate(GAP_2B%coeff(GAP_2B%nsparse, DATA_C%ninteraction))
-    open(111,file='coeffx.dat')
-    do i = 1, GAP_2B%nsparse
-        read(111,*) j, GAP_2B%sparseX(i,1), GAP_2B%sparsecut(i), GAP_2B%coeff(i,:)
-    enddo
-    close(111)
+    call gap_read_paras_mb(GAP_MB, ACSF)
 endif
   
 open(2211,file='test')
@@ -93,7 +82,8 @@ print*, "CPU time used (sec) For converting coord: ",(it2 - it1)/10000.0
 CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, nconfig
-    call gap_predict_2B(GAP_2B, at(i), DATA_C)
+!    call gap_predict_2B(GAP_2B, at(i), DATA_C)
+    call gap_predict_MB(GAP_MB, at(i))
 enddo
 CALL  SYSTEM_CLOCK(it2)
 print*, "CPU time used (sec) For GP Predict: ",(it2 - it1)/10000.0
@@ -110,8 +100,9 @@ do i = 1, nconfig
             rmse_force = rmse_force + (at(i)%force_cal(j,k) - at(i)%force_ref(j,k))**2
         enddo
     enddo
+    at(i)%stress_ref = at(i)%stress_ref * (1.0/GPa2eVPang) * 10.0 / at(i)%volume
     do j = 1,6
-        rmse_stress = rmse_stress + (at(i)%stress_cal(j) - at(i)%stress_ref(j))**2
+        rmse_stress = rmse_stress + (at(i)%stress_cal(j)/10.0 - at(i)%stress_ref(j)/10.0)**2
     enddo
 enddo
 print *, 'RMSE ENERGY:', sqrt(rmse_energy/nconfig)

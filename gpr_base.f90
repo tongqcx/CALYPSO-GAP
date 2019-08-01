@@ -218,6 +218,7 @@ END SUBROUTINE
     real(dp), allocatable, dimension(:,:) :: C, Cp
     real(dp) :: err, min_err
     integer :: error
+    real(dp) :: temp_random
 
     expected_columns = size(index_out)
 
@@ -264,7 +265,9 @@ END SUBROUTINE
 
           ! randomly select columns according to the probabilities
           do j = 1, n
-             p_minus_ran_uniform(j) = ran_uniform() - p(j)
+             temp_random = ran_uniform()
+!             print*, 'random', temp_random
+             p_minus_ran_uniform(j) = temp_random - p(j)
              p_index(j) = j ! initialise index array
           end do
 
