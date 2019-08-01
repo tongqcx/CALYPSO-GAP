@@ -135,8 +135,83 @@ do i = 1, at%natoms
         enddo
     enddo
 enddo
-
 end SUBROUTINE
+
+SUBROUTINE GET_RMSE(AT, data_c)
+type(Structure),intent(inout),dimension(:)     :: at
+type(data_type),intent(in)                     :: data_c
+
+!local
+integer                                        :: i,j,k,ii
+integer                                        :: nforce
+rmse_energy = 0.d0
+rmse_force = 0.d0
+rmse_stress = 0.d0
+nforce = 0
+do i = 1, data_c%ne
+    rmse_energy = rmse_energy + (at(i)%energy_cal/at(i)%natoms - at(i)%energy_ref/at(i)%natoms)**2
+    do j = 1, at(i)%natoms
+        do k = 1, 3
+            nforce = nforce + 1
+            rmse_force = rmse_force + (at(i)%force_cal(j,k) - at(i)%force_ref(j,k))**2
+        enddo
+    enddo
+    at(i)%stress_ref = at(i)%stress_ref * (1.0/GPa2eVPang) * 10.0 / at(i)%volume
+    do j = 1,6
+        rmse_stress = rmse_stress + (at(i)%stress_cal(j)/10.0 - at(i)%stress_ref(j)/10.0)**2
+    enddo
+enddo
+print *, 'RMSE ENERGY:', sqrt(rmse_energy/data_c%ne)
+print *, 'RMSE FORCE:', sqrt(rmse_force/nforce)
+print *, 'RMSE STRESS Units GPa:', sqrt(rmse_stress/data_c%ne/6.d0)
+open(181,file="predited.datf")
+do ii = 1, data_c%ne
+        write(181,*) "----------------------------------------------------"
+        write(181,'(A9,X,I5,X,A30)') "Structure",ii
+        write(181,*) "----------------------------------------------------"
+        do i  =1,at(ii)%natoms
+            do j = 1,3
+            if (j==1) then
+            write(181,'(I5,I5,X,A,A,X,3F15.6)') ii,i, "F","X",at(ii)%force_cal(i,j),at(ii)%force_ref(i,j),&
+                                    abs(at(ii)%force_cal(i,j) - at(ii)%force_ref(i,j))
+            elseif(j ==2 ) then
+            write(181,'(I5,I5,X,A,A,X,3F15.6)') ii,i, "F","Y",at(ii)%force_cal(i,j),at(ii)%force_ref(i,j),&
+                                    abs(at(ii)%force_cal(i,j) - at(ii)%force_ref(i,j))
+            else
+            write(181,'(I5,I5,X,A,A,X,3F15.6)') ii,i, "F","Z",at(ii)%force_cal(i,j),at(ii)%force_ref(i,j),&
+                                    abs(at(ii)%force_cal(i,j) - at(ii)%force_ref(i,j))
+            endif
+            enddo
+        enddo
+        do j = 1,6
+            if (j==1) then
+            write(181,'(A2,X,3F20.5)') "XX",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            elseif(j==2) then
+            write(181,'(A2,X,3F20.5)') "XY",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            elseif(j==3) then
+            write(181,'(A2,X,3F20.5)') "XZ",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            elseif(j==4) then
+            write(181,'(A2,X,3F20.5)') "YY",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            elseif(j==5) then
+            write(181,'(A2,X,3F20.5)') "YZ",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            else
+            write(181,'(A2,X,3F20.5)') "ZZ",at(ii)%stress_cal(j),at(ii)%stress_ref(j),&
+                                     abs(at(ii)%stress_cal(j) - at(ii)%stress_ref(j))
+            endif
+        enddo
+        write(181,'(A6,X,I5,X,3F15.6)') "ENERGY",ii,at(ii)%energy_cal/at(ii)%natoms, at(ii)%energy_ref/at(ii)%natoms,&
+               abs(at(ii)%energy_cal-at(ii)%energy_ref)/at(ii)%natoms
+        !write(181,'(A10X3F15.8)') 'E-V:', at(i)%volume/at(i)%na, (at(i)%stress_cal(1) + at(i)%stress_cal(4) + at(i)%stress_cal(6))/30.0, &
+        !at(i)%energy_cal/at(i)%na
+enddo
+close(181)
+END SUBROUTINE
+
 
 end module
 

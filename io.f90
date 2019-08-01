@@ -200,6 +200,7 @@ allocate(acsf%sf(acsf%nsf))
 do i = 1, acsf%nsf
     read(2244,*) acsf%sf(i)%ntype, acsf%sf(i)%alpha, acsf%sf(i)%cutoff
 enddo
+close(2244)
 END SUBROUTINE READ_ACSF
 
 end module
