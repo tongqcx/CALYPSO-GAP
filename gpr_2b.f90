@@ -25,6 +25,14 @@ GAP%dd = 1
 GAP%nsparse = DATA_C%nsparse_2B
 GAP%nglobalY = DATA_C%ne
 GAP%delta = DATA_C%delta_2B
+print*, '********************************************************'
+print*, 'Parameters for TWO_BODY interaction'
+print*, 'The size of sparse set:', GAP%nsparse
+print*, 'The dimension of ACSF descriptors', GAP%dd
+print*, 'The size of globalY:', GAP%nglobalY
+print*, 'The value of delta:', GAP%delta
+print*, '********************************************************'
+
 allocate(GAP%theta(1))
 allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
 allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, DATA_C%ninteraction))

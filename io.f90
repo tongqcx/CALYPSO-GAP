@@ -181,6 +181,9 @@ do i = 1, n_config
         data_c%ob(kf) = at(i)%stress_ref(j)
     enddo
 enddo
+print*, 'Number of structures/energy/stress:', data_c%ne, data_c%ne, data_c%ns
+print*, 'Number of atoms/forces:', data_c%natoms, data_c%nf
+print*, 'Number of Observable variables:',data_c%nob
 END SUBROUTINE read_structure
 
 SUBROUTINE READ_ACSF(filename, acsf)

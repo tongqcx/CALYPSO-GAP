@@ -29,6 +29,12 @@ GAP%nglobalY = DATA_C%nob
 GAP%sigma_e = DATA_C%sigma_e
 GAP%sigma_f = DATA_C%sigma_f
 GAP%sigma_s = DATA_C%sigma_s
+print*, '&&&& '
+print*, 'Parameters for MANY_BODY interaction'
+print*, 'The size of sparse set:', GAP%nsparse
+print*, 'The dimension of ACSF descriptors', GAP%dd
+write(*,'(A30X3F8.5)'), 'The value of sigma E/F/S:', GAP%sigma_e, GAP%sigma_f, GAP%sigma_s
+print*, 'The size of globalY:', GAP%nglobalY
 
 allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
 allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
@@ -39,10 +45,11 @@ allocate(GAP%lamdaobe(GAP%nglobalY, 1))
 
 allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
 !allocate(GAP%MM(GAP%nsparse, GAP%dd))
-allocate(GAP%DescriptorX(GAP%nsparse, GAP%dd))
+allocate(GAP%DescriptorX(DATA_C%natoms, GAP%dd))
 allocate(GAP%sparsex_index(GAP%nsparse))
 allocate(GAP%theta(GAP%dd))
 
+!$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, DATA_C%ne
     call car2acsf(at(i), GAP, ACSF)
 enddo
@@ -55,6 +62,7 @@ do i_struc = 1, DATA_C%ne
         GAP%descriptorx(k,:) = at(i_struc)%xx(:,i_atom)
     enddo
 enddo
+call write_array(GAP%descriptorx,'des.dat')
 call cur_decomposition(transpose(GAP%descriptorx), GAP%sparseX_index)
 do i = 1, GAP%nsparse
     GAP%sparseX(i,:) = GAP%descriptorx(GAP%sparsex_index(i),:)
@@ -255,6 +263,11 @@ REAL(DP),dimension(3)                  :: xyz, xyz_j, xyz_k
 allocate(at%xx(GAP%dd, at%natoms))
 allocate(at%dxdy(GAP%dd, at%natoms, at%natoms, 3))
 allocate(at%strs(3, 3, GAP%dd, at%natoms))
+! @@@@ this three array must be initial
+at%xx = 0.d0
+at%dxdy = 0.d0
+at%strs = 0.d0
+! @@@@
 
 rmin = 0.5d0
 nnn = ACSF%nsf
@@ -290,6 +303,7 @@ do ii = 1, nnn
                     dfcutijdxj=-1.d0*dfcutijdxi
                     dfcutijdyj=-1.d0*dfcutijdyi
                     dfcutijdzj=-1.d0*dfcutijdzi
+        !            if (i==2 .and. ii==2) print*, dexp(-1.d0*alpha*rij**2)*fcutij
                     at%xx(ii,i) = at%xx(ii,i) + dexp(-1.d0*alpha*rij**2)*fcutij
                     at%xx(ii + nnn, i) = at%xx(ii + nnn, i) + dexp(-1.d0*alpha*rij**2)*fcutij * weights !!!!!!! 
 
@@ -980,6 +994,7 @@ do ii = 1, nnn
         print *, 'Unknown function type',ii, ACSF%sf(ii)%ntype
     endif
 enddo  ! types
+!print*, 'CCC',at%xx(2,2)
 END SUBROUTINE 
 
 END MODULE
