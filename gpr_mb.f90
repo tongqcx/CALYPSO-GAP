@@ -50,10 +50,13 @@ allocate(GAP%DescriptorX(DATA_C%natoms, GAP%dd))
 allocate(GAP%sparsex_index(GAP%nsparse))
 allocate(GAP%theta(GAP%dd))
 
+CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, DATA_C%ne
     call car2acsf(at(i), GAP, ACSF)
 enddo
+CALL  SYSTEM_CLOCK(it2)
+print*, "CPU time used (sec) For convert COORD: ",(it2 - it1)/10000.0
 
 spaese_index = 0
 k = 0

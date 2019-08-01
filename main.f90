@@ -30,7 +30,10 @@ call read_structure('config',at, data_c)
 !
 !*****************************************************
 call gap_ini_mb(GAP_MB, AT, ACSF, DATA_C)
+CALL  SYSTEM_CLOCK(it1)
 call gap_cmo_mb(GAP_MB, AT, DATA_C)
+CALL  SYSTEM_CLOCK(it2)
+print*, "CPU time used (sec) For matrix CMO: ",(it2 - it1)/10000.0
 call gap_coeff_mb(GAP_MB,AT,DATA_C)
 call gap_write_paras_mb(GAP_MB)
 
