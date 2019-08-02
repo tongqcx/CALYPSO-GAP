@@ -13,8 +13,8 @@ real(dp)           :: fc_i, fc_j, rij
 logical            :: alive, T_MB, T_2B
 integer            :: interaction_index
 integer            :: ran_seed(1)
-T_MB = .true.
-T_2B = .false.
+T_MB = .false.
+T_2B = .true.
 ran_seed=1
 call random_seed(put=ran_seed)
 
@@ -47,7 +47,9 @@ endif
 if (T_2B) then
     call gap_ini_2b(GAP_2B, AT, DATA_C)
     call gap_cmo_2b(GAP_2B, AT, DATA_C)
+    call write_array(GAP_2B%cmo(:,:,1),'cmo.dat')
     call gap_coeff_2b(GAP_2B, DATA_C)
+    call gap_write_paras_2b(GAP_2B)
 endif
 !print*, GAP_2B%coeff(:,1)
 !stop
@@ -56,9 +58,7 @@ call destropy_data_type(DATA_C)
 ENDIF  ! ltrain
 
 if (ltest) then
-print*, '************************************************'
 print*, '*************** BEGIN PREDICTING ***************'
-print*, '************************************************'
 if (.not.ltrain) then
     call gap_read_paras_mb(GAP_MB, ACSF)
 endif

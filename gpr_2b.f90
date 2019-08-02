@@ -72,9 +72,10 @@ type(GAP_type),intent(inout)             :: GAP
 type(DATA_type),intent(in)               :: DATA_C
 
 do i = 1, DATA_C%ne
-    GAP%obe(i) = DATA_C%obe(i)
+    GAP%obe(i) = DATA_C%obe(i) 
     GAP%lamdaobe(i, 1) = DATA_C%obe(i) * sqrt(1.d0/GAP%lamda(i))
 enddo
+call write_array(GAP%lamdaobe(:, 1), 'lamdaobe.dat')
 do k = 1, DATA_C%ninteraction
     call matmuldiag_T(GAP%cmo(:,:,k),sqrt(1.0/GAP%lamda))
     call gpr(GAP%cmm, GAP%cmo(:,:,k), GAP%lamdaobe(:,1), GAP%coeff(:,k))
@@ -159,7 +160,7 @@ at%energy_cal = sum(at%atomic_energy) * 0.5d0 + at%natoms * ene_cons
 at%force_cal = -1.0 * at%force_cal
 at%volume = volume(at%lat)
 at%stress = sum(stress_i, dim=3) * -0.5d0
-at%stress = at%stress / at%volume * (1.0/GPa2eVPang) 
+at%stress = at%stress / at%volume * (1.0/GPa2eVPang) * 10.d0
 at%stress_cal(1) = at%stress(1,1)
 at%stress_cal(2) = at%stress(1,2)
 at%stress_cal(3) = at%stress(1,3)

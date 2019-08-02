@@ -168,7 +168,7 @@ allocate(data_c%obe(data_c%ne))
 kf = 0
 do i = 1, n_config
     kf = kf + 1
-    data_c%obe(i) = at(i)%energy_ref
+    data_c%obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
     data_c%ob(kf) = at(i)%energy_ref
     do j = 1, at(i)%natoms
         do k1 = 1, 3

@@ -6,6 +6,7 @@ REAL(DP), PARAMETER      :: pi=3.141592654d0
 REAL(DP), PARAMETER      :: ene_cons = -90.040530764400003
 REAL(DP), PARAMETER      :: GPa2eVPang =6.24219D-3
 !REAL(DP), PARAMETER      :: ene_cons = -162.0
+!REAL(DP), PARAMETER      :: ene_cons = -90.040530764400003
 
 !  *************  Parameters of GPR
 REAL(DP)                               :: RMSE_ENERGY, RMSE_FORCE, RMSE_STRESS
