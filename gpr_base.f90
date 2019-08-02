@@ -144,6 +144,7 @@ REAL(DP),intent(inout),dimension(:)  :: theta
 integer                              :: i,j,n,m
 REAL(DP),allocatable,dimension(:)    :: t
 
+theta = 0.d0
 n = size(x,1)
 m = size(x,2)
 allocate(t(n))

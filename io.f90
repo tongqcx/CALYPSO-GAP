@@ -9,43 +9,33 @@ logical :: lex
 character(len=150) :: rtp,cerr, ele
 integer :: lv1,lv2
 
-inquire(file='contral',exist=lex)
-if(.not.lex) then
-    open(file='contral',unit=60)
-    write(60,fmt=*) '    NSPECIES =  '
-    write(60,fmt=*) '  NSPARSE_2B =  '
-    write(60,fmt=*) '  NSPARSE_MB =  '
-    write(60,fmt=*) '     SIGMA_E =  '
-    write(60,fmt=*) '     SIGMA_F =  '
-    write(60,fmt=*) '     SIGMA_S =  '
-    write(60,fmt=*) '     D_WIDTH =  '
-    write(60,fmt=*) '        Rcut =  '
-    write(60,fmt=*) '        Rmin =  '
-    write(60,fmt=*) '       THETA =  '
-    write(60,fmt=*) '    DELTA_2B =  '
-    write(60,fmt=*) '    DELTA_MB =  '
-    write(60,fmt=*) 'SIGMA_JITTER =  '
-    write(60,fmt=*) '    ELEMENTS =  '
-    write(60,fmt=*) '    TRAINING =  '
-    write(60,fmt=*) '     TESTING =  '
-    close(60)
-    stop
-end if
 !>>> INITIAL PARAMETERS LIST <<< 
     DATA_C%nspecies = 1
-    DATA_C%nsparse_2B = 100
-    DATA_C%nsparse_MB = 1000
-    DATA_C%sigma_e = 1.d0
-    DATA_C%sigma_f = 1.d0
-    DATA_C%sigma_s = 1.d0
     DATA_C%d_width = 1.d0
-    DATA_C%rcut = 9.d0
-    DATA_C%theta_2B = 1.d0
-    DATA_C%delta_2B = 1.d0
-    DATA_C%delta_MB = 1.d0
+    DATA_C%rmin = 0.5d0
+    DATA_C%rcut = 6.d0
     sigma_jitter = 1.0d-8
     ltrain = .true.
     ltest = .true.
+!{
+    DATA_C%nsparse_2B = 100
+    DATA_C%theta_2B = 1.d0
+    DATA_C%delta_2B = 2.35d0
+    DATA_C%sigma_e_2B = 1.d0
+    DATA_C%sigma_f_2B = 1.d0
+    DATA_C%sigma_s_2B = 1.d0
+!}
+
+!{
+    DATA_C%nsparse_MB = 1000
+    DATA_C%sparse_dis_len = 1.d0
+    DATA_C%sigma_e_MB = 0.001d0
+    DATA_C%sigma_f_MB = 0.01d0
+    DATA_C%sigma_s_MB = 0.01d0
+    DATA_C%delta_MB = 1.d0
+    DATA_C%sparse_method = 1
+    DATA_C%sigma_atom = 1.6d0
+!}
     
 !>>>                         <<<
 open(file='contral',unit=60)
@@ -68,26 +58,42 @@ do while(.not.eof(60))
         read(rtp(lv2:),*) DATA_C%nspecies
         DATA_C%ninteraction = DATA_C%nspecies * (DATA_C%nspecies + 1)/2.d0
         if (.not. allocated(DATA_C%elements)) allocate(DATA_C%elements(DATA_C%nspecies))
+!{
     case('nsparse_2b')
         read(rtp(lv2:),*) DATA_C%nsparse_2b
-    case('nsparse_mb')
-        read(rtp(lv2:),*) DATA_C%nsparse_mb
-    case('sigma_e')
-        read(rtp(lv2:),*) DATA_C%sigma_e
-    case('sigma_f')
-        read(rtp(lv2:),*) DATA_C%sigma_f
-    case('sigma_s')
-        read(rtp(lv2:),*) DATA_C%sigma_s
-    case('rcut')
-        read(rtp(lv2:),*) DATA_C%rcut
-    case('rmin')
-        read(rtp(lv2:),*) DATA_C%rmin
+    case('sigma_e_2b')
+        read(rtp(lv2:),*) DATA_C%sigma_e_2b
+    case('sigma_f_2b')
+        read(rtp(lv2:),*) DATA_C%sigma_f_2b
+    case('sigma_s_2b')
+        read(rtp(lv2:),*) DATA_C%sigma_s_2b
     case('theta_2b')
         read(rtp(lv2:),*) DATA_C%theta_2b
     case('delta_2b')
         read(rtp(lv2:),*) DATA_C%delta_2b
+!}
+!{
+    case('nsparse_mb')
+        read(rtp(lv2:),*) DATA_C%nsparse_mb
+    case('sigma_e_mb')
+        read(rtp(lv2:),*) DATA_C%sigma_e_mb
+    case('sigma_f_mb')
+        read(rtp(lv2:),*) DATA_C%sigma_f_mb
+    case('sigma_s_mb')
+        read(rtp(lv2:),*) DATA_C%sigma_s_mb
     case('delta_mb')
         read(rtp(lv2:),*) DATA_C%delta_mb
+    case('sparse_dis_len')
+        read(rtp(lv2:),*) DATA_C%sparse_dis_len
+    case('sparse_method')
+        read(rtp(lv2:),*) DATA_C%sparse_method
+    case('sigma_atom')
+        read(rtp(lv2:),*) DATA_C%sigma_atom
+!}
+    case('rcut')
+        read(rtp(lv2:),*) DATA_C%rcut
+    case('rmin')
+        read(rtp(lv2:),*) DATA_C%rmin
     case('d_width')
         read(rtp(lv2:),*) DATA_C%d_width
     case('sigma_jitter')

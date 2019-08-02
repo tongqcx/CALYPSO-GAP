@@ -26,16 +26,22 @@ call READ_ACSF('neural.in', ACSF)
 GAP%nsparse = DATA_C%nsparse_mb
 GAP%dd = ACSF%NSF * 2     ! D_tot = D_topology + D_species
 GAP%nglobalY = DATA_C%nob
-GAP%sigma_e = DATA_C%sigma_e
-GAP%sigma_f = DATA_C%sigma_f
-GAP%sigma_s = DATA_C%sigma_s
-GAP%delta = 1.d0
+GAP%sigma_e = DATA_C%sigma_e_mb
+GAP%sigma_f = DATA_C%sigma_f_mb
+GAP%sigma_s = DATA_C%sigma_s_mb
+GAP%delta = DATA_C%delta_mb
+GAP%sparse_method = DATA_C%sparse_method
+GAP%sigma_atom = DATA_C%sigma_atom
+GAP%sparse_dis_len = DATA_C%sparse_dis_len
 print*, '&&&& '
 print*, 'Parameters for MANY_BODY interaction'
 print*, 'The size of sparse set:', GAP%nsparse
 print*, 'The dimension of ACSF descriptors', GAP%dd
 write(*,'(A30X3F8.5)'), 'The value of sigma E/F/S:', GAP%sigma_e, GAP%sigma_f, GAP%sigma_s
 print*, 'The size of globalY:', GAP%nglobalY
+print*, 'sparse_dis_len:', GAP%sparse_dis_len
+print*, 'sparse_method:',GAP%sparse_method
+print*, 'sigma_atom:',GAP%sigma_atom
 
 CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
@@ -51,7 +57,7 @@ allocate(GAP%coeff(GAP%nsparse, 1))
 allocate(GAP%lamda(GAP%nglobalY))
 allocate(GAP%lamdaobe(GAP%nglobalY, 1))
 
-if (sparse_method==1) then
+if (GAP%sparse_method == 1) then
     allocate(GAP%DescriptorX(DATA_C%natoms, GAP%dd))
     allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
     allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
@@ -82,8 +88,8 @@ if (sparse_method==1) then
             GAP%cmm(j,i) = GAP%cmm(i,j)
         enddo
     enddo
-elseif (sparse_method == 2) then
-    call gpr_sparse(GAP,AT)
+elseif (GAP%sparse_method == 2) then
+    call GAP_SPARSE(GAP,AT)
 else
     print*, 'Unknow sparse_method'
 endif
@@ -117,15 +123,13 @@ type(GAP_type),intent(inout)                :: GAP
 type(Structure),intent(inout),dimension(:)  :: at
 
 ! local
-integer                                     :: max_mm_len
 REAL(DP),dimension(:),allocatable           :: theta_temp
 REAL(DP),dimension(:,:),allocatable         :: MM
 REAL(DP),dimension(:,:),allocatable         :: calc_det
 logical                                     :: lexit
-REAL(DP)                                    :: sparse_dis_len
+REAL(DP)                                    :: my_length
 
-max_mm_len = 3000
-spaese_dis_len = 1.d0
+!spaese_dis_len = 1.d0
 n_config = size(AT)
 allocate(theta_temp(GAP%dd))
 allocate(MM(max_mm_len,GAP%dd))
@@ -138,6 +142,7 @@ do i1 = 1,n_config
         if (rx < 0.1d0) then
             k = k + 1
             mm(k,:) = at(i1)%xx(:,i2)
+            print*, mm(k,:)
         endif
         if (k >= max_mm_len) then
             lexit = .true.
@@ -159,8 +164,11 @@ do while (.true.)
         do i2 = 1, at(i1)%natoms
             ladd = 0
             do j = 1, k
+                print*, at(i1)%xx(:,i2),'LL'
+                print*, at(i1)%xx(:,i2) - mm(j,:)
+                print*, length(at(i1)%xx(:,i2) - mm(j,:),theta_temp)
                 my_length = length(at(i1)%xx(:,i2) - mm(j,:),theta_temp)
-                if (my_length >= sparse_dis_cut) ladd = ladd + 1
+                if (my_length >= GAP%sparse_dis_len) ladd = ladd + 1
             enddo
             if (ladd == k) then
                 k = k + 1
@@ -173,11 +181,12 @@ do while (.true.)
                 exit
             endif
         enddo
+        stop
         if (lexit) exit
     enddo
     call GAP_SET_THETA(mm(1:k,:), GAP%theta)
     GAP%nsparse = k
-    GAP%theta = GAP%theta * sigma_atom
+    GAP%theta = GAP%theta * GAP%sigma_atom
     if (.not. allocated(GAP%cmm))  allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
     if (.not. allocated(calc_det))  allocate(calc_det(GAP%nsparse, GAP%nsparse))
     GAP%cmm = 0.0
@@ -196,8 +205,8 @@ do while (.true.)
         print*, 'Det of CMM:',det_cmm
         exit
     else
-        print *,'Increasing sparse_dis_cut',sparse_dis_cut, '------>',sparse_dis_cut + 0.2d0
-        sparse_dis_cut = sparse_dis_cut + 0.2d0
+        print *,'Increasing sparse_dis_cut',GAP%sparse_dis_len, '------>',GAP%sparse_dis_len + 0.2d0
+        GAP%sparse_dis_len = GAP%sparse_dis_len + 0.2d0
         if (allocated(GAP%cmm))  deallocate(GAP%cmm)
         if (allocated(calc_det))  deallocate(calc_det)
     endif

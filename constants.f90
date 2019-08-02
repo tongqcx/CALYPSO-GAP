@@ -7,6 +7,7 @@ REAL(DP), PARAMETER      :: ene_cons = -90.040530764400003
 REAL(DP), PARAMETER      :: GPa2eVPang =6.24219D-3
 !REAL(DP), PARAMETER      :: ene_cons = -162.0
 !REAL(DP), PARAMETER      :: ene_cons = -90.040530764400003
+INTEGER, PARAMETER       :: max_mm_len = 4000
 
 !  *************  Parameters of GPR
 REAL(DP)                               :: RMSE_ENERGY, RMSE_FORCE, RMSE_STRESS
@@ -20,7 +21,9 @@ INTEGER                                 :: nsparse
 INTEGER                                 :: ninteraction
 INTEGER                                 :: dd   ! the dimension of discriptors
 INTEGER                                 :: nglobalY
+INTEGER                                 :: sparse_method
 REAL(DP)                                :: delta
+REAL(DP)                                :: sparse_dis_len, sigma_atom
 REAL(DP)                                :: sigma_e, sigma_f, sigma_s
 REAL(DP),DIMENSION(:),ALLOCATABLE       :: lamda
 REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: lamdaobe
@@ -52,13 +55,23 @@ END TYPE ACSF_type
 
 !
 TYPE data_type
-integer                                 :: nsparse_2b, nsparse_mb
+!{
+integer                                 :: nsparse_2b
+REAL(DP)                                :: delta_2b
+REAL(DP)                                :: theta_2b
+REAL(DP)                                :: sigma_e_2b, sigma_f_2b, sigma_s_2b
+!}
+!{
+integer                                 :: nsparse_mb
+REAL(DP)                                :: sparse_dis_len, sigma_atom
+integer                                 :: sparse_method
+REAL(DP)                                :: sigma_e_mb, sigma_f_mb, sigma_s_mb
+REAL(DP)                                :: delta_mb
+!}
 integer                                 :: nspecies  ! this nspecies is global
 integer                                 :: ninteraction
-REAL(DP)                                :: delta_2b, delta_mb, d_width, sigma_jitter
-REAL(DP)                                :: theta_2b
-REAL(DP)                                :: sigma_e, sigma_f, sigma_s
-REAL(DP)                                :: Rcut, Rmin
+REAL(DP)                                :: sigma_jitter
+REAL(DP)                                :: Rcut, Rmin, d_width
 character(2),allocatable,dimension(:)   :: elements
 INTEGER,allocatable,dimension(:,:)      :: interaction_mat
 

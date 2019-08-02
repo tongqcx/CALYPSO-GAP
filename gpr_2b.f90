@@ -26,6 +26,7 @@ GAP%nsparse = DATA_C%nsparse_2B
 GAP%nglobalY = DATA_C%ne
 GAP%delta = DATA_C%delta_2B
 GAP%ninteraction = data_c%ninteraction
+GAP%sigma_e = DATA_C%sigma_e_2B
 print*, '********************************************************'
 print*, 'Parameters for TWO_BODY interaction'
 print*, 'The size of sparse set:', GAP%nsparse
@@ -65,7 +66,7 @@ enddo
     enddo
 call write_array(GAP%cmm,'cmm.dat')
 do i = 1, DATA_C%ne
-    GAP%lamda(i) = (DATA_C%sigma_e * (sqrt(1.d0 * at(i)%natoms)))**2
+    GAP%lamda(i) = (GAP%sigma_e * (sqrt(1.d0 * at(i)%natoms)))**2
 enddo
 END SUBROUTINE
 
