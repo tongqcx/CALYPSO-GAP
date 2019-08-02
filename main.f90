@@ -13,8 +13,8 @@ real(dp)           :: fc_i, fc_j, rij
 logical            :: alive, T_MB, T_2B
 integer            :: interaction_index
 integer            :: ran_seed(1)
-T_MB = .false.
-T_2B = .true.
+T_MB = .true.
+T_2B = .false.
 ran_seed=1
 call random_seed(put=ran_seed)
 

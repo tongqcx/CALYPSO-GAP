@@ -106,4 +106,37 @@ enddo
 close(2244)
 END SUBROUTINE
 
+FUNCTION length(x,theta)
+    real(8)    :: length
+    real(8)    :: x(:)
+    real(8)    :: theta(:)
+    integer    :: i
+    length = 0.d0
+    do i = 1,size(x)
+        length = length + (x(i)/theta(i))**2
+    enddo
+    length = sqrt(length)
+END FUNCTION
+
+FUNCTION MY_DET(X)
+    REAL(DP)                 :: MY_DET
+    integer,allocatable      ::  ipiv(:)
+    REAL(DP)                 :: X(:,:)
+    REAL(DP)                 :: RES
+    INTEGER                  :: I,J,N
+    N = SIZE(X,1)
+    allocate(ipiv(n))
+    call dgetrf(n,n,x,n,ipiv,info)
+    res = 1.d0
+    do i=1,n
+        if (ipiv(i).ne.i)  then
+            res = -1.d0*res*x(i,i)
+        else
+            res = 1.d0*res*x(i,i)
+        endif
+    enddo
+    deallocate(ipiv)
+    MY_DET = RES
+END FUNCTION
+
 end module math

@@ -37,19 +37,6 @@ print*, 'The dimension of ACSF descriptors', GAP%dd
 write(*,'(A30X3F8.5)'), 'The value of sigma E/F/S:', GAP%sigma_e, GAP%sigma_f, GAP%sigma_s
 print*, 'The size of globalY:', GAP%nglobalY
 
-allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
-allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
-allocate(GAP%obe(GAP%nglobalY))
-allocate(GAP%coeff(GAP%nsparse, 1))
-allocate(GAP%lamda(GAP%nglobalY))
-allocate(GAP%lamdaobe(GAP%nglobalY, 1))
-
-allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
-!allocate(GAP%MM(GAP%nsparse, GAP%dd))
-allocate(GAP%DescriptorX(DATA_C%natoms, GAP%dd))
-allocate(GAP%sparsex_index(GAP%nsparse))
-allocate(GAP%theta(GAP%dd))
-
 CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, DATA_C%ne
@@ -58,32 +45,51 @@ enddo
 CALL  SYSTEM_CLOCK(it2)
 print*, "CPU time used (sec) For convert COORD: ",(it2 - it1)/10000.0
 
-spaese_index = 0
-k = 0
-do i_struc = 1, DATA_C%ne
-    do i_atom = 1, at(i_struc)%natoms
-        k = k + 1
-        GAP%descriptorx(k,:) = at(i_struc)%xx(:,i_atom)
-    enddo
-enddo
-call write_array(GAP%descriptorx,'des.dat')
-call cur_decomposition(transpose(GAP%descriptorx), GAP%sparseX_index)
-do i = 1, GAP%nsparse
-    GAP%sparseX(i,:) = GAP%descriptorx(GAP%sparsex_index(i),:)
-enddo
-call write_array(GAP%sparseX,'sparseX.dat')
-call GAP_SET_THETA(GAP%sparseX, GAP%theta)
+allocate(GAP%theta(GAP%dd))
+allocate(GAP%obe(GAP%nglobalY))
+allocate(GAP%coeff(GAP%nsparse, 1))
+allocate(GAP%lamda(GAP%nglobalY))
+allocate(GAP%lamdaobe(GAP%nglobalY, 1))
 
-
-GAP%cmm = 0.0
-do i = 1, GAP%nsparse
-    GAP%cmm(i,i) = 1.d0 + DATA_C%sigma_jitter
-    do  j = i+1 , GAP%nsparse
-        GAP%cmm(i,j) = covariance_MB(GAP%delta, GAP%sparseX(i,:),GAP%sparseX(j,:), GAP%theta)
-        GAP%cmm(j,i) = GAP%cmm(i,j)
+if (sparse_method==1) then
+    allocate(GAP%DescriptorX(DATA_C%natoms, GAP%dd))
+    allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
+    allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
+    allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
+    allocate(GAP%sparsex_index(GAP%nsparse))
+    spaese_index = 0
+    k = 0
+    do i_struc = 1, DATA_C%ne
+        do i_atom = 1, at(i_struc)%natoms
+            k = k + 1
+            GAP%descriptorx(k,:) = at(i_struc)%xx(:,i_atom)
+        enddo
     enddo
-enddo
+    call write_array(GAP%descriptorx,'des.dat')
+    call cur_decomposition(transpose(GAP%descriptorx), GAP%sparseX_index)
+    do i = 1, GAP%nsparse
+        GAP%sparseX(i,:) = GAP%descriptorx(GAP%sparsex_index(i),:)
+    enddo
+    call write_array(GAP%sparseX,'sparseX.dat')
+    call GAP_SET_THETA(GAP%sparseX, GAP%theta)
+    
+    
+    GAP%cmm = 0.0
+    do i = 1, GAP%nsparse
+        GAP%cmm(i,i) = 1.d0 + DATA_C%sigma_jitter
+        do  j = i+1 , GAP%nsparse
+            GAP%cmm(i,j) = covariance_MB(GAP%delta, GAP%sparseX(i,:),GAP%sparseX(j,:), GAP%theta)
+            GAP%cmm(j,i) = GAP%cmm(i,j)
+        enddo
+    enddo
+elseif (sparse_method == 2) then
+    call gpr_sparse(GAP,AT)
+else
+    print*, 'Unknow sparse_method'
+endif
 call write_array(GAP%cmm,'cmm.dat')
+
+
 
 !!!!!!!!!!!!!!!!!!!!!!
 ! initial GAP%lamda
@@ -105,6 +111,106 @@ do i = 1, DATA_C%ne
 enddo
 print*, 'GAP INI FINISHED'
 END SUBROUTINE GAP_INI_MB
+
+SUBROUTINE GAP_SPARSE(GAP, AT)
+type(GAP_type),intent(inout)                :: GAP
+type(Structure),intent(inout),dimension(:)  :: at
+
+! local
+integer                                     :: max_mm_len
+REAL(DP),dimension(:),allocatable           :: theta_temp
+REAL(DP),dimension(:,:),allocatable         :: MM
+REAL(DP),dimension(:,:),allocatable         :: calc_det
+logical                                     :: lexit
+REAL(DP)                                    :: sparse_dis_len
+
+max_mm_len = 3000
+spaese_dis_len = 1.d0
+n_config = size(AT)
+allocate(theta_temp(GAP%dd))
+allocate(MM(max_mm_len,GAP%dd))
+lexit = .false.
+MM = 0.d0
+k = 0
+do i1 = 1,n_config
+    do i2 = 1,at(i1)%natoms
+        call random_number(rx)
+        if (rx < 0.1d0) then
+            k = k + 1
+            mm(k,:) = at(i1)%xx(:,i2)
+        endif
+        if (k >= max_mm_len) then
+            lexit = .true.
+            exit
+        endif
+    enddo
+    if (lexit) exit
+enddo
+!call GAP_SET_THETA(mm, GAP%theta)
+deallocate(MM)
+allocate(MM(max_mm_len,GAP%dd))
+theta_temp = 1.d0
+do while (.true.)
+    lexit = .false.
+    mm = 0.d0
+    k = 1
+    mm(k,:) = at(1)%xx(:,1)
+    do i1 = 1, n_config
+        do i2 = 1, at(i1)%natoms
+            ladd = 0
+            do j = 1, k
+                my_length = length(at(i1)%xx(:,i2) - mm(j,:),theta_temp)
+                if (my_length >= sparse_dis_cut) ladd = ladd + 1
+            enddo
+            if (ladd == k) then
+                k = k + 1
+                mm(k,:) = at(i1)%xx(:,i2)
+            endif
+            if (k == max_mm_len) then
+                lexit = .true.
+                print*, i1,'nconfig',i2,'atom'
+                print*, k,"is large than max_mm_len",max_mm_len
+                exit
+            endif
+        enddo
+        if (lexit) exit
+    enddo
+    call GAP_SET_THETA(mm(1:k,:), GAP%theta)
+    GAP%nsparse = k
+    GAP%theta = GAP%theta * sigma_atom
+    if (.not. allocated(GAP%cmm))  allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
+    if (.not. allocated(calc_det))  allocate(calc_det(GAP%nsparse, GAP%nsparse))
+    GAP%cmm = 0.0
+    calc_det  = 0.0
+    do i = 1, GAP%nsparse
+        GAP%cmm(i,i) = 1.d0 + DATA_C%sigma_jitter
+        do  j = i+1 , GAP%nsparse
+            GAP%cmm(i,j) = covariance_MB(GAP%delta, mm(i,:),mm(j,:), GAP%theta)
+            GAP%cmm(j,i) = GAP%cmm(i,j)
+        enddo
+    enddo
+    calc_det = GAP%cmm
+    det_cmm = my_det(calc_det)**(1.d0/GAP%nsparse)
+    if (det_cmm > 0.0001d0) then
+        write(*,*) "The number of atomic environment in Sparse set:",GAP%nsparse
+        print*, 'Det of CMM:',det_cmm
+        exit
+    else
+        print *,'Increasing sparse_dis_cut',sparse_dis_cut, '------>',sparse_dis_cut + 0.2d0
+        sparse_dis_cut = sparse_dis_cut + 0.2d0
+        if (allocated(GAP%cmm))  deallocate(GAP%cmm)
+        if (allocated(calc_det))  deallocate(calc_det)
+    endif
+enddo
+allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
+allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
+do i = 1, GAP%nsparse
+    GAP%sparseX(i,:) = MM(i,:)
+enddo
+deallocate(MM)
+deallocate(theta_temp)
+deallocate(calc_det)
+END SUBROUTINE GAP_SPARSE
 
 SUBROUTINE GAP_WRITE_PARAS_MB(GAP)
 type(GAP_type),intent(in)             :: GAP
