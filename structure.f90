@@ -94,6 +94,7 @@ enddo
 
 !rcut = 9.d0
 !rmin = 0.5d0
+!print*, 'data_c%rcut',data_c%rcut
 
 at%recip_lat = recipvector(at%lat)
 nabc(1)=ceiling(data_c%rcut*vectorlength(at%recip_lat(1,:))/pi/2)

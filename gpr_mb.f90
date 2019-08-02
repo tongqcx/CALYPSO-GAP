@@ -53,7 +53,6 @@ print*, "CPU time used (sec) For convert COORD: ",(it2 - it1)/10000.0
 
 allocate(GAP%theta(GAP%dd))
 allocate(GAP%obe(GAP%nglobalY))
-allocate(GAP%coeff(GAP%nsparse, 1))
 allocate(GAP%lamda(GAP%nglobalY))
 allocate(GAP%lamdaobe(GAP%nglobalY, 1))
 
@@ -63,6 +62,7 @@ if (GAP%sparse_method == 1) then
     allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
     allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
     allocate(GAP%sparsex_index(GAP%nsparse))
+    allocate(GAP%coeff(GAP%nsparse, 1))
     spaese_index = 0
     k = 0
     do i_struc = 1, DATA_C%ne
@@ -142,7 +142,6 @@ do i1 = 1,n_config
         if (rx < 0.1d0) then
             k = k + 1
             mm(k,:) = at(i1)%xx(:,i2)
-            print*, mm(k,:)
         endif
         if (k >= max_mm_len) then
             lexit = .true.
@@ -164,9 +163,6 @@ do while (.true.)
         do i2 = 1, at(i1)%natoms
             ladd = 0
             do j = 1, k
-                print*, at(i1)%xx(:,i2),'LL'
-                print*, at(i1)%xx(:,i2) - mm(j,:)
-                print*, length(at(i1)%xx(:,i2) - mm(j,:),theta_temp)
                 my_length = length(at(i1)%xx(:,i2) - mm(j,:),theta_temp)
                 if (my_length >= GAP%sparse_dis_len) ladd = ladd + 1
             enddo
@@ -181,7 +177,6 @@ do while (.true.)
                 exit
             endif
         enddo
-        stop
         if (lexit) exit
     enddo
     call GAP_SET_THETA(mm(1:k,:), GAP%theta)
@@ -213,6 +208,7 @@ do while (.true.)
 enddo
 allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
 allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
+allocate(GAP%coeff(GAP%nsparse, 1))
 do i = 1, GAP%nsparse
     GAP%sparseX(i,:) = MM(i,:)
 enddo
@@ -1175,7 +1171,7 @@ do ii = 1, nnn
         print *, 'Unknown function type',ii, ACSF%sf(ii)%ntype
     endif
 enddo  ! types
-!print*, 'CCC',at%xx(2,2)
+!print*, 'CCC',at%xx(:,1)
 END SUBROUTINE 
 
 END MODULE
