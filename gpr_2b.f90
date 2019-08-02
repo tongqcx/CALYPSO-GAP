@@ -25,12 +25,14 @@ GAP%dd = 1
 GAP%nsparse = DATA_C%nsparse_2B
 GAP%nglobalY = DATA_C%ne
 GAP%delta = DATA_C%delta_2B
+GAP%ninteraction = data_c%ninteraction
 print*, '********************************************************'
 print*, 'Parameters for TWO_BODY interaction'
 print*, 'The size of sparse set:', GAP%nsparse
 print*, 'The dimension of ACSF descriptors', GAP%dd
 print*, 'The size of globalY:', GAP%nglobalY
 print*, 'The value of delta:', GAP%delta
+print*, 'The number of interaction:', GAP%ninteraction
 print*, '********************************************************'
 
 allocate(GAP%theta(1))
@@ -43,7 +45,7 @@ allocate(GAP%lamdaobe(GAP%nglobalY, 1))
 allocate(GAP%sparsecut(GAP%nsparse))
 allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
 
-GAP%theta(1)  = 1.d0
+GAP%theta(1)  = data_c%theta_2b
 
 dr3 = (data_c%rcut - data_c%rmin)/(GAP%nsparse - 1)
 do i = 1, GAP%nsparse
@@ -83,19 +85,43 @@ enddo
 END SUBROUTINE GAP_COEFF_2B
 
 SUBROUTINE GAP_WRITE_PARAS_2B(GAP)
-type(GAP_type),intent(inout)             :: GAP
+type(GAP_type),intent(in)             :: GAP
 
 open(2234, file='gap_paras_2b.dat')
+write(2234,*) GAP%nsparse, GAP%ninteraction
+write(2234,*)
+write(2234,*)
+write(2234,*)
+write(2234,*) GAP%delta
+write(2234,*) GAP%theta
 do i = 1,GAP%nsparse
-    write(2234,'(I3,F25.8,$)') i, GAP%sparseX(i,1)
-    write(2234,'(F25.8, $)') GAP%sparsecut(i)
+    write(2234,'(I3,F30.15,$)') i, GAP%sparseX(i,1)
+    write(2234,'(F30.15, $)') GAP%sparsecut(i)
     do k = 1,DATA_C%ninteraction
-        write(2234,'(F25.8,$)') GAP%coeff(i,k)
+        write(2234,'(F30.15,$)') GAP%coeff(i,k)
     enddo
     write(2234,*)
 enddo
 close(2234)
 ENDSUBROUTINE GAP_WRITE_PARAS_2B
+
+SUBROUTINE GAP_READ_PARAS_2B(GAP)
+type(GAP_type),intent(inout)             :: GAP
+open(2234, file='gap_paras_2b.dat')
+read(2234,*) GAP%nsparse,  GAP%ninteraction
+read(2234,*)
+read(2234,*)
+read(2234,*)
+allocate(GAP%sparsecut(GAP%nsparse))
+allocate(GAP%sparseX(GAP%nsparse, 1))
+allocate(GAP%coeff(GAP%nsparse, GAP%ninteraction))
+allocate(GAP%theta(1))
+read(2234,*) GAP%delta
+read(2234,*) GAP%theta
+do i_sparsex = 1,GAP%nsparse
+    read(2234,*) i, GAP%sparseX(i,1), GAP%sparsecut(i), GAP%coeff(i,:)
+enddo
+END SUBROUTINE GAP_READ_PARAS_2B
 
 
 SUBROUTINE GAP_predict_2B(GAP, at, DATA_C)
@@ -116,6 +142,7 @@ REAL(DP),allocatable,dimension(:,:,:) :: stress_i
 at%energy_cal = 0.d0
 at%force_cal = 0.d0
 at%stress = 0.d0
+at%atomic_energy = 0.d0
 allocate(stress_i(3,3,at%natoms))
 stress_i = 0.d0
 
@@ -131,9 +158,12 @@ do i = 1,at%natoms
             ene = 0.d0
             do k1 = 1, GAP%nsparse
 !***********  get total energy                   
+!print*, GAP%delta, rij, GAP%sparseX(k1, 1), GAP%theta(1)
                 cov = covariance_2B(GAP%delta, rij, GAP%sparseX(k1, 1), GAP%theta(1))
                 dcov = dcovdx_2B(GAP%delta, rij, GAP%sparseX(k1, 1), GAP%theta(1))
                 ene = ene + cov * fc_ij * GAP%coeff(k1,interaction_index) 
+!                print*, cov , fc_ij , GAP%coeff(k1,interaction_index)
+!                pause
 
 !***********  get atomic force                    
                 do k2 = 1,3
@@ -154,9 +184,7 @@ do i = 1,at%natoms
     enddo ! j
 !    print*, at%atomic_energy(i)
 enddo
-!print*, at%atomic_energy
 at%energy_cal = sum(at%atomic_energy) * 0.5d0 + at%natoms * ene_cons
-!print*, at%energy_cal
 at%force_cal = -1.0 * at%force_cal
 at%volume = volume(at%lat)
 at%stress = sum(stress_i, dim=3) * -0.5d0
@@ -180,7 +208,7 @@ integer                                  :: n, interaction_index
 REAL(DP)                                 :: rij
 
 GAP%cmo = 0.d0
-!!$OMP parallel do schedule(dynamic) default(shared) private(i, j, k1, k2, k3, interaction_index, rij, n)
+!$OMP parallel do schedule(dynamic) default(shared) private(i, j, k1, k2, k3, interaction_index, rij, n)
 do i = 1, GAP%nsparse
     do j = 1, GAP%nglobalY
 !***********************************************

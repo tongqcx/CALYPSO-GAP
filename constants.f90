@@ -17,6 +17,7 @@ INTEGER                                :: tt1, tt2, it1, it2
 !
 TYPE GAP_type
 INTEGER                                 :: nsparse
+INTEGER                                 :: ninteraction
 INTEGER                                 :: dd   ! the dimension of discriptors
 INTEGER                                 :: nglobalY
 REAL(DP)                                :: delta
@@ -72,14 +73,6 @@ TYPE(GAP_type)                          :: GAP_2B, GAP_MB
 TYPE(data_type)                         :: DATA_C
 
 CONTAINS
-
-SUBROUTINE destropy_data_type(DATA_C)
-TYPE(data_type),intent(inout)              :: DATA_C
-if (allocated(DATA_C%obe)            )  deallocate(DATA_C%obe)
-if (allocated(DATA_C%ob)             )  deallocate(DATA_C%ob)
-!if (allocated(DATA_C%elements)       )  deallocate(DATA_C%elements)
-!if (allocated(DATA_C%interaction_mat))  deallocate(DATA_C%interaction_mat)
-END SUBROUTINE 
 
 SUBROUTINE get_ele_weights(cc,nw)
 implicit none

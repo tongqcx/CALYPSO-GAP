@@ -27,6 +27,7 @@ allocate(at(nconfig))
 close(2211)
 
 call read_structure('config',at, data_c)
+call set_gpr_ob(at, data_c)
 
 !*****************************************************
 !
@@ -54,13 +55,13 @@ endif
 !print*, GAP_2B%coeff(:,1)
 !stop
 deallocate(at)
-call destropy_data_type(DATA_C)
 ENDIF  ! ltrain
 
 if (ltest) then
 print*, '*************** BEGIN PREDICTING ***************'
 if (.not.ltrain) then
-    call gap_read_paras_mb(GAP_MB, ACSF)
+    if (T_MB) call gap_read_paras_mb(GAP_MB, ACSF)
+    if (T_2B) call gap_read_paras_2b(GAP_2B)
 endif
   
 open(2211,file='test')
@@ -81,7 +82,7 @@ enddo
 CALL  SYSTEM_CLOCK(it2)
 print*, "CPU time used (sec) For GP Predict: ",(it2 - it1)/10000.0
 
-call get_rmse(at, data_c)
+call get_rmse(at)
 
 ENDIF ! ltest
 end program

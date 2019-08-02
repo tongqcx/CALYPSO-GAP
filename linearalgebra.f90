@@ -179,7 +179,7 @@ use constants
 !#else
 !print*, 'not have HAVE QP'
      call dpotrf('L', this%n, this%factor, this%n, info)
-     print*, 'info of dpotrf', info
+!     print*, 'info of dpotrf', info
      do i = 2, this%n
         do j = 1, i
            this%factor(j,i) = this%factor(i,j)

@@ -137,18 +137,18 @@ do i = 1, at%natoms
 enddo
 end SUBROUTINE
 
-SUBROUTINE GET_RMSE(AT, data_c)
+SUBROUTINE GET_RMSE(AT)
 type(Structure),intent(inout),dimension(:)     :: at
-type(data_type),intent(in)                     :: data_c
 
 !local
 integer                                        :: i,j,k,ii
-integer                                        :: nforce
+integer                                        :: nforce, n_config
+n_config = size(at)
 rmse_energy = 0.d0
 rmse_force = 0.d0
 rmse_stress = 0.d0
 nforce = 0
-do i = 1, data_c%ne
+do i = 1, n_config
     rmse_energy = rmse_energy + (at(i)%energy_cal/at(i)%natoms - at(i)%energy_ref/at(i)%natoms)**2
     do j = 1, at(i)%natoms
         do k = 1, 3
@@ -161,11 +161,11 @@ do i = 1, data_c%ne
         rmse_stress = rmse_stress + (at(i)%stress_cal(j)/10.0 - at(i)%stress_ref(j)/10.0)**2
     enddo
 enddo
-print *, 'RMSE ENERGY:', sqrt(rmse_energy/data_c%ne)
+print *, 'RMSE ENERGY:', sqrt(rmse_energy/n_config)
 print *, 'RMSE FORCE:', sqrt(rmse_force/nforce)
-print *, 'RMSE STRESS Units GPa:', sqrt(rmse_stress/data_c%ne/6.d0)
+print *, 'RMSE STRESS Units GPa:', sqrt(rmse_stress/n_config/6.d0)
 open(181,file="predited.datf")
-do ii = 1, data_c%ne
+do ii = 1, n_config
         write(181,*) "----------------------------------------------------"
         write(181,'(A9,X,I5,X,A30)') "Structure",ii
         write(181,*) "----------------------------------------------------"

@@ -160,30 +160,7 @@ do i = 1, n_config
     call build_neighbor(at(i), data_c)
 enddo
 close(2244)
-data_c%ns = n_config*6
-data_c%ne = n_config
-data_c%nob = data_c%ne + data_c%nf + data_c%ns
-allocate(data_c%ob(data_c%nob))
-allocate(data_c%obe(data_c%ne))
-kf = 0
-do i = 1, n_config
-    kf = kf + 1
-    data_c%obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
-    data_c%ob(kf) = at(i)%energy_ref
-    do j = 1, at(i)%natoms
-        do k1 = 1, 3
-            kf = kf + 1
-            data_c%ob(kf) = at(i)%force_ref(j,k1)
-        enddo
-    enddo
-    do j = 1, 6
-        kf = kf + 1
-        data_c%ob(kf) = at(i)%stress_ref(j)
-    enddo
-enddo
-print*, 'Number of structures/energy/stress:', data_c%ne, data_c%ne, data_c%ns
-print*, 'Number of atoms/forces:', data_c%natoms, data_c%nf
-print*, 'Number of Observable variables:',data_c%nob
+
 END SUBROUTINE read_structure
 
 SUBROUTINE READ_ACSF(filename, acsf)
