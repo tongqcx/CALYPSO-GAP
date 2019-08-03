@@ -38,9 +38,9 @@ print*, '********************************************************'
 
 allocate(GAP%theta(1))
 allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
-allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, DATA_C%ninteraction))
+allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, GAP%ninteraction))
 allocate(GAP%obe(GAP%nglobalY))
-allocate(GAP%coeff(GAP%nsparse,DATA_C%ninteraction))
+allocate(GAP%coeff(GAP%nsparse, GAP%ninteraction))
 allocate(GAP%lamda(GAP%nglobalY))
 allocate(GAP%lamdaobe(GAP%nglobalY, 1))
 allocate(GAP%sparsecut(GAP%nsparse))
@@ -189,7 +189,7 @@ at%energy_cal = sum(at%atomic_energy) * 0.5d0 + at%natoms * ene_cons
 at%force_cal = -1.0 * at%force_cal
 at%volume = volume(at%lat)
 at%stress = sum(stress_i, dim=3) * -0.5d0
-at%stress = at%stress / at%volume * (1.0/GPa2eVPang) * 10.d0
+!at%stress = at%stress / at%volume * (1.0/GPa2eVPang) * 10.d0
 at%stress_cal(1) = at%stress(1,1)
 at%stress_cal(2) = at%stress(1,2)
 at%stress_cal(3) = at%stress(1,3)

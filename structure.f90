@@ -141,6 +141,10 @@ end SUBROUTINE
 SUBROUTINE GET_RMSE(AT)
 type(Structure),intent(inout),dimension(:)     :: at
 
+! In this subroutine, the unit of Energy is eV  
+!                                 Force  is eV/angstrom
+!                                 Stress is eV
+!
 !local
 integer                                        :: i,j,k,ii
 integer                                        :: nforce, n_config
@@ -157,7 +161,10 @@ do i = 1, n_config
             rmse_force = rmse_force + (at(i)%force_cal(j,k) - at(i)%force_ref(j,k))**2
         enddo
     enddo
+    ! convert virial stress to kB
     at(i)%stress_ref = at(i)%stress_ref * (1.0/GPa2eVPang) * 10.0 / at(i)%volume
+    at(i)%stress_cal = at(i)%stress_cal * (1.0/GPa2eVPang) * 10.0 / at(i)%volume
+
     do j = 1,6
         rmse_stress = rmse_stress + (at(i)%stress_cal(j)/10.0 - at(i)%stress_ref(j)/10.0)**2
     enddo
@@ -209,6 +216,10 @@ do ii = 1, n_config
                abs(at(ii)%energy_cal-at(ii)%energy_ref)/at(ii)%natoms
         !write(181,'(A10X3F15.8)') 'E-V:', at(i)%volume/at(i)%na, (at(i)%stress_cal(1) + at(i)%stress_cal(4) + at(i)%stress_cal(6))/30.0, &
         !at(i)%energy_cal/at(i)%na
+        at(ii)%stress_ref = at(ii)%stress_ref/10.d0 ! kB to GPa
+        at(ii)%stress_ref = at(ii)%stress_ref * GPa2eVPang * at(ii)%volume ! to virial stress
+        at(ii)%stress_cal = at(ii)%stress_cal/10.d0 ! kB to GPa
+        at(ii)%stress_cal = at(ii)%stress_cal * GPa2eVPang * at(ii)%volume ! to virial stress
 enddo
 close(181)
 END SUBROUTINE

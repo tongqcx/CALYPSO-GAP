@@ -61,6 +61,8 @@ do while(.not.eof(60))
     case('nspecies')
         read(rtp(lv2:),*) DATA_C%nspecies
         DATA_C%ninteraction = DATA_C%nspecies * (DATA_C%nspecies + 1)/2.d0
+    !    print*, 'DATA_C%ninteraction',DATA_C%ninteraction
+    !    stop
         if (.not. allocated(DATA_C%elements)) allocate(DATA_C%elements(DATA_C%nspecies))
 !{
     case('nsparse_2b')

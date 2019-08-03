@@ -368,7 +368,7 @@ do i = 1, 3
         k1 = k1 + 1
     enddo
 enddo
-at%stress_cal = at%stress_cal * (1.0/GPa2eVPang) * 10.0 / at%volume
+!at%stress_cal = at%stress_cal * (1.0/GPa2eVPang) * 10.0 / at%volume
 END SUBROUTINE GAP_PREDICT_MB
 
 SUBROUTINE   new_cov(delta, x, theta, xx, dxdy, strs, covf)
