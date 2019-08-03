@@ -42,6 +42,10 @@ open(file='contral',unit=60)
 do while(.not.eof(60))
     read(60,'(a150)') rtp
     rtp=adjustl(rtp)
+    lv1 = index(rtp,'{')
+    if (lv1 == 1 ) cycle
+    lv1 = index(rtp,'}')
+    if (lv1 == 1 ) cycle
     lv1=index(rtp,'#')
     lv2=index(rtp,'!')
     if(lv1==0) lv1=lv2
