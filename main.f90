@@ -56,6 +56,7 @@ endif
 
 if (T_2B .and. T_MB) then
     
+    itype = 3
     call gap_ini_2b(GAP_2B, AT, DATA_C)
     call gap_cmo_2b(GAP_2B, AT, DATA_C)
 
@@ -65,15 +66,20 @@ if (T_2B .and. T_MB) then
         print*, 'Interation',i
         call set_gpr_ob_2B(at, data_c)
         call gap_coeff_2b(GAP_2B, DATA_C)
-        call set_gpr_ob_MB(at, data_c)
-        call gap_coeff_mb(GAP_MB,AT,DATA_C)
-
         !$OMP parallel do schedule(dynamic) default(shared) private(j)
         do j = 1, nconfig
             call gap_predict_2B(GAP_2B, at(j), DATA_C)
-            call gap_predict_MB(GAP_MB, at(j))
         enddo
-        call get_rmse(at, 3)
+        !call get_rmse(at, 1)
+
+        call set_gpr_ob_MB(at, data_c)
+        call gap_coeff_mb(GAP_MB,AT,DATA_C)
+        !$OMP parallel do schedule(dynamic) default(shared) private(j)
+        do j = 1, nconfig
+            call gap_predict_MB(GAP_MB, at(j),.false.)
+        enddo
+        !call get_rmse(at, 2)
+        call get_rmse(at, itype)
     enddo
 endif
 
@@ -100,7 +106,7 @@ CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, nconfig
     if (T_2B) call gap_predict_2B(GAP_2B, at(i), DATA_C)
-    if (T_MB) call gap_predict_MB(GAP_MB, at(i))
+    if (T_MB) call gap_predict_MB(GAP_MB, at(i),.true.)
 enddo
 CALL  SYSTEM_CLOCK(it2)
 print*, "CPU time used (sec) For GP Predict: ",(it2 - it1)/10000.0

@@ -314,18 +314,20 @@ CALL  SYSTEM_CLOCK(it2)
 print*, 'GAP_MB CMO FINISHED',(it2 - it1)/10000.0,'Seconds'
 END SUBROUTINE GAP_CMO_MB
 
-SUBROUTINE GAP_PREDICT_MB(GAP,AT)
+SUBROUTINE GAP_PREDICT_MB(GAP,AT, lcar2acsf)
 type(GAP_type),intent(in)                   :: GAP
 type(Structure),intent(inout)               :: at
+logical,intent(in)                          :: lcar2acsf
 
-call car2acsf(at, GAP, ACSF)
+if (lcar2acsf)  call car2acsf(at, GAP, ACSF)
 
-allocate(at%kk(at%natoms, GAP%dd))
-allocate(at%ckm(at%natoms, GAP%nsparse))
-allocate(at%dedg(at%natoms, GAP%dd))
+if (.not. allocated(at%kk))   allocate(at%kk(at%natoms, GAP%dd))
+if (.not. allocated(at%ckm))  allocate(at%ckm(at%natoms, GAP%nsparse))
+if (.not. allocated(at%dedg)) allocate(at%dedg(at%natoms, GAP%dd))
 
 at%kk = 0.d0
 at%ckm = 0.d0
+at%dedg = 0.d0
 
 do i = 1,at%natoms
     at%kk(i,:) = at%xx(:,i)
@@ -334,7 +336,6 @@ call get_cov(GAP%delta, at%kk, GAP%sparseX, GAP%theta, at%ckm)
 
 at%atomic_energy = matmul(at%ckm, GAP%coeff(:,1))
 at%energy_cal_mb = sum(at%atomic_energy)
-at%dedg = 0.d0
 do i = 1, at%natoms
     do j = 1, GAP%dd
         do k = 1, GAP%nsparse

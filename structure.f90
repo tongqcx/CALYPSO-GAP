@@ -190,9 +190,11 @@ do i = 1, n_config
         rmse_stress = rmse_stress + (at(i)%stress_cal(j)/10.0 - at(i)%stress_ref(j)/10.0)**2
     enddo
 enddo
+print*, '//////////////////////////////////////////////'
 print *, 'RMSE ENERGY:', sqrt(rmse_energy/n_config)
 print *, 'RMSE FORCE:', sqrt(rmse_force/nforce)
 print *, 'RMSE STRESS Units GPa:', sqrt(rmse_stress/n_config/6.d0)
+print*, '//////////////////////////////////////////////'
 open(181,file="predited.datf")
 do ii = 1, n_config
         write(181,*) "----------------------------------------------------"
