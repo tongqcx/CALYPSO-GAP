@@ -75,6 +75,7 @@ integer                                 :: ninteraction
 REAL(DP)                                :: sigma_jitter
 REAL(DP)                                :: Rcut, Rmin, d_width
 character(2),allocatable,dimension(:)   :: elements
+INTEGER                                 :: ncross
 INTEGER,allocatable,dimension(:,:)      :: interaction_mat
 
 INTEGER                                 :: ne, nf, ns

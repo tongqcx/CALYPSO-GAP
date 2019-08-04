@@ -62,8 +62,8 @@ if (T_2B .and. T_MB) then
 
     call gap_ini_mb(GAP_MB, AT, ACSF, DATA_C)
     call gap_cmo_mb(GAP_MB, AT, DATA_C)
-    do i = 1, 3
-        print*, 'Interation',i
+    do i = 1, DATA_C%ncross
+        print*, 'NCROSS >>>>>>>>>>>>',i
         call set_gpr_ob_2B(at, data_c)
         call gap_coeff_2b(GAP_2B, DATA_C)
         !$OMP parallel do schedule(dynamic) default(shared) private(j)

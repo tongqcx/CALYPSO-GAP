@@ -14,6 +14,7 @@ integer :: lv1,lv2
     DATA_C%d_width = 1.d0
     DATA_C%rmin = 0.5d0
     DATA_C%rcut = 6.d0
+    DATA_C%ncross = 3
     sigma_jitter = 1.0d-8
     ltrain = .true.
     ltest = .true.
@@ -106,6 +107,8 @@ do while(.not.eof(60))
         read(rtp(lv2:),*) DATA_C%rmin
     case('d_width')
         read(rtp(lv2:),*) DATA_C%d_width
+    case('ncross')
+        read(rtp(lv2:),*) DATA_C%ncross
     case('sigma_jitter')
         read(rtp(lv2:),*) DATA_C%sigma_jitter
     case('elements')
