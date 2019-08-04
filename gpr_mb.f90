@@ -280,8 +280,6 @@ type(DATA_type),intent(in)               :: DATA_C
 do i = 1, DATA_C%nob
     GAP%lamdaobe(i,1) = sqrt(1.d0/GAP%lamda(i)) * DATA_C%ob(i)
 enddo
-call matmuldiag_T(GAP%cmo(:,:,1), sqrt(1.d0/GAP%lamda))
-print*, 'begin gpr'
 call gpr(GAP%cmm, GAP%cmo(:,:,1), GAP%lamdaobe(:,1), GAP%coeff(:,1))
 END SUBROUTINE GAP_COEFF_MB
 
@@ -293,6 +291,7 @@ type(DATA_type),intent(in)               :: DATA_C
 !local
 REAL(DP),allocatable,dimension(:)        :: cov
 INTEGER                                  :: i,j,k1,kf
+CALL  SYSTEM_CLOCK(it1)
 allocate(cov(DATA_C%nob))
 !!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
 !$OMP parallel private(i_sparse, i_struc ,i_ob, kf, cov)
@@ -310,7 +309,9 @@ enddo
 !$OMP END PARALLEL 
 
 deallocate(cov)
-print*, 'GAP CMO MB FINISHED'
+call matmuldiag_T(GAP%cmo(:,:,1), sqrt(1.d0/GAP%lamda))
+CALL  SYSTEM_CLOCK(it2)
+print*, 'GAP_MB CMO FINISHED',(it2 - it1)/10000.0,'Seconds'
 END SUBROUTINE GAP_CMO_MB
 
 SUBROUTINE GAP_PREDICT_MB(GAP,AT)
@@ -332,7 +333,7 @@ enddo
 call get_cov(GAP%delta, at%kk, GAP%sparseX, GAP%theta, at%ckm)
 
 at%atomic_energy = matmul(at%ckm, GAP%coeff(:,1))
-at%energy_cal = sum(at%atomic_energy)
+at%energy_cal_mb = sum(at%atomic_energy)
 at%dedg = 0.d0
 do i = 1, at%natoms
     do j = 1, GAP%dd
@@ -344,25 +345,25 @@ do i = 1, at%natoms
 enddo
 
 !!for force calculation
-at%force_cal = 0.d0
+at%force_cal_mb = 0.d0
 do i = 1, at%natoms
     do n = 1, at%natoms
         do j = 1,3
             do k = 1, GAP%dd
-                at%force_cal(i,j) = at%force_cal(i,j) - at%dedg(n,k) * at%dxdy(k,n,i,j)
+                at%force_cal_mb(i,j) = at%force_cal_mb(i,j) - at%dedg(n,k) * at%dxdy(k,n,i,j)
             enddo
         enddo
     enddo
 enddo
 !! for stress calculation
-at%stress_cal = 0.d0
+at%stress_cal_mb = 0.d0
 at%volume = volume(at%lat)
 k1 = 1
 do i = 1, 3
     do j = i, 3
         do n = 1, at%natoms
             do k = 1, GAP%dd
-                at%stress_cal(k1) = at%stress_cal(k1) - at%dedg(n,k) * at%strs(i,j,k,n)
+                at%stress_cal_mb(k1) = at%stress_cal_mb(k1) - at%dedg(n,k) * at%strs(i,j,k,n)
             enddo
         enddo
         k1 = k1 + 1

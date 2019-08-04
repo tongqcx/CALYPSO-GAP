@@ -53,13 +53,12 @@ do i = 1, GAP%nsparse
     GAP%sparseX(i,1) = data_c%rmin + (i - 1)*dr3
     GAP%sparsecut(i) = fcut_ij(GAP%sparseX(i,1))
 enddo
-!$OMP parallel do schedule(dynamic) default(shared) private(i,j,fc_i,fc_j)
+!!$OMP parallel do schedule(dynamic) default(shared) private(i,j,fc_i,fc_j)
     do i  = 1, GAP%nsparse
         GAP%cmm(i,i) = GAP%delta**2 
         fc_i = fcut_ij(GAP%sparseX(i,1))
         GAP%cmm(i,i) = GAP%cmm(i,i)*fc_i*fc_i + DATA_C%sigma_jitter
         do j = i + 1, GAP%nsparse
-
             GAP%cmm(i,j) = covariance_2B(GAP%delta, GAP%sparseX(i,1), GAP%sparseX(j,1),GAP%theta(1))
             GAP%cmm(j,i) = GAP%cmm(i,j)
         enddo
@@ -79,8 +78,8 @@ do i = 1, DATA_C%ne
     GAP%lamdaobe(i, 1) = DATA_C%obe(i) * sqrt(1.d0/GAP%lamda(i))
 enddo
 call write_array(GAP%lamdaobe(:, 1), 'lamdaobe.dat')
-do k = 1, DATA_C%ninteraction
-    call matmuldiag_T(GAP%cmo(:,:,k),sqrt(1.0/GAP%lamda))
+do k = 1, GAP%ninteraction
+!    call matmuldiag_T(GAP%cmo(:,:,k),sqrt(1.0/GAP%lamda))
     call gpr(GAP%cmm, GAP%cmo(:,:,k), GAP%lamdaobe(:,1), GAP%coeff(:,k))
 enddo
 END SUBROUTINE GAP_COEFF_2B
@@ -140,8 +139,9 @@ REAL(DP)                              :: ene
 REAL(DP)                              :: cov, dcov
 REAL(DP),allocatable,dimension(:,:,:) :: stress_i
 
-at%energy_cal = 0.d0
-at%force_cal = 0.d0
+at%energy_cal_2b = 0.d0
+at%force_cal_2b = 0.d0
+at%stress_cal_2b = 0.d0
 at%stress = 0.d0
 at%atomic_energy = 0.d0
 allocate(stress_i(3,3,at%natoms))
@@ -168,7 +168,7 @@ do i = 1,at%natoms
 
 !***********  get atomic force                    
                 do k2 = 1,3
-                    at%force_cal(i,k2) = at%force_cal(i,k2) + (dfc_ij * cov + dcov * fc_ij) * &
+                    at%force_cal_2b(i,k2) = at%force_cal_2b(i,k2) + (dfc_ij * cov + dcov * fc_ij) * &
                     (at%atom(i)%pos(k2) - at%atom(i)%neighbor(j,k,k2))/rij * GAP%coeff(k1,interaction_index) 
 
 !***********  get atomic cell stress
@@ -185,17 +185,17 @@ do i = 1,at%natoms
     enddo ! j
 !    print*, at%atomic_energy(i)
 enddo
-at%energy_cal = sum(at%atomic_energy) * 0.5d0 + at%natoms * ene_cons
-at%force_cal = -1.0 * at%force_cal
+at%energy_cal_2b = sum(at%atomic_energy) * 0.5d0 + at%natoms * ene_cons
+at%force_cal_2b = -1.0 * at%force_cal_2b
 at%volume = volume(at%lat)
 at%stress = sum(stress_i, dim=3) * -0.5d0
 !at%stress = at%stress / at%volume * (1.0/GPa2eVPang) * 10.d0
-at%stress_cal(1) = at%stress(1,1)
-at%stress_cal(2) = at%stress(1,2)
-at%stress_cal(3) = at%stress(1,3)
-at%stress_cal(4) = at%stress(2,2)
-at%stress_cal(5) = at%stress(2,3)
-at%stress_cal(6) = at%stress(3,3)
+at%stress_cal_2b(1) = at%stress(1,1)
+at%stress_cal_2b(2) = at%stress(1,2)
+at%stress_cal_2b(3) = at%stress(1,3)
+at%stress_cal_2b(4) = at%stress(2,2)
+at%stress_cal_2b(5) = at%stress(2,3)
+at%stress_cal_2b(6) = at%stress(3,3)
 deallocate(stress_i)
 END SUBROUTINE
 
@@ -204,10 +204,11 @@ implicit none
 type(GAP_type),intent(inout)             :: GAP
 type(Structure),intent(in),dimension(:)  :: at
 type(DATA_type),intent(in)               :: DATA_C
-integer                                  :: i, j, k1, k2, k3
+integer                                  :: i, j, k, k1, k2, k3
 integer                                  :: n, interaction_index
 REAL(DP)                                 :: rij
 
+CALL  SYSTEM_CLOCK(it1)
 GAP%cmo = 0.d0
 !$OMP parallel do schedule(dynamic) default(shared) private(i, j, k1, k2, k3, interaction_index, rij, n)
 do i = 1, GAP%nsparse
@@ -227,6 +228,11 @@ do i = 1, GAP%nsparse
     enddo
 enddo
 !cmo(:,:,2) = cmo(:,:,2)/2.d0
+do k = 1, GAP%ninteraction
+    call matmuldiag_T(GAP%cmo(:,:,k),sqrt(1.0/GAP%lamda))
+enddo
+CALL  SYSTEM_CLOCK(it2)
+print*, 'GAP_2B CMO FINISHED',(it2 - it1)/10000.0,'Seconds'
 END SUBROUTINE
 
 END module

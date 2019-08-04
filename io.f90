@@ -77,6 +77,8 @@ do while(.not.eof(60))
         read(rtp(lv2:),*) DATA_C%theta_2b
     case('delta_2b')
         read(rtp(lv2:),*) DATA_C%delta_2b
+    case('ltrain_2b')
+        read(rtp(lv2:),*) DATA_C%ltrain_2b
 !}
 !{
     case('nsparse_mb')
@@ -95,6 +97,8 @@ do while(.not.eof(60))
         read(rtp(lv2:),*) DATA_C%sparse_method
     case('sigma_atom')
         read(rtp(lv2:),*) DATA_C%sigma_atom
+    case('ltrain_mb')
+        read(rtp(lv2:),*) DATA_C%ltrain_mb
 !}
     case('rcut')
         read(rtp(lv2:),*) DATA_C%rcut
@@ -156,7 +160,7 @@ do i = 1, n_config
     read(2244,*)  at(i)%natoms, at(i)%nspecies
     data_c%nf = data_c%nf + 3*at(i)%natoms
     data_c%natoms = data_c%natoms + at(i)%natoms
-    call ini_structure(at(i))
+    call ini_structure(at(i), data_c)
     do j = 1,3
         read(2244,*) at(i)%lat(j,:)
     enddo

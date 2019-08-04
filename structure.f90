@@ -29,9 +29,9 @@ type Structure
     integer,dimension(:,:),allocatable       :: interaction_mat
     ! Properties
     real(DP)                                 :: volume
-    real(DP),dimension(:,:),allocatable      :: force_ref, force_cal
-    real(DP),dimension(6)                    :: stress_ref, stress_cal
-    real(DP)                                 :: energy_ref, energy_cal
+    real(DP),dimension(:,:),allocatable      :: force_ref, force_cal, force_cal_mb, force_cal_2b
+    real(DP),dimension(6)                    :: stress_ref, stress_cal, stress_cal_mb, stress_cal_2b
+    real(DP)                                 :: energy_ref, energy_cal, energy_cal_mb, energy_cal_2b
     real(DP),dimension(:),allocatable        :: atomic_energy
     real(DP),dimension(3,3)                  :: stress         
     ! for many-body descriptors ACSF
@@ -42,8 +42,9 @@ type Structure
 endtype Structure
 type(Structure),allocatable,dimension(:)   :: at
 contains
-SUBROUTINE INI_STRUCTURE(at)
+SUBROUTINE INI_STRUCTURE(at, data_c)
 type(Structure),intent(inout)  :: at
+type(data_type),intent(in)     :: data_c
 
 allocate(at%symbols(     at%natoms))
 allocate(at%mlp_weights( at%natoms))
@@ -55,6 +56,8 @@ allocate(at%dpos(        at%natoms,3))
 allocate(at%force_ref(   at%natoms,3))
 allocate(at%force_cal(   at%natoms,3))
 allocate(at%atomic_energy(at%natoms))
+allocate(at%force_cal_mb(   at%natoms,3))
+allocate(at%force_cal_2b(   at%natoms,3))
 END SUBROUTINE
 
 !------------------------------------------------------
@@ -94,7 +97,6 @@ enddo
 
 !rcut = 9.d0
 !rmin = 0.5d0
-!print*, 'data_c%rcut',data_c%rcut
 
 at%recip_lat = recipvector(at%lat)
 nabc(1)=ceiling(data_c%rcut*vectorlength(at%recip_lat(1,:))/pi/2)
@@ -138,8 +140,9 @@ do i = 1, at%natoms
 enddo
 end SUBROUTINE
 
-SUBROUTINE GET_RMSE(AT)
+SUBROUTINE GET_RMSE(AT,itype)
 type(Structure),intent(inout),dimension(:)     :: at
+integer                                        :: itype
 
 ! In this subroutine, the unit of Energy is eV  
 !                                 Force  is eV/angstrom
@@ -153,6 +156,24 @@ rmse_energy = 0.d0
 rmse_force = 0.d0
 rmse_stress = 0.d0
 nforce = 0
+
+!@@@
+do i = 1, n_config
+    if (itype == 1) then
+        at(i)%energy_cal = at(i)%energy_cal_2b
+        at(i)%force_cal = at(i)%force_cal_2b
+        at(i)%stress_cal = at(i)%stress_cal_2b
+    elseif (itype == 2) then
+        at(i)%energy_cal = at(i)%energy_cal_mb
+        at(i)%force_cal = at(i)%force_cal_mb
+        at(i)%stress_cal = at(i)%stress_cal_mb
+    else
+        at(i)%energy_cal = at(i)%energy_cal_mb + at(i)%energy_cal_2b
+        at(i)%force_cal = at(i)%force_cal_mb + at(i)%force_cal_2b
+        at(i)%stress_cal = at(i)%stress_cal_mb + at(i)%stress_cal_2b
+    endif
+enddo
+!@@@
 do i = 1, n_config
     rmse_energy = rmse_energy + (at(i)%energy_cal/at(i)%natoms - at(i)%energy_ref/at(i)%natoms)**2
     do j = 1, at(i)%natoms
@@ -223,6 +244,24 @@ do ii = 1, n_config
 enddo
 close(181)
 END SUBROUTINE
+
+SUBROUTINE INI_AT_CALC(AT)
+type(Structure),intent(inout),dimension(:)     :: at
+! local
+integer                                        :: n_config, i
+
+n_config = size(at)
+do i = 1, n_config
+    at(i)%energy_cal_mb = 0.d0
+    at(i)%force_cal_mb = 0.d0
+    at(i)%stress_cal_mb = 0.d0
+    at(i)%energy_cal_2b = 0.d0
+    at(i)%force_cal_2b = 0.d0
+    at(i)%stress_cal_2b = 0.d0
+enddo
+END SUBROUTINE INI_AT_CALC
+
+    
 
 
 end module
