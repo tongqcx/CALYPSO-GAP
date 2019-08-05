@@ -190,11 +190,10 @@ do i = 1, n_config
         rmse_stress = rmse_stress + (at(i)%stress_cal(j)/10.0 - at(i)%stress_ref(j)/10.0)**2
     enddo
 enddo
-print*, '//////////////////////////////////////////////'
 print *, 'RMSE ENERGY:', sqrt(rmse_energy/n_config)
 print *, 'RMSE FORCE:', sqrt(rmse_force/nforce)
 print *, 'RMSE STRESS Units GPa:', sqrt(rmse_stress/n_config/6.d0)
-print*, '//////////////////////////////////////////////'
+print*, '============================================================'
 open(181,file="predited.datf")
 do ii = 1, n_config
         write(181,*) "----------------------------------------------------"
@@ -247,8 +246,9 @@ enddo
 close(181)
 END SUBROUTINE
 
-SUBROUTINE INI_AT_CALC(AT)
+SUBROUTINE INI_AT_CALC(AT, DATA_C)
 type(Structure),intent(inout),dimension(:)     :: at
+type(data_type),intent(inout)                  :: data_c
 ! local
 integer                                        :: n_config, i
 
@@ -261,6 +261,22 @@ do i = 1, n_config
     at(i)%force_cal_2b = 0.d0
     at(i)%stress_cal_2b = 0.d0
 enddo
+data_c%ns = n_config*6
+data_c%ne = n_config
+data_c%nob = data_c%ne + data_c%nf + data_c%ns
+
+if (data_c%ltrain_mb .and. .not. data_c%ltrain_2b) then
+    allocate(data_c%ob(data_c%nob))
+endif
+
+if (data_c%ltrain_2b .and. .not. data_c%ltrain_mb) then
+    allocate(data_c%obe(data_c%ne))
+endif
+
+if (data_c%ltrain_2b .and. data_c%ltrain_mb) then
+    allocate(data_c%ob(data_c%nob))
+    allocate(data_c%obe(data_c%ne))
+endif
 END SUBROUTINE INI_AT_CALC
 
     

@@ -307,11 +307,6 @@ type(Structure),intent(inout),dimension(:)  :: at
 type(DATA_TYPE),intent(inout)               :: data_c
 
 n_config = size(at)
-data_c%ns = n_config*6
-data_c%ne = n_config
-data_c%nob = data_c%ne + data_c%nf + data_c%ns
-if (.not. allocated(data_c%ob)) allocate(data_c%ob(data_c%nob))
-if (.not. allocated(data_c%obe)) allocate(data_c%obe(data_c%ne))
 kf = 0
 do i = 1, n_config
     kf = kf + 1
@@ -338,9 +333,6 @@ type(Structure),intent(in),dimension(:)     :: at
 type(DATA_TYPE),intent(inout)               :: data_c
 
 n_config = size(at)
-data_c%ns = n_config*6
-data_c%ne = n_config
-data_c%nob = data_c%ne + data_c%nf + data_c%ns
 if (.not. allocated(data_c%ob)) allocate(data_c%ob(data_c%nob))
 kf = 0
 do i = 1, n_config

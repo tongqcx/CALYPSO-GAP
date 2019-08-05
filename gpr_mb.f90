@@ -21,6 +21,7 @@ type(ACSF_type),intent(inout)               :: ACSF
 type(DATA_type),intent(in)                  :: DATA_C
 
 !local
+n_config = size(at)
 
 call READ_ACSF('neural.in', ACSF)
 GAP%nsparse = DATA_C%nsparse_mb
@@ -33,19 +34,19 @@ GAP%delta = DATA_C%delta_mb
 GAP%sparse_method = DATA_C%sparse_method
 GAP%sigma_atom = DATA_C%sigma_atom
 GAP%sparse_dis_len = DATA_C%sparse_dis_len
-print*, '&&&& '
+print*, '==============================================='
 print*, 'Parameters for MANY_BODY interaction'
 print*, 'The size of sparse set:', GAP%nsparse
 print*, 'The dimension of ACSF descriptors', GAP%dd
 write(*,'(A30X3F8.5)'), 'The value of sigma E/F/S:', GAP%sigma_e, GAP%sigma_f, GAP%sigma_s
-print*, 'The size of globalY:', GAP%nglobalY
+print*, 'The size of globalY:', GAP%nglobalY, DATA_C%nob
 print*, 'sparse_dis_len:', GAP%sparse_dis_len
 print*, 'sparse_method:',GAP%sparse_method
 print*, 'sigma_atom:',GAP%sigma_atom
 
 CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
-do i = 1, DATA_C%ne
+do i = 1, n_config
     call car2acsf(at(i), GAP, ACSF)
 enddo
 CALL  SYSTEM_CLOCK(it2)
@@ -65,7 +66,7 @@ if (GAP%sparse_method == 1) then
     allocate(GAP%coeff(GAP%nsparse, 1))
     spaese_index = 0
     k = 0
-    do i_struc = 1, DATA_C%ne
+    do i_struc = 1, n_config
         do i_atom = 1, at(i_struc)%natoms
             k = k + 1
             GAP%descriptorx(k,:) = at(i_struc)%xx(:,i_atom)
@@ -101,7 +102,7 @@ call write_array(GAP%cmm,'cmm.dat')
 ! initial GAP%lamda
 !!!!!!!!!!!!!!!!!!!!!!
 kf = 0
-do i = 1, DATA_C%ne
+do i = 1, n_config
     kf = kf + 1
     GAP%lamda(kf) = (GAP%sigma_e * (sqrt(1.d0 * at(i)%natoms)))**2
     do j = 1,at(i)%natoms

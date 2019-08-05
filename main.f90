@@ -27,13 +27,13 @@ allocate(at(nconfig))
 close(2211)
 
 call read_structure('config',at, data_c)
-call set_gpr_ob(at, data_c)
-call ini_at_calc(AT)
+call ini_at_calc(AT, data_c)
 
 !*****************************************************
 !
 !*****************************************************
 if (T_MB .and. .not. T_2B) then
+    call set_gpr_ob(at, data_c)
     call gap_ini_mb(GAP_MB, AT, ACSF, DATA_C)
     call gap_cmo_mb(GAP_MB, AT, DATA_C)
     call gap_coeff_mb(GAP_MB,AT,DATA_C)
@@ -45,6 +45,7 @@ endif
 !*****************************************************
 !
 if (T_2B .and. .not. T_MB) then
+    call set_gpr_ob(at, data_c)
     call gap_ini_2b(GAP_2B, AT, DATA_C)
     call gap_cmo_2b(GAP_2B, AT, DATA_C)
     call write_array(GAP_2B%cmo(:,:,1),'cmo.dat')
@@ -57,6 +58,9 @@ endif
 if (T_2B .and. T_MB) then
     
     itype = 3
+    print*, '***'
+    print*, 'BEGIN FITTING 2-body and many-body interaction'
+    print*, '***'
     call gap_ini_2b(GAP_2B, AT, DATA_C)
     call gap_cmo_2b(GAP_2B, AT, DATA_C)
 
