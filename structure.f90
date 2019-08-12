@@ -105,8 +105,10 @@ nabc(3)=ceiling(data_c%rcut*vectorlength(at%recip_lat(3,:))/pi/2)
 do i = 1, at%natoms
 
 !------------------------------------------------
-    allocate(at%atom(i)%neighbor(at%nspecies, max_neighbor, 5))
-    allocate(at%atom(i)%count(at%nspecies))
+    !allocate(at%atom(i)%neighbor(at%nspecies, max_neighbor, 5))
+    !allocate(at%atom(i)%count(at%nspecies))
+    allocate(at%atom(i)%neighbor(data_c%nspecies, max_neighbor, 5))
+    allocate(at%atom(i)%count(data_c%nspecies))
     at%atom(i)%pos = at%pos(i,:)
     at%atom(i)%name = at%symbols(i)
     at%atom(i)%count = 0

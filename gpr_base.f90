@@ -310,18 +310,24 @@ n_config = size(at)
 kf = 0
 do i = 1, n_config
     kf = kf + 1
-    data_c%obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
-    data_c%ob(kf) = at(i)%energy_ref
-    do j = 1, at(i)%natoms
-        do k1 = 1, 3
-            kf = kf + 1
-            data_c%ob(kf) = at(i)%force_ref(j,k1)
+
+    if (data_c%ltrain_2b .and. .not. data_c%ltrain_mb) then
+        data_c%obe(i) = at(i)%energy_ref - at(i)%natoms * ene_cons
+    endif
+
+    if (data_c%ltrain_mb .and. .not. data_c%ltrain_2b) then
+        data_c%ob(kf) = at(i)%energy_ref
+        do j = 1, at(i)%natoms
+            do k1 = 1, 3
+                kf = kf + 1
+                data_c%ob(kf) = at(i)%force_ref(j,k1)
+            enddo
         enddo
-    enddo
-    do j = 1, 6
-        kf = kf + 1
-        data_c%ob(kf) = at(i)%stress_ref(j)
-    enddo
+        do j = 1, 6
+            kf = kf + 1
+            data_c%ob(kf) = at(i)%stress_ref(j)
+        enddo
+    endif
 enddo
 print*, 'Number of structures/energy/stress:', data_c%ne, data_c%ne, data_c%ns
 print*, 'Number of atoms/forces:', data_c%natoms, data_c%nf

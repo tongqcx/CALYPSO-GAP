@@ -72,12 +72,12 @@ if (GAP%sparse_method == 1) then
             GAP%descriptorx(k,:) = at(i_struc)%xx(:,i_atom)
         enddo
     enddo
-    call write_array(GAP%descriptorx,'des.dat')
+    !call write_array(GAP%descriptorx,'des.dat')
     call cur_decomposition(transpose(GAP%descriptorx), GAP%sparseX_index)
     do i = 1, GAP%nsparse
         GAP%sparseX(i,:) = GAP%descriptorx(GAP%sparsex_index(i),:)
     enddo
-    call write_array(GAP%sparseX,'sparseX.dat')
+    !call write_array(GAP%sparseX,'sparseX.dat')
     call GAP_SET_THETA(GAP%sparseX, GAP%theta)
     
     
@@ -94,7 +94,7 @@ elseif (GAP%sparse_method == 2) then
 else
     print*, 'Unknow sparse_method'
 endif
-call write_array(GAP%cmm,'cmm.dat')
+!call write_array(GAP%cmm,'cmm.dat')
 
 
 
