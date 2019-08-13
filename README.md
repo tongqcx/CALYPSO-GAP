@@ -7,13 +7,13 @@ For more information of GAP, please read the paper
 
 ## Using GAP
 * Compling GAP
-The lapack library is need for compling GAP, So be sure the lapack library or Intel MKL library have installed. 
-Entering Src dir, type make
-* Input files
-  ** control (containing the control parameter)
-  ** config (containing training set)
-  ** test (containing testing set)
-  ** neural.in (the parameter file of wACSF)
+The lapack library is need for compling GAP, So be sure the lapack library or Intel MKL library have installed.  
+Entering Src dir, type make  
+* Input files  
+  * control (containing the control parameter)  
+  * config (containing training set)  
+  * test (containing testing set)  
+  * neural.in (the parameter file of wACSF)  
 ## How to cite GAP
 
 ## Others
