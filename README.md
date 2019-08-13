@@ -1,6 +1,9 @@
 # Gaussian Approximation Potentials(GAP)
-Gaussian approximation potentials is an effective machine learning potentials(MLP) to calculate the properties of multi-species crystal under high pressure.
-
+Gaussian approximation potentials is an effective machine learning potentials(MLP) to calculate the properties of multi-species crystal under high pressure.  
+There are two key methods in GAP
+* Weighted atom centered symmetry function(wACSF)
+* Gaussian process regression(GPR)
+wACSF based the original ACSF by Jorg Behler, ACSF describe the atomic environment by a series of radial or anguler symmetry function.  
 For more information of GAP, please read the paper  
 [GaussianApproximation Potentials: The Accuracy of Quantum Mechanics, without the Electrons](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.104.136403)  
 [Gaussian Approximation Potentials: A Brief Tutorial introduction](https://onlinelibrary.wiley.com/doi/full/10.1002/qua.24927)  
@@ -10,10 +13,10 @@ For more information of GAP, please read the paper
 The lapack library is need for compling GAP, So be sure the lapack library or Intel MKL library have installed.  
 Entering Src dir, type make  
 * Input files  
-  * control (containing the control parameter)  
-  * config (containing training set)  
-  * test (containing testing set)  
-  * neural.in (the parameter file of wACSF)  
+  * **control** (containing the control parameter)  
+  * **config** (containing training set)  
+  * **test** (containing testing set)  
+  * **neural.in** (the parameter file of wACSF)  
 ## How to cite GAP
 
 ## Others
