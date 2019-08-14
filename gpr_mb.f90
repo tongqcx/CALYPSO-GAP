@@ -295,11 +295,11 @@ INTEGER                                  :: i,j,k1,kf
 CALL  SYSTEM_CLOCK(it1)
 allocate(cov(DATA_C%nob))
 !!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
-!!$OMP parallel private(i_sparse, i_struc ,i_ob, kf, cov)
-!!$OMP DO
+!$OMP parallel private(i_sparse, i_struc ,i_ob, kf, cov)
+!$OMP DO
 do i_sparse = 1, GAP%nsparse
     kf = 1
-    print*, i_sparse
+!    print*, i_sparse
     do i_struc = 1, DATA_C%ne
         call new_COV(GAP%delta, GAP%sparseX(i_sparse,:), GAP%theta, AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov(:))
         do i_ob = 1, 3*at(i_struc)%natoms + 7
@@ -308,7 +308,7 @@ do i_sparse = 1, GAP%nsparse
         enddo
     enddo
 enddo
-!!$OMP END PARALLEL 
+!$OMP END PARALLEL 
 
 deallocate(cov)
 call matmuldiag_T(GAP%cmo(:,:,1), sqrt(1.d0/GAP%lamda))
