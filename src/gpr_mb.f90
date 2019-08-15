@@ -273,9 +273,8 @@ call READ_ACSF('neural.in', ACSF)
 GAP%delta = 1.d0
 END SUBROUTINE GAP_READ_PARAS_MB
 
-SUBROUTINE GAP_COEFF_MB(GAP,AT,DATA_C)
+SUBROUTINE GAP_COEFF_MB(GAP, DATA_C)
 type(GAP_type),intent(inout)             :: GAP
-type(Structure),intent(in),dimension(:)  :: at
 type(DATA_type),intent(in)               :: DATA_C
 
 do i = 1, DATA_C%nob

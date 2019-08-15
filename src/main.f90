@@ -36,7 +36,8 @@ if (T_MB .and. .not. T_2B) then
     call set_gpr_ob(at, data_c)
     call gap_ini_mb(GAP_MB, AT, ACSF, DATA_C)
     call gap_cmo_mb(GAP_MB, AT, DATA_C)
-    call gap_coeff_mb(GAP_MB,AT,DATA_C)
+    deallocate(at)
+    call gap_coeff_mb(GAP_MB, DATA_C)
     call gap_write_paras_mb(GAP_MB)
     itype = 2
 endif
@@ -48,6 +49,7 @@ if (T_2B .and. .not. T_MB) then
     call set_gpr_ob(at, data_c)
     call gap_ini_2b(GAP_2B, AT, DATA_C)
     call gap_cmo_2b(GAP_2B, AT, DATA_C)
+    deallocate(at)
     call write_array(GAP_2B%cmo(:,:,1),'cmo.dat')
     call gap_coeff_2b(GAP_2B, DATA_C)
     call gap_write_paras_2b(GAP_2B)
@@ -77,7 +79,7 @@ if (T_2B .and. T_MB) then
         !call get_rmse(at, 1)
 
         call set_gpr_ob_MB(at, data_c)
-        call gap_coeff_mb(GAP_MB,AT,DATA_C)
+        call gap_coeff_mb(GAP_MB, DATA_C)
         !$OMP parallel do schedule(dynamic) default(shared) private(j)
         do j = 1, nconfig
             call gap_predict_MB(GAP_MB, at(j),.false.)
@@ -87,7 +89,7 @@ if (T_2B .and. T_MB) then
     enddo
 endif
 
-deallocate(at)
+!deallocate(at)
 ENDIF  ! ltrain
 
 if (ltest) then

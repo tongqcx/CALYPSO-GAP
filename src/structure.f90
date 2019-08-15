@@ -281,9 +281,6 @@ if (data_c%ltrain_2b .and. data_c%ltrain_mb) then
 endif
 END SUBROUTINE INI_AT_CALC
 
-    
-
-
 end module
 
 
