@@ -289,11 +289,13 @@ type(GAP_type),intent(inout)             :: GAP
 type(Structure),intent(in),dimension(:)  :: at
 type(DATA_type),intent(in)               :: DATA_C
 
+
 !local
-REAL(DP),allocatable,dimension(:)        :: cov
+!REAL(DP),allocatable,dimension(:)        :: cov
 INTEGER                                  :: i,j,k1,kf
+REAL(DP)                                :: cov(3 * 500 + 7) ! the maximum number of atoms is 500  modified 2019.08.15
 CALL  SYSTEM_CLOCK(it1)
-allocate(cov(DATA_C%nob))
+!allocate(cov(DATA_C%nob))
 !!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
 !$OMP parallel private(i_sparse, i_struc ,i_ob, kf, cov)
 !$OMP DO
@@ -310,7 +312,7 @@ do i_sparse = 1, GAP%nsparse
 enddo
 !$OMP END PARALLEL 
 
-deallocate(cov)
+!deallocate(cov)
 call matmuldiag_T(GAP%cmo(:,:,1), sqrt(1.d0/GAP%lamda))
 CALL  SYSTEM_CLOCK(it2)
 print*, 'GAP_MB CMO FINISHED',(it2 - it1)/10000.0,'Seconds'
