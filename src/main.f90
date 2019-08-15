@@ -103,10 +103,7 @@ open(2211,file='test')
 read(2211,*) nconfig
 allocate(at(nconfig))
 close(2211)
-CALL  SYSTEM_CLOCK(it1)
 call read_structure('test',at, data_c)
-CALL  SYSTEM_CLOCK(it2)
-print*, "CPU time used (sec) For converting coord: ",(it2 - it1)/10000.0
 
 CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
