@@ -105,15 +105,18 @@ kf = 0
 do i = 1, n_config
     kf = kf + 1
     GAP%lamda(kf) = (GAP%sigma_e * (sqrt(1.d0 * at(i)%natoms)))**2
+    GAP%lamda(kf) = sqrt(1.d0/GAP%lamda(kf))
     do j = 1,at(i)%natoms
         do k1 = 1,3
             kf = kf + 1
             GAP%lamda(kf) = GAP%sigma_f**2
+            GAP%lamda(kf) = sqrt(1.d0/GAP%lamda(kf))
         enddo
     enddo
     do j = 1,6
         kf = kf + 1
         GAP%lamda(kf) = GAP%sigma_s**2
+        GAP%lamda(kf) = sqrt(1.d0/GAP%lamda(kf))
     enddo
 enddo
 print*, 'GAP INI FINISHED'
@@ -278,7 +281,7 @@ type(GAP_type),intent(inout)             :: GAP
 type(DATA_type),intent(in)               :: DATA_C
 
 do i = 1, DATA_C%nob
-    GAP%lamdaobe(i,1) = sqrt(1.d0/GAP%lamda(i)) * DATA_C%ob(i)
+    GAP%lamdaobe(i,1) = GAP%lamda(i) * DATA_C%ob(i)
 enddo
 call gpr(GAP%cmm, GAP%cmo(:,:,1), GAP%lamdaobe(:,1), GAP%coeff(:,1))
 END SUBROUTINE GAP_COEFF_MB
@@ -312,7 +315,7 @@ enddo
 !$OMP END PARALLEL 
 
 !deallocate(cov)
-call matmuldiag_T(GAP%cmo(:,:,1), sqrt(1.d0/GAP%lamda))
+call matmuldiag_T(GAP%cmo(:,:,1), GAP%lamda)
 CALL  SYSTEM_CLOCK(it2)
 print*, 'GAP_MB CMO FINISHED',(it2 - it1)/10000.0,'Seconds'
 END SUBROUTINE GAP_CMO_MB
