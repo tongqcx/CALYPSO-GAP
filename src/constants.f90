@@ -8,6 +8,7 @@ REAL(DP), PARAMETER      :: GPa2eVPang =6.24219D-3
 !REAL(DP), PARAMETER      :: ene_cons = -162.0
 !REAL(DP), PARAMETER      :: ene_cons = -90.040530764400003
 INTEGER, PARAMETER       :: max_mm_len = 4000
+INTEGER, PARAMETER       :: max_atoms = 500
 
 !  *************  Parameters of GPR
 REAL(DP)                               :: RMSE_ENERGY, RMSE_FORCE, RMSE_STRESS

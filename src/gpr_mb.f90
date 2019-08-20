@@ -292,7 +292,7 @@ type(DATA_type),intent(in)               :: DATA_C
 !local
 !REAL(DP),allocatable,dimension(:)        :: cov
 INTEGER                                  :: i,j,k1,kf
-REAL(DP)                                :: cov(3 * 500 + 7) ! the maximum number of atoms is 500  modified 2019.08.15
+REAL(DP)                                 :: cov(3 * max_atoms + 7) ! the maximum number of atoms is 500  modified 2019.08.15
 CALL  SYSTEM_CLOCK(it1)
 !allocate(cov(DATA_C%nob))
 !!$OMP parallel do schedule(dynamic) default(shared) private(i_sparse, i_struc ,i_ob, kf, cov)
