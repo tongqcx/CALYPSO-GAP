@@ -196,7 +196,7 @@ do while (.true.)
     enddo
     calc_det = GAP%cmm
     det_cmm = my_det(calc_det)**(1.d0/GAP%nsparse)
-    if (det_cmm > 0.01d0) then
+    if (det_cmm > Inverse_error) then
         write(*,*) "The number of atomic environment in Sparse set:",GAP%nsparse
         print*, 'Det of CMM:',det_cmm
         exit
