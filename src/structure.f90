@@ -2,7 +2,7 @@ module struct
 use constants
 use math
 implicit none
-integer,parameter                      :: max_neighbor = 2000
+integer,parameter                      :: max_neighbor = 4000
 type Atoms
     character(2)                       :: name
     integer                            :: atomic_number
@@ -123,12 +123,13 @@ do i = 1, at%natoms
                     dis = dsqrt(dr(1)**2 + dr(2)**2 + dr(3)**2)
                     if ( dis > data_c%rcut) cycle
                     if ( dis < data_c%rmin) then
-                        print*, 'The distance of two atoms is very small'
-                        stop
+                        print*, 'Warning: The distance of two atoms is very small',dis
+                        !stop
                     endif
                     at%atom(i)%count(at%index(j)) = at%atom(i)%count(at%index(j)) + 1
                     if (at%atom(i)%count(at%index(j)) > max_neighbor) then
-                        print *, 'Reset max number of neighbor'
+                        print *, 'Atoms neighbor:', at%atom(i)%count(at%index(j)), 'large than max_neighbor',max_neighbor
+                        print *, 'Please reset max_neighbor in nGAP/src/structure.f90'
                         stop
                     endif
                     !at%atom(i)%nneighbor = count
