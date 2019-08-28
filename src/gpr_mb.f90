@@ -225,7 +225,7 @@ do while (.true.)
         has_upper_bound = .TRUE.
         upper_bound = GAP%sparse_dis_len
         GAP%sparse_dis_len = GAP%sparse_dis_len * 0.75d0
-        print *,'Decreasing sparse_dis_cut to:',GAP%sparse_dis_len
+        print *,'*Decreasing sparse_dis_cut to:',GAP%sparse_dis_len
 
         if (allocated(GAP%cmm))  deallocate(GAP%cmm)
         if (allocated(calc_det))  deallocate(calc_det)
