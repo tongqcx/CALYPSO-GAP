@@ -130,7 +130,7 @@ type(Structure),intent(inout),dimension(:)  :: at
 REAL(DP),dimension(:),allocatable           :: theta_temp
 REAL(DP),dimension(:,:),allocatable         :: MM
 REAL(DP),dimension(:,:),allocatable         :: calc_det
-logical                                     :: lexit
+logical                                     :: lexit, has_upper_bound
 REAL(DP)                                    :: my_length
 
 !spaese_dis_len = 1.d0
@@ -158,6 +158,8 @@ enddo
 deallocate(MM)
 allocate(MM(max_mm_len,GAP%dd))
 theta_temp = 1.d0
+has_upper_bound = .FALSE.
+CALL  SYSTEM_CLOCK(it1)
 do while (.true.)
     lexit = .false.
     mm = 0.d0
@@ -176,8 +178,8 @@ do while (.true.)
             endif
             if (k == max_mm_len) then
                 lexit = .true.
-                print*, i1,'nconfig',i2,'atom'
-                print*, k,"is large than max_mm_len",max_mm_len
+                !print*, i1,'nconfig',i2,'atom'
+                !print*, k,"is large than max_mm_len",max_mm_len
                 exit
             endif
         enddo
@@ -199,17 +201,38 @@ do while (.true.)
     enddo
     calc_det = GAP%cmm
     det_cmm = my_det(calc_det)**(1.d0/GAP%nsparse)
-    if (det_cmm > Inverse_error) then
+    !if (det_cmm > Inverse_error_min .and. det_cmm < Inverse_error_max) then
+    if (GAP%nsparse > 120 .and. GAP%nsparse < 200) then
         write(*,*) "The number of atomic environment in Sparse set:",GAP%nsparse
+        print*, 'sparse_dis_len:', GAP%sparse_dis_len
         print*, 'Det of CMM:',det_cmm
         exit
-    else
-        print *,'Increasing sparse_dis_cut',GAP%sparse_dis_len, '------>',GAP%sparse_dis_len + 0.2d0
-        GAP%sparse_dis_len = GAP%sparse_dis_len + 0.2d0
+    !elseif (det_cmm <= Inverse_error_min) then
+    elseif (GAP%nsparse >= 200) then
+
+        if (has_upper_bound) then
+            GAP%sparse_dis_len = (GAP%sparse_dis_len + upper_bound)/2.d0
+        else
+            GAP%sparse_dis_len = GAP%sparse_dis_len * 2.d0
+        endif
+        print *,'Increasing sparse_dis_cut to:',GAP%sparse_dis_len
+
+        if (allocated(GAP%cmm))  deallocate(GAP%cmm)
+        if (allocated(calc_det))  deallocate(calc_det)
+    !elseif (det_cmm >= Inverse_error_max )then
+    elseif (GAP%nsparse <= 120 )then
+
+        has_upper_bound = .TRUE.
+        upper_bound = GAP%sparse_dis_len
+        GAP%sparse_dis_len = GAP%sparse_dis_len * 0.75d0
+        print *,'Decreasing sparse_dis_cut to:',GAP%sparse_dis_len
+
         if (allocated(GAP%cmm))  deallocate(GAP%cmm)
         if (allocated(calc_det))  deallocate(calc_det)
     endif
 enddo
+CALL  SYSTEM_CLOCK(it2)
+print*, 'Sparsing FINISHED',(it2 - it1)/10000.0,'Seconds'
 allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
 allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
 allocate(GAP%coeff(GAP%nsparse, 1))
