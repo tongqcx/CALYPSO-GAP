@@ -76,6 +76,9 @@ integer                                 :: ninteraction
 REAL(DP)                                :: sigma_jitter
 REAL(DP)                                :: Rcut, Rmin, d_width
 character(2),allocatable,dimension(:)   :: elements
+REAL(DP),allocatable,dimension(:)       :: elements_weight
+LOGICAL                                 :: lread_ele_weight
+INTEGER,allocatable,dimension(:)        :: elements_count
 INTEGER                                 :: ncross
 INTEGER,allocatable,dimension(:,:)      :: interaction_mat
 
@@ -91,7 +94,24 @@ TYPE(data_type)                         :: DATA_C
 
 CONTAINS
 
-SUBROUTINE get_ele_weights(cc,nw)
+SUBROUTINE get_elements_count(DATA_C, cc)
+type(data_type),intent(inout)              :: DATA_C
+character(2),intent(in)                 :: cc
+do i = 1, DATA_C%nspecies
+    if (cc==DATA_C%elements(i)) DATA_C%elements_count(i) = DATA_C%elements_count(i) + 1
+enddo
+END SUBROUTINE get_elements_count
+
+SUBROUTINE get_read_weights(DATA_C, cc,nw)
+type(data_type),intent(in)              :: DATA_C
+character(2),intent(in)                 :: cc
+real(DP),intent(inout)                  :: nw
+do i = 1, DATA_C%nspecies
+    if (cc==DATA_C%elements(i)) nw = DATA_C%elements_weight(i)
+enddo
+END SUBROUTINE get_read_weights
+
+SUBROUTINE get_default_weights(cc,nw)
 implicit none
 character(2),intent(in)          ::  cc
 real(DP),intent(inout)           ::  nw
@@ -103,7 +123,7 @@ case ('Li')
 case ('B')
     nw = -1.0
 case ('C')
-    nw = 4.0
+    nw = 1.0
 case ('O')
     nw = 2.0
 case ('Mg')
@@ -120,6 +140,8 @@ case ('Ca')
     nw = -1.0
 case ('Ni')
     nw = -1.0
+case ('Sr')
+    nw = 3.0
 case ('Y')
     nw = 4.0
 case ('Cs')
