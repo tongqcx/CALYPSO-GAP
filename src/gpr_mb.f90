@@ -47,7 +47,7 @@ print*, 'sigma_atom:',GAP%sigma_atom
 CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, n_config
-    call car2acsf(at(i), GAP, ACSF)
+    call car2acsf(at(i), GAP, ACSF, DATA_C)
 enddo
 CALL  SYSTEM_CLOCK(it2)
 print*, "CPU time used (sec) For convert COORD: ",(it2 - it1)/10000.0
@@ -134,6 +134,20 @@ logical                                     :: lexit, has_upper_bound
 REAL(DP)                                    :: my_length
 
 !spaese_dis_len = 1.d0
+open(3310, file='ddd.dat')
+do i1 = 1, size(AT)
+    write(3310,*), i1
+    do i2 = 1, at(i1)%natoms
+        do j = 1, GAP%dd
+            write(3310,'(F20.10,$)') at(i1)%xx(j,i2)
+        enddo
+        write(3310,*)
+    enddo
+enddo
+close(3310)
+stop
+
+
 n_config = size(AT)
 allocate(theta_temp(GAP%dd))
 allocate(MM(max_mm_len,GAP%dd))
@@ -186,6 +200,8 @@ do while (.true.)
         if (lexit) exit
     enddo
     call GAP_SET_THETA(mm(1:k,:), GAP%theta)
+call write_array(GAP%theta, 'theta,dat')
+call write_array(mm(1:k,:),'MM.dat')
     GAP%nsparse = k
     GAP%theta = GAP%theta * GAP%sigma_atom
     if (.not. allocated(GAP%cmm))  allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
@@ -199,6 +215,8 @@ do while (.true.)
             GAP%cmm(j,i) = GAP%cmm(i,j)
         enddo
     enddo
+    call write_array(GAP%cmm, 'cmm.datx')
+stop
     calc_det = GAP%cmm
     det_cmm = my_det(calc_det)**(1.d0/GAP%nsparse)
     if (GAP%sparse_method == 2) then
@@ -239,7 +257,7 @@ do while (.true.)
             exit
         else
             GAP%sparse_dis_len = GAP%sparse_dis_len + 0.2d0
-            print *,'Increasing sparse_dis_cut',GAP%sparse_dis_len
+            print *,'Increasing sparse_dis_cut',GAP%sparse_dis_len, GAP%nsparse
             if (allocated(GAP%cmm))  deallocate(GAP%cmm)
             if (allocated(calc_det))  deallocate(calc_det)
         endif
@@ -357,12 +375,13 @@ CALL  SYSTEM_CLOCK(it2)
 print*, 'GAP_MB CMO FINISHED',(it2 - it1)/10000.0,'Seconds'
 END SUBROUTINE GAP_CMO_MB
 
-SUBROUTINE GAP_PREDICT_MB(GAP,AT, lcar2acsf)
+SUBROUTINE GAP_PREDICT_MB(GAP,AT, DATA_C, lcar2acsf)
 type(GAP_type),intent(in)                   :: GAP
 type(Structure),intent(inout)               :: at
+type(DATA_type),intent(in)                  :: DATA_C
 logical,intent(in)                          :: lcar2acsf
 
-if (lcar2acsf)  call car2acsf(at, GAP, ACSF)
+if (lcar2acsf)  call car2acsf(at, GAP, ACSF, DATA_C)
 
 if (.not. allocated(at%kk))   allocate(at%kk(at%natoms, GAP%dd))
 if (.not. allocated(at%ckm))  allocate(at%ckm(at%natoms, GAP%nsparse))
@@ -471,13 +490,14 @@ enddo
 deallocate(for)
 end subroutine new_cov
 
-SUBROUTINE CAR2ACSF(at, GAP, ACSF)
+SUBROUTINE CAR2ACSF(at, GAP, ACSF, DATA_C)
 
 implicit real(DP) (a-h,o-z)
 
 type(Structure),intent(inout)          :: at
 type(GAP_type),intent(in)              :: GAP
 type(ACSF_type),intent(in)             :: acsf
+type(DATA_type),intent(in)             :: DATA_C
 
 !local
 REAL(DP),dimension(3)                  :: xyz, xyz_j, xyz_k
@@ -501,7 +521,12 @@ do ii = 1, nnn
         cutoff = ACSF%sf(ii)%cutoff
         alpha = ACSF%sf(ii)%alpha
         do i = 1, at%natoms
-            do i_type = 1, at%nspecies
+            ! ******************
+            ! Be careful!!!
+            ! i_type loop from 1 to data_c%nspecies not at%nspecies
+            ! 2019.09.04 STUPID!!!
+            ! ******************
+            do i_type = 1, data_c%nspecies
                 do i_neighbor = 1, at%atom(i)%count(i_type)
                     rij = at%atom(i)%neighbor(i_type,i_neighbor,4)
                     if (rij.gt.cutoff) cycle
@@ -528,6 +553,7 @@ do ii = 1, nnn
         !            if (i==2 .and. ii==2) print*, dexp(-1.d0*alpha*rij**2)*fcutij
                     at%xx(ii,i) = at%xx(ii,i) + dexp(-1.d0*alpha*rij**2)*fcutij
                     at%xx(ii + nnn, i) = at%xx(ii + nnn, i) + dexp(-1.d0*alpha*rij**2)*fcutij * weights !!!!!!! 
+                    !write(*,'(I4X4F25.10)') i, rij, at%xx(ii,i),at%xx(ii + nnn,i)  , weights
 
                     !dxx/dx
                     temp1=-2.d0*alpha*rij*dexp(-1.d0*alpha*rij**2)*fcutij
@@ -599,7 +625,7 @@ do ii = 1, nnn
 !        print*, 'cutoff',cutoff,'alpha',alpha
         do i = 1, at%natoms
 !            lllll = 0
-            do j_type = 1, at%nspecies
+            do j_type = 1, data_c%nspecies
                 do j_neighbor = 1, at%atom(i)%count(j_type)
                     rij = at%atom(i)%neighbor(j_type,j_neighbor,4)
                     if (rij.gt.cutoff) cycle
@@ -630,7 +656,7 @@ do ii = 1, nnn
                     dfcutijdxk=0.0d0
                     dfcutijdyk=0.0d0
                     dfcutijdzk=0.0d0
-                    do k_type = 1, at%nspecies
+                    do k_type = 1, data_c%nspecies
                         do k_neighbor = 1, at%atom(i)%count(k_type)
                             !if ((k_type <= j_type) .and. (k_neighbor <= j_neighbor)) cycle
                             ! ******************
@@ -864,7 +890,7 @@ do ii = 1, nnn
         rshift = ACSF%sf(ii)%alpha
         alpha = 4.d0
         do i = 1, at%natoms
-            do i_type = 1, at%nspecies
+            do i_type = 1, data_c%nspecies
                 do i_neighbor = 1, at%atom(i)%count(i_type)
                     rij = at%atom(i)%neighbor(i_type,i_neighbor,4)
 
@@ -960,7 +986,7 @@ do ii = 1, nnn
         cutoff = ACSF%sf(ii)%cutoff
         alpha = ACSF%sf(ii)%alpha
         do i = 1, at%natoms
-            do j_type = 1, at%nspecies
+            do j_type = 1, data_c%nspecies
                 do j_neighbor = 1, at%atom(i)%count(j_type)
                     rij = at%atom(i)%neighbor(j_type,j_neighbor,4)
                     if (rij.gt.cutoff) cycle
@@ -991,7 +1017,7 @@ do ii = 1, nnn
                     dfcutijdxk=0.0d0
                     dfcutijdyk=0.0d0
                     dfcutijdzk=0.0d0
-                    do k_type = 1, at%nspecies
+                    do k_type = 1, data_c%nspecies
                         do k_neighbor = 1, at%atom(i)%count(k_type)
                             !if ((k_type <= j_type) .and. (k_neighbor <= j_neighbor)) cycle
                             if (k_type < j_type) cycle

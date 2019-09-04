@@ -140,6 +140,7 @@ do i = 1, at%natoms
             enddo
         enddo
     enddo
+    !print*, at%atom(i)%count(:)
 enddo
 end SUBROUTINE
 

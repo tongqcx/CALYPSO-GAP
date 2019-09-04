@@ -82,7 +82,7 @@ if (T_2B .and. T_MB) then
         call gap_coeff_mb(GAP_MB, DATA_C)
         !$OMP parallel do schedule(dynamic) default(shared) private(j)
         do j = 1, nconfig
-            call gap_predict_MB(GAP_MB, at(j),.false.)
+            call gap_predict_MB(GAP_MB, at(j), DATA_C, .false.)
         enddo
         !call get_rmse(at, 2)
         call get_rmse(at, itype)
@@ -109,7 +109,7 @@ CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, nconfig
     if (T_2B) call gap_predict_2B(GAP_2B, at(i), DATA_C)
-    if (T_MB) call gap_predict_MB(GAP_MB, at(i),.true.)
+    if (T_MB) call gap_predict_MB(GAP_MB, at(i), DATA_C, .true.)
 enddo
 CALL  SYSTEM_CLOCK(it2)
 print*, "CPU time used (sec) For GP Predict: ",(it2 - it1)/10000.0
