@@ -134,18 +134,18 @@ logical                                     :: lexit, has_upper_bound
 REAL(DP)                                    :: my_length
 
 !spaese_dis_len = 1.d0
-open(3310, file='ddd.dat')
-do i1 = 1, size(AT)
-    write(3310,*), i1
-    do i2 = 1, at(i1)%natoms
-        do j = 1, GAP%dd
-            write(3310,'(F20.10,$)') at(i1)%xx(j,i2)
-        enddo
-        write(3310,*)
-    enddo
-enddo
-close(3310)
-stop
+!open(3310, file='ddd.dat')
+!do i1 = 1, size(AT)
+!    write(3310,*), i1
+!    do i2 = 1, at(i1)%natoms
+!        do j = 1, GAP%dd
+!            write(3310,'(F20.10,$)') at(i1)%xx(j,i2)
+!        enddo
+!        write(3310,*)
+!    enddo
+!enddo
+!close(3310)
+!stop
 
 
 n_config = size(AT)
@@ -200,8 +200,8 @@ do while (.true.)
         if (lexit) exit
     enddo
     call GAP_SET_THETA(mm(1:k,:), GAP%theta)
-call write_array(GAP%theta, 'theta,dat')
-call write_array(mm(1:k,:),'MM.dat')
+!call write_array(GAP%theta, 'theta,dat')
+!call write_array(mm(1:k,:),'MM.dat')
     GAP%nsparse = k
     GAP%theta = GAP%theta * GAP%sigma_atom
     if (.not. allocated(GAP%cmm))  allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
@@ -215,8 +215,7 @@ call write_array(mm(1:k,:),'MM.dat')
             GAP%cmm(j,i) = GAP%cmm(i,j)
         enddo
     enddo
-    call write_array(GAP%cmm, 'cmm.datx')
-stop
+!    call write_array(GAP%cmm, 'cmm.datx')
     calc_det = GAP%cmm
     det_cmm = my_det(calc_det)**(1.d0/GAP%nsparse)
     if (GAP%sparse_method == 2) then

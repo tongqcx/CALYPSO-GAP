@@ -152,10 +152,7 @@ do i = 1, m
     do j = 1, n
         t(j) = x(j,i)
     enddo
-print*, t
     theta(i) = my_cov(t)
-print *, theta(i)
-stop
 enddo
 deallocate(t)
 END SUBROUTINE
