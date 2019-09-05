@@ -53,7 +53,7 @@ if any(["intelem" in arg for arg in sys.argv]):
 
 mytest_module = Extension(name = 'libwacsf',
                           sources = [
-                                './wacsf/constants.f90'
+                                './libwacsf/wacsf.f90',
                             ],
                           extra_f90_compile_args = COMPILER_FLAGS,
                           extra_f77_compile_args = COMPILER_FLAGS,
