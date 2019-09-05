@@ -39,6 +39,7 @@ max_neighbor = 4000
 
 natoms = size(pos,1)
 allocate(neighbor(natoms, max_neighbor, 4))
+allocate(neighbor_count(natoms))
 
 recip_lat = recipvector(lat)
 nabc(1)=ceiling(rcut*vectorlength(recip_lat(1,:))/pi/2)
@@ -61,8 +62,8 @@ do i = 1, natoms
                         !stop
                     endif
                     neighbor_count(i) = neighbor_count(i) + 1
-                    if (count > max_neighbor) then
-                        print *, 'Atoms neighbor:', count, 'large than max_neighbor',max_neighbor
+                    if (neighbor_count(i) > max_neighbor) then
+                        print *, 'Atoms neighbor:', neighbor_count(i), 'large than max_neighbor',max_neighbor
                         print *, 'Please reset max_neighbor in nGAP/src/structure.f90'
                         stop
                     endif
@@ -120,22 +121,23 @@ REAL(8), intent(out), dimension(:,:)     :: xx
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 TYPE SF
-INTEGER                                 :: ntype
-REAL(8)                                :: alpha
-REAL(8)                                :: cutoff
+INTEGER                                  :: ntype
+REAL(8)                                  :: alpha
+REAL(8)                                  :: cutoff
 END TYPE SF
 
 TYPE ACSF_type
-INTEGER                                 :: nsf
-REAL(8)                                :: global_cutoff
-type(SF),dimension(:),allocatable       :: sf
+INTEGER                                  :: nsf
+REAL(8)                                  :: global_cutoff
+type(SF),dimension(:),allocatable        :: sf
 END TYPE ACSF_type
-TYPE(ACSF_type)                         :: ACSF
+TYPE(ACSF_type)                          :: ACSF
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 !local
-REAL(8),dimension(3)                  :: xyz, xyz_j, xyz_k
+REAL(8),dimension(3)                     :: xyz, xyz_j, xyz_k
+logical                                  :: alive
 
 natoms = size(neighbor,1)
 xx = 0.d0
@@ -147,6 +149,11 @@ xx = 0.d0
 !at%strs = 0.d0
 ! @@@@
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+inquire(file="neural.in",exist=alive)
+if(.not.alive) then
+    print*, "neural.in file does not exist!"
+    stop
+endif
 open(2244,file='neural.in')
 read(2244,*)  acsf%global_cutoff
 read(2244,*)  acsf%nsf
