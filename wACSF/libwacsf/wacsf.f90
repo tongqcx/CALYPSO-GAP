@@ -47,6 +47,7 @@ nabc(2)=ceiling(rcut*vectorlength(recip_lat(2,:))/pi/2)
 nabc(3)=ceiling(rcut*vectorlength(recip_lat(3,:))/pi/2)
 neighbor = 0.d0
 neighbor_count = 0
+! this part could parallel with OpenMP
 do i = 1, natoms
     do j = 1, natoms
         do n1 = -nabc(1), nabc(1)
