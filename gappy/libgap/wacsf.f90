@@ -24,7 +24,8 @@ REAL(8),allocatable,dimension(:)               :: weights
 REAL(8),PARAMETER                              :: pi=3.141592654d0
 REAL(8),dimension(3)                           :: xyz, dr
 INTEGER,dimension(3)                           :: nabc
-INTEGER                                        :: nspecies, atom_number, atom_weight
+INTEGER                                        :: nspecies, atom_number
+REAL(8)                                        :: atom_weight
 
 
 !#############################################
@@ -47,6 +48,15 @@ do i = 1, nspecies
     enddo
 enddo
 close(2233)
+print *, 'Lat'
+print *, transpose(lat)
+print*, 'POS', size(POS,1), size(POS,2)
+print*, transpose(POS)
+print*, 'weights'
+print* , weights
+print*, 'RCUT',rcut
+print*, 'lgard', lgard
+
 
 recip_lat = recipvector(lat)
 nabc(1)=ceiling(rcut*vectorlength(recip_lat(1,:))/pi/2)
@@ -83,8 +93,14 @@ do i = 1, natoms
         enddo
     enddo
 enddo
-deallocate(weights)
 call car2acsf(pos, neighbor, neighbor_count, xx, dxdy, strs, lgrad)
+call write_array_2dim(na, nf, transpose(xx), 'xx.dat')
+call write_array_2dim(na, 238, neighbor(:,1:238,4), 'neighbor.dat')
+print*, neighbor_count
+print*, 'XXXXXX'
+print*, xx(1:10,1)
+print*, 'XXXXXX'
+deallocate(weights)
 
 contains
 
@@ -154,6 +170,7 @@ REAL(8),dimension(3)                         :: xyz, xyz_j, xyz_k
 logical                                      :: alive
 INTEGER                                      :: nspecies
 REAL(8)                                      :: weights
+REAL(8)                                      :: rij, fcutij, rik, fcutik, rjk, fcutjk
 
 natoms = size(neighbor,1)
 xx = 0.d0
@@ -181,6 +198,9 @@ close(2244)
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 rmin = 0.5d0
 nnn = ACSF%nsf
+print*, 'NNN', nnn
+print*, 'pi', pi
+print*, 'XXX', size(xx,1), size(xx,2)
 do ii = 1, nnn
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 !G1 = SUM_j{exp(-alpha*rij**2)*fc(rij)}
@@ -201,8 +221,11 @@ do ii = 1, nnn
                     xyz = neighbor(i, i_neighbor, 1:3)
                     weights = neighbor(i, i_neighbor, 5)
                     fcutij = 0.5d0 * (dcos(pi*rij/cutoff) + 1.d0)
+                    write(*, '(2I4, X, 4F20.10)') i,i_neighbor, rij, weights, xx(ii,i), xx(ii+nnn,i)
                     xx(ii,i) = xx(ii,i) + dexp(-1.d0*alpha*rij**2)*fcutij
                     xx(ii + nnn, i) = xx(ii + nnn, i) + dexp(-1.d0*alpha*rij**2)*fcutij * weights !!!!!!! 
+                    write(*, '(2I4, X, 6F20.10)') i,i_neighbor, rij, weights, xx(ii,i), xx(ii+nnn,i),&
+                    dexp(-1.d0*alpha*rij**2)*fcutij, fcutij
 
                     if (lgrad) then
                         deltaxj = -1.d0*(pos(i, 1) - xyz(1))
@@ -906,5 +929,19 @@ do ii = 1, nnn
 enddo  ! types
 !print*, 'CCC',at%xx(:,1)
 END SUBROUTINE
+END SUBROUTINE
+
+SUBROUTINE  write_array_2dim(n,m, a,name)
+REAL(8),intent(in),dimension(n,m)       :: a
+character(*),intent(in)                :: name
+integer                                  :: i,j
+open(2244,file=trim(adjustl(name)))
+do i = 1, n
+    do j = 1, m
+        write(2244,'(F20.10,$)') a(i,j)
+    enddo
+    write(2244,*)
+enddo
+close(2244)
 END SUBROUTINE
 

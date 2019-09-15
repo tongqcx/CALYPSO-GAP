@@ -26,7 +26,9 @@ double precision, intent(out),dimension(6)                                     :
 !-- local --
 type(Structure)                                                                :: at
 integer                                                                        :: i,j,k, k1, n
-logical,parameter                                                              :: lcrystal = .true.
+double precision                                                               :: Rcut
+logical                                                                        :: lgrad
+
 
 !--print*, Na,'Na'
 if (Na > natoms_max) then
@@ -34,6 +36,8 @@ if (Na > natoms_max) then
                "and you should modify it in gap_init.f90"
     stop
 endif
+Rcut = 6.0
+lgrad = .true.
 at%na = NA
 at%lat = LAT
 do i = 1,at%na
@@ -46,7 +50,8 @@ call FCAR2WACSF(&
                  at%xx(1:des_len, 1:at%na),&
                  at%dxdy(1:des_len,1:at%na,1:at%na,:),&
                  at%strs(:,:,1:des_len,1:at%na), &
-                 6.0)
+                 rcut, lgrad)
+print*, 'BEGIN gal_calc'
 do i = 1,at%na
     at%kk(i,1:des_len) = at%xx(1:des_len,i)
 enddo
