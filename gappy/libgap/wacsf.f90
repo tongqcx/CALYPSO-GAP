@@ -1,7 +1,7 @@
 ! GAP%dd is the only used variable in structure GAP
 ! DATA_C%nspecies is the only used variable in structure DATA_C
 
-SUBROUTINE FCAR2WACSF(na, nf, lat, elemetns, pos, xx, dxdy, strs, rcut)
+SUBROUTINE FCAR2WACSF(na, nf, lat, elements, pos, xx, dxdy, strs, rcut, lgrad)
 
 
 INTEGER,intent(in)                             :: na, nf
@@ -12,6 +12,7 @@ REAL(8),intent(out),dimension(nf,na)           :: xx
 REAL(8),intent(out),dimension(nf, na, na, 3)   :: dxdy
 REAL(8),intent(out),dimension(3, 3, nf, na)    :: strs
 REAL(8),intent(in)                             :: rcut
+LOGICAL,intent(in)                             :: lgrad
 !local
 REAL(8),dimension(3,3)                         :: recip_lat
 REAL(8)                                        :: rmin
@@ -19,7 +20,7 @@ REAL(8)                                        :: dis
 integer                                        :: max_neighbor
 REAL(8),allocatable,dimension(:,:,:)           :: neighbor
 INTEGER,allocatable,dimension(:)               :: neighbor_count
-REAL(8),allocatable.dimension(:)               :: weights
+REAL(8),allocatable,dimension(:)               :: weights
 REAL(8),PARAMETER                              :: pi=3.141592654d0
 REAL(8),dimension(3)                           :: xyz, dr
 INTEGER,dimension(3)                           :: nabc
@@ -83,7 +84,7 @@ do i = 1, natoms
     enddo
 enddo
 deallocate(weights)
-call car2acsf(pos, neighbor, neighbor_count, xx, dxdy, strs)
+call car2acsf(pos, neighbor, neighbor_count, xx, dxdy, strs, lgrad)
 
 contains
 
@@ -124,39 +125,40 @@ end function
 SUBROUTINE CAR2ACSF(pos, neighbor, neighbor_count, xx, dxdy, strs, lgrad)
 
 implicit real(8) (a-h,o-z)
-REAL(8), intent(in), dimension(:,:)      :: pos
-REAL(8), intent(in), dimension(:,:,:)    :: neighbor
-INTEGER, intent(in), dimension(:)        :: neighbor_count
-REAL(8), intent(out), dimension(:,:)     :: xx
-REAL(8), intent(out), dimension(:,:)     :: dxdy
-REAL(8), intent(out), dimension(:,:)     :: strs
-LOGICAL, intent(in)                      :: lgrad
+REAL(8), intent(in), dimension(:,:)          :: pos
+REAL(8), intent(in), dimension(:,:,:)        :: neighbor
+INTEGER, intent(in), dimension(:)            :: neighbor_count
+REAL(8), intent(out), dimension(:,:)         :: xx
+REAL(8), intent(out), dimension(:,:,:,:)     :: dxdy
+REAL(8), intent(out), dimension(:,:,:,:)     :: strs
+LOGICAL, intent(in)                          :: lgrad
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 TYPE SF
-INTEGER                                  :: ntype
-REAL(8)                                  :: alpha
-REAL(8)                                  :: cutoff
+INTEGER                                      :: ntype
+REAL(8)                                      :: alpha
+REAL(8)                                      :: cutoff
 END TYPE SF
 
 TYPE ACSF_type
-INTEGER                                  :: nsf
-REAL(8)                                  :: global_cutoff
-type(SF),dimension(:),allocatable        :: sf
+INTEGER                                      :: nsf
+REAL(8)                                      :: global_cutoff
+type(SF),dimension(:),allocatable            :: sf
 END TYPE ACSF_type
-TYPE(ACSF_type)                          :: ACSF
+TYPE(ACSF_type)                              :: ACSF
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 !local
-REAL(8),dimension(3)                     :: xyz, xyz_j, xyz_k
-logical                                  :: alive
-INTEGER                                  :: nspecies
+REAL(8),dimension(3)                         :: xyz, xyz_j, xyz_k
+logical                                      :: alive
+INTEGER                                      :: nspecies
+REAL(8)                                      :: weights
 
 natoms = size(neighbor,1)
 xx = 0.d0
-at%dxdy = 0.d0
-at%strs = 0.d0
+dxdy = 0.d0
+strs = 0.d0
 ! @@@@
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 inquire(file="neural.in",exist=alive)
@@ -168,6 +170,7 @@ open(2244,file='neural.in')
 read(2244,*)  nspecies
 do i = 1, nspecies
     read(2244, *)
+enddo
 !read(2244,*)  acsf%global_cutoff
 read(2244,*)  acsf%nsf
 allocate(acsf%sf(acsf%nsf))
@@ -223,8 +226,7 @@ do ii = 1, nnn
                         temp2= dexp(-1.d0*alpha*rij**2)
 
                         dxdy(ii,i,i,1)=dxdy(ii,i,i,1)+(drijdxi*temp1 + temp2*dfcutijdxi)
-                        dxdy(ii+nnn,i,i,1)=dxdy(ii+nnn,i,i,1) + &
-                        (drijdxi*temp1+ temp2*dfcutijdxi) * weights
+                        dxdy(ii+nnn,i,i,1)=dxdy(ii+nnn,i,i,1) + (drijdxi*temp1+ temp2*dfcutijdxi) * weights
                 
                         temp3=drijdxj*temp1 + temp2*dfcutijdxj
                         dxdy(ii,i,n,1)=dxdy(ii,i,n,1)+temp3
@@ -329,9 +331,9 @@ do ii = 1, nnn
                     weights_k = neighbor(i, k_neighbor,5)
                     fcutik=0.5d0*(dcos(pi*rik/cutoff)+1.d0)
                     if (lgrad) then
-                        deltaxk = -1.d0*(at%atom(i)%pos(1) - xyz_k(1))
-                        deltayk = -1.d0*(at%atom(i)%pos(2) - xyz_k(2))
-                        deltazk = -1.d0*(at%atom(i)%pos(3) - xyz_k(3))
+                        deltaxk = -1.d0*(pos(i, 1) - xyz_k(1))
+                        deltayk = -1.d0*(pos(i, 2) - xyz_k(2))
+                        deltazk = -1.d0*(pos(i, 3) - xyz_k(3))
                         drikdxi = -deltaxk/rik
                         drikdyi = -deltayk/rik
                         drikdzi = -deltazk/rik
@@ -654,9 +656,9 @@ do ii = 1, nnn
                 weithts_j = neighbor(i, j_neighbor, 5)
                 fcutij=0.5d0*(dcos(pi*rij/cutoff)+1.d0)
                 if (lgrad) then
-                    deltaxj = -1.d0*(%pos(i, 1) - xyz_j(1))
-                    deltayj = -1.d0*(%pos(i, 2) - xyz_j(2))
-                    deltazj = -1.d0*(%pos(i, 3) - xyz_j(3))
+                    deltaxj = -1.d0*(pos(i, 1) - xyz_j(1))
+                    deltayj = -1.d0*(pos(i, 2) - xyz_j(2))
+                    deltazj = -1.d0*(pos(i, 3) - xyz_j(3))
                     drijdxi = -1.d0*deltaxj/rij
                     drijdyi = -1.d0*deltayj/rij
                     drijdzi = -1.d0*deltazj/rij
@@ -686,9 +688,9 @@ do ii = 1, nnn
                     weights_k = neighbor(i, k_neighbor,5)
                     fcutik=0.5d0*(dcos(pi*rik/cutoff)+1.d0)
                     if (lgrad) then
-                        deltaxk = -1.d0*(at%atom(i)%pos(1) - xyz_k(1))
-                        deltayk = -1.d0*(at%atom(i)%pos(2) - xyz_k(2))
-                        deltazk = -1.d0*(at%atom(i)%pos(3) - xyz_k(3))
+                        deltaxk = -1.d0*(pos(i, 1) - xyz_k(1))
+                        deltayk = -1.d0*(pos(i, 2) - xyz_k(2))
+                        deltazk = -1.d0*(pos(i, 3) - xyz_k(3))
                         drikdxi = -deltaxk/rik
                         drikdyi = -deltayk/rik
                         drikdzi = -deltazk/rik

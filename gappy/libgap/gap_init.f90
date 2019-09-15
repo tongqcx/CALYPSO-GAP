@@ -1,32 +1,31 @@
 MODULE GAP_INIT
-integer, parameter                :: tna = 300
-integer, parameter                :: tnf = 100
-integer, parameter                :: tcc = 1000
+integer, parameter                :: natoms_max = 300
+integer, parameter                :: nsf_max = 100
+integer, parameter                :: nsparseX_max = 1000
 double precision,parameter        :: delta = 1.0
 double precision,parameter        :: GPa2eVPang =6.24219D-3
 type Structure
     integer                       :: na
     integer                       :: ntype
-    double precision              :: types(tna)
+    double precision              :: types(natoms_max)
     double precision              :: lat(3,3)
     double precision              :: volume
-    double precision              :: xyz(tna,3)
-    double precision              :: xx(tnf,1,tna)
-    double precision              :: kk(tna,tnf)
-    double precision              :: ckm(tna,tcc)  ! k in the number of atoms
-    double precision              :: e(tna)
-    double precision              :: covf(tna)
+    double precision              :: xyz(natoms_max,3)
+    double precision              :: xx(nsf_max,natoms_max)
+    double precision              :: kk(natoms_max,nsf_max)
+    double precision              :: ckm(natoms_max,nsparseX_max)  ! k in the number of atoms
+    double precision              :: e(natoms_max)
+    double precision              :: covf(natoms_max)
     double precision              :: energy_ref
     double precision              :: energy_cal
     double precision              :: stress_ref(6)
     double precision              :: stress_cal(6)
-    double precision              :: force_ref(tna,3)
-    double precision              :: force_cal(tna,3)
-    double precision              :: dxdy(tnf,tna,tna,3)
-    double precision              :: strs(3,3,tnf,tna)
-    double precision              :: derf(tna,tnf)
-    double precision              :: ders(tna,tnf)
-    double precision              :: dkdg(tna,tnf,tcc)
+    double precision              :: force_ref(natoms_max,3)
+    double precision              :: force_cal(natoms_max,3)
+    double precision              :: dxdy(nsf_max,natoms_max,natoms_max,3)
+    double precision              :: strs(3,3,nsf_max,natoms_max)
+    double precision              :: dedg(natoms_max,nsf_max)
+    double precision              :: dkdg(natoms_max,nsf_max,nsparseX_max)
 end type
 
 contains

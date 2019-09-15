@@ -22,10 +22,6 @@ COMPILER_FLAGS = ["-O3", "-fopenmp", "-m64", "-march=native", "-fPIC",
 LINKER_FLAGS = ["-lgomp"]
 MATH_LINKER_FLAGS = ["-lblas", "-llapack"]
 
-# UNCOMMENT TO FORCE LINKING TO MKL with GNU compilers:
-if mkl_exists(verbose=True):
-    LINKER_FLAGS = ["-lgomp", " -lpthread", "-lm", "-ldl"]
-    MATH_LINKER_FLAGS = ["-L${MKLROOT}/lib/intel64", "-lmkl_rt"]
 
 # For clang without OpenMP: (i.e. most Apple/mac system)
 if sys.platform == "darwin" and all(["gnu" not in arg for arg in sys.argv]):
@@ -36,14 +32,14 @@ if sys.platform == "darwin" and all(["gnu" not in arg for arg in sys.argv]):
 
 # Intel
 if any(["intelem" in arg for arg in sys.argv]):
-    COMPILER_FLAGS = ["-xHost", "-O3", "-axAVX", "-qopenmp"]
+    COMPILER_FLAGS = ["-xHost", "-O3" , "-fopenmp"]
     LINKER_FLAGS = ["-liomp5", " -lpthread", "-lm", "-ldl"]
     MATH_LINKER_FLAGS = ["-L${MKLROOT}/lib/intel64", "-lmkl_rt"]
 
 
 mytest_module = Extension(name = 'libgap',
                           sources = [
-                                './libgap/functions.f90',
+                                './libgap/wacsf.f90',
                                 './libgap/gap_init.f90',
                                 './libgap/gap_calc.f90',
                             ],

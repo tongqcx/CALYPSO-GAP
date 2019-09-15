@@ -9,32 +9,31 @@ except:
 class Gap_calculator(object):
     def __init__(self):
 
-        #self.species = Species
-        #self.lat = Lat
-        #self.pos = Pos
         self.gap_read()
 
     def get_elenum(self,x):
-        ele_dist = {'H':1,\
-                    'Li':3,\
-                    'B':5,\
-                    'C':6,\
-                    'O':8,\
-                    'Mg':12,\
-                    'Al':13,\
-                    'Si':14,\
-                    'P':15,\
-                    'S':16,\
-                    'Ca':20,\
-                    'Ni':27,\
-                    'Cs':55,\
-                    }
+        ChemicalSymbols = [ 'X',  'H',  'He', 'Li', 'Be','B',  'C',  'N',  'O',  'F',
+                            'Ne', 'Na', 'Mg', 'Al', 'Si','P',  'S',  'Cl', 'Ar', 'K',
+                            'Ca', 'Sc', 'Ti', 'V',  'Cr','Mn', 'Fe', 'Co', 'Ni', 'Cu',
+                            'Zn', 'Ga', 'Ge', 'As', 'Se','Br', 'Kr', 'Rb', 'Sr', 'Y',
+                            'Zr', 'Nb', 'Mo', 'Tc', 'Ru','Rh', 'Pd', 'Ag', 'Cd', 'In',
+                            'Sn', 'Sb', 'Te', 'I',  'Xe','Cs', 'Ba', 'La', 'Ce', 'Pr',
+                            'Nd', 'Pm', 'Sm', 'Eu', 'Gd','Tb', 'Dy', 'Ho', 'Er', 'Tm',
+                            'Yb', 'Lu', 'Hf', 'Ta', 'W','Re', 'Os', 'Ir', 'Pt', 'Au',
+                            'Hg', 'Tl', 'Pb', 'Bi', 'Po','At', 'Rn', 'Fr', 'Ra', 'Ac',
+                            'Th', 'Pa', 'U',  'Np', 'Pu','Am', 'Cm', 'Bk', 'Cf', 'Es',
+                            'Fm', 'Md', 'No', 'Lr']
+        atomicNum = {}
+        for anum, symbol in enumerate(ChemicalSymbols):
+            atomicNum[symbol] = anum
+
         x_num = []
         for element in x:
-            x_num.append(ele_dist[element])
+            x_num.append(atomicNum[element])
         return x_num
+
     def gap_read(self): 
-        self.sparse_cov_mat_len,\
+        self.nsparseX,\
         self.des_len,\
         self.theta,\
         self.mm,\
@@ -49,7 +48,7 @@ class Gap_calculator(object):
                                                  lat,\
                                                  pos,\
                                                  self.theta[0:self.des_len],\
-                                                 self.mm[0:self.sparse_cov_mat_len,0:self.des_len],\
-                                                 self.invcmm[0:self.sparse_cov_mat_len,0:self.sparse_cov_mat_len],\
-                                                 self.coeff[0:self.sparse_cov_mat_len])
+                                                 self.mm[0:self.nsparseX,0:self.des_len],\
+                                                 self.invcmm[0:self.nsparseX,0:self.nsparseX],\
+                                                 self.coeff[0:self.nsparseX])
         return ene, force, stress, variance
