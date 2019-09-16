@@ -35,7 +35,7 @@ max_neighbor = 4000
 !#############################################
 
 natoms = size(pos,1)
-allocate(neighbor(natoms, max_neighbor, 6))
+allocate(neighbor(natoms, max_neighbor, 5))
 allocate(neighbor_count(natoms))
 allocate(weights(natoms))
 
@@ -48,6 +48,14 @@ do i = 1, nspecies
     enddo
 enddo
 close(2233)
+print *, 'Lat'
+print *, transpose(lat)
+print*, 'POS', size(POS,1), size(POS,2)
+print*, transpose(POS)
+print*, 'weights'
+print* , weights
+print*, 'RCUT',rcut
+print*, 'lgrad', lgrad
 
 
 recip_lat = recipvector(lat)
@@ -80,16 +88,14 @@ do i = 1, natoms
                     neighbor(i,neighbor_count(i), 1:3) = xyz
                     neighbor(i,neighbor_count(i), 4) = dis
                     neighbor(i,neighbor_count(i), 5) = weights(j)
-                    neighbor(i,neighbor_count(i), 6) = real(j)
                 enddo
             enddo
         enddo
     enddo
 enddo
 call car2acsf(natoms, max_neighbor, nf, pos, neighbor, neighbor_count, xx, dxdy, strs, lgrad)
+call write_array_2dim(na, nf, transpose(xx), 'xx.dat')
 deallocate(weights)
-deallocate(neighbor)
-deallocate(neighbor_count)
 
 contains
 
@@ -125,13 +131,15 @@ function crossp(va,vb)
     crossp(2)=va(3)*vb(1)-va(1)*vb(3)
     crossp(3)=va(1)*vb(2)-va(2)*vb(1)
 end function
+END SUBROUTINE
 
 SUBROUTINE CAR2ACSF(NA, max_neighbor, nf, pos, neighbor, neighbor_count, xx, dxdy, strs, lgrad)
 
-implicit real(8) (a-h,o-z)
+!implicit real(8) (a-h,o-z)
+implicit none
 INTEGER, intent(in)                                      :: NA, max_neighbor, NF
 REAL(8), intent(in), dimension(NA,3)                     :: pos
-REAL(8), intent(in), dimension(NA,max_neighbor,6)        :: neighbor
+REAL(8), intent(in), dimension(NA,max_neighbor,5)        :: neighbor
 INTEGER, intent(in), dimension(NA)                       :: neighbor_count
 REAL(8), intent(out), dimension(NF, NA)                  :: xx
 REAL(8), intent(out), dimension(NF,NA,NA,3)              :: dxdy
@@ -155,12 +163,76 @@ TYPE(ACSF_type)                              :: ACSF
 
 
 !local
+INTEGER                                      :: i,j,k,n,m, ii
 REAL(8),PARAMETER                            :: pi=3.141592654d0
 REAL(8),dimension(3)                         :: xyz, xyz_j, xyz_k
 logical                                      :: alive
-INTEGER                                      :: nspecies
+INTEGER                                      :: natoms, nspecies, nnn
+INTEGER                                      :: i_neighbor, j_neighbor, k_neighbor
+REAL(8)                                      :: Rmin, cutoff, rshift, alpha
+
 REAL(8)                                      :: weights, weights_j, weights_k
 REAL(8)                                      :: rij, fcutij, rik, fcutik, rjk, fcutjk
+REAL(8)                                      :: drijdx, drijdy, drijdz
+REAL(8)                                      :: drijdxi, drijdyi, drijdzi
+REAL(8)                                      :: drijdxj, drijdyj, drijdzj
+REAL(8)                                      :: drijdxk, drijdyk, drijdzk
+REAL(8)                                      :: drikdx, drikdy, drikdz
+REAL(8)                                      :: drikdxi, drikdyi, drikdzi
+REAL(8)                                      :: drikdxj, drikdyj, drikdzj
+REAL(8)                                      :: drikdxk, drikdyk, drikdzk
+REAL(8)                                      :: drihdx, drihdy, drihdz
+REAL(8)                                      :: drihdxi, drihdyi, drihdzi
+REAL(8)                                      :: drihdxh, drihdyh, drihdzh
+REAL(8)                                      :: drihdxj, drihdyj, drihdzj
+REAL(8)                                      :: drihdxk, drihdyk, drihdzk
+REAL(8)                                      :: drjkdx, drjkdy, drjkdz
+REAL(8)                                      :: drjkdxi, drjkdyi, drjkdzi
+REAL(8)                                      :: drjkdxj, drjkdyj, drjkdzj
+REAL(8)                                      :: drjkdxk, drjkdyk, drjkdzk
+REAL(8)                                      :: dcutoffdx, dcutoffdy, dcutoffdz
+REAL(8)                                      :: dfcutijdx,dfcutijdy,dfcutijdz
+REAL(8)                                      :: dfcutijdxi,dfcutijdyi,dfcutijdzi
+REAL(8)                                      :: dfcutijdxj,dfcutijdyj,dfcutijdzj
+REAL(8)                                      :: dfcutijdxk,dfcutijdyk,dfcutijdzk
+REAL(8)                                      :: dfcutikdx,dfcutikdy,dfcutikdz
+REAL(8)                                      :: dfcutikdxi,dfcutikdyi,dfcutikdzi
+REAL(8)                                      :: dfcutikdxj,dfcutikdyj,dfcutikdzj
+REAL(8)                                      :: dfcutikdxk,dfcutikdyk,dfcutikdzk
+REAL(8)                                      :: dfcutjkdx,dfcutjkdy,dfcutjkdz
+REAL(8)                                      :: dfcutjkdxi,dfcutjkdyi,dfcutjkdzi
+REAL(8)                                      :: dfcutjkdxj,dfcutjkdyj,dfcutjkdzj
+REAL(8)                                      :: dfcutjkdxk,dfcutjkdyk,dfcutjkdzk
+REAL(8)                                      :: dcosthetadx,dcosthetady,dcosthetadz
+REAL(8)                                      :: dcosthetadxi,dcosthetadyi,dcosthetadzi
+REAL(8)                                      :: dcosthetadxj,dcosthetadyj,dcosthetadzj
+REAL(8)                                      :: dcosthetadxk,dcosthetadyk,dcosthetadzk
+REAL(8)                                      :: f,g
+REAL(8)                                      :: dfdx,dfdy,dfdz
+REAL(8)                                      :: dfdxi,dfdyi,dfdzi
+REAL(8)                                      :: dfdxj,dfdyj,dfdzj
+REAL(8)                                      :: dfdxk,dfdyk,dfdzk
+REAL(8)                                      :: dgdx,dgdy,dgdz
+REAL(8)                                      :: dgdxi,dgdyi,dgdzi
+REAL(8)                                      :: dgdxj,dgdyj,dgdzj
+REAL(8)                                      :: dgdxk,dgdyk,dgdzk
+REAL(8)                                      :: dthetadxi,dthetadyi,dthetadzi
+REAL(8)                                      :: dthetadxj,dthetadyj,dthetadzj
+REAL(8)                                      :: dthetadxk,dthetadyk,dthetadzk
+REAL(8)                                      :: temp1, temp2, temp3, temp4, temp5, temp6
+REAL(8)                                      :: expxyz
+REAL(8)                                      :: dexpxyzdxi
+REAL(8)                                      :: dexpxyzdyi
+REAL(8)                                      :: dexpxyzdzi
+REAL(8)                                      :: dexpxyzdxj
+REAL(8)                                      :: dexpxyzdyj
+REAL(8)                                      :: dexpxyzdzj
+REAL(8)                                      :: dexpxyzdxk
+REAL(8)                                      :: dexpxyzdyk
+REAL(8)                                      :: dexpxyzdzk
+REAL(8)                                      :: deltaxj,deltayj,deltazj
+REAL(8)                                      :: deltaxk,deltayk,deltazk
+REAL(8)                                      :: costheta
 
 natoms = size(neighbor,1)
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -189,6 +261,10 @@ xx = 0.d0
 dxdy = 0.d0
 strs = 0.d0
 
+print*, 'pos'
+print*, transpose(POS)
+open(3332, file='check.out_2')
+open(3333, file='check.out_4')
 do ii = 1, nnn
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 !G1 = SUM_j{exp(-alpha*rij**2)*fc(rij)}
@@ -208,7 +284,6 @@ do ii = 1, nnn
                     if (rij.gt.cutoff) cycle
                     xyz = neighbor(i, i_neighbor, 1:3)
                     weights = neighbor(i, i_neighbor, 5)
-                    n = int(neighbor(i, i_neighbor, 6))
                     fcutij = 0.5d0 * (dcos(pi*rij/cutoff) + 1.d0)
                     xx(ii,i) = xx(ii,i) + dexp(-1.d0*alpha*rij**2)*fcutij
                     xx(ii + nnn, i) = xx(ii + nnn, i) + dexp(-1.d0*alpha*rij**2)*fcutij * weights !!!!!!! 
@@ -305,7 +380,6 @@ do ii = 1, nnn
                 xyz_j = neighbor(i, j_neighbor, 1:3)
                 fcutij=0.5d0*(dcos(pi*rij/cutoff)+1.d0)
                 weights_j = neighbor(i, j_neighbor, 5)
-                n = int(neighbor(i, j_neighbor, 6))
                 if (lgrad) then
                     deltaxj = -1.d0*(pos(i, 1) - xyz_j(1))
                     deltayj = -1.d0*(pos(i, 2) - xyz_j(2))
@@ -339,7 +413,6 @@ do ii = 1, nnn
                     if (rik.gt.cutoff) cycle
                     xyz_k = neighbor(i, k_neighbor,1:3)
                     weights_k = neighbor(i, k_neighbor,5)
-                    m = int(neighbor(i, k_neighbor,6))
                     fcutik=0.5d0*(dcos(pi*rik/cutoff)+1.d0)
                     if (lgrad) then
                         deltaxk = -1.d0*(pos(i, 1) - xyz_k(1))
@@ -570,7 +643,6 @@ do ii = 1, nnn
                 if (rij.gt.cutoff) cycle
                 xyz = neighbor(i, i_neighbor,1:3)
                 weights = neighbor(i, i_neighbor, 5)
-                n = int(neighbor(i, i_neighbor, 6))
                 fcutij = 0.5d0 * (dcos(pi*rij/cutoff) + 1.d0)
                 if (lgrad) then
                     deltaxj = -1.d0*(pos(i, 1) - xyz(1))
@@ -667,7 +739,7 @@ do ii = 1, nnn
                 if (rij.gt.cutoff) cycle
                 xyz_j = neighbor(i, j_neighbor,1:3)
                 weights_j = neighbor(i, j_neighbor, 5)
-                n = int(neighbor(i, j_neighbor, 6))
+
                 fcutij=0.5d0*(dcos(pi*rij/cutoff)+1.d0)
                 if (lgrad) then
                     deltaxj = -1.d0*(pos(i, 1) - xyz_j(1))
@@ -699,7 +771,6 @@ do ii = 1, nnn
                     if (rik.gt.cutoff) cycle
                     xyz_k = neighbor(i, k_neighbor,1:3)
                     weights_k = neighbor(i, k_neighbor,5)
-                    m = int(neighbor(i, k_neighbor,6))
                     fcutik=0.5d0*(dcos(pi*rik/cutoff)+1.d0)
 
                     if (lgrad) then
@@ -804,6 +875,7 @@ do ii = 1, nnn
                     xx(ii,i)=xx(ii,i)+costheta*expxyz*fcutij*fcutik*fcutjk
                     xx(ii + nnn,i)=xx(ii + nnn,i)+&
                     costheta*expxyz*fcutij*fcutik*fcutjk*weights_j*weights_k
+                    write(3333, '(4I4, X, 4F20.10)') ii , i, j_neighbor, k_neighbor, weights_j, weights_k, xx(ii,i), xx(ii+nnn,i)
                     if (lgrad) then
                         temp1=-alpha*2.0d0*expxyz
                         dexpxyzdxi=(rij*drijdxi+rik*drikdxi+rjk*drjkdxi)*temp1
@@ -920,7 +992,6 @@ do ii = 1, nnn
         print *, 'Unknown function type',ii, ACSF%sf(ii)%ntype
     endif
 enddo  ! types
-END SUBROUTINE
 END SUBROUTINE
 
 SUBROUTINE  write_array_2dim(n,m, a,name)

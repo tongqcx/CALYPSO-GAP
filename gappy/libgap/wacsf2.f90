@@ -48,6 +48,14 @@ do i = 1, nspecies
     enddo
 enddo
 close(2233)
+print *, 'Lat'
+print *, transpose(lat)
+print*, 'POS', size(POS,1), size(POS,2)
+print*, transpose(POS)
+print*, 'weights'
+print* , weights
+print*, 'RCUT',rcut
+print*, 'lgrad', lgrad
 
 
 recip_lat = recipvector(lat)
@@ -87,9 +95,8 @@ do i = 1, natoms
     enddo
 enddo
 call car2acsf(natoms, max_neighbor, nf, pos, neighbor, neighbor_count, xx, dxdy, strs, lgrad)
+call write_array_2dim(na, nf, transpose(xx), 'xx.dat')
 deallocate(weights)
-deallocate(neighbor)
-deallocate(neighbor_count)
 
 contains
 
@@ -125,6 +132,7 @@ function crossp(va,vb)
     crossp(2)=va(3)*vb(1)-va(1)*vb(3)
     crossp(3)=va(1)*vb(2)-va(2)*vb(1)
 end function
+END SUBROUTINE
 
 SUBROUTINE CAR2ACSF(NA, max_neighbor, nf, pos, neighbor, neighbor_count, xx, dxdy, strs, lgrad)
 
@@ -189,6 +197,8 @@ xx = 0.d0
 dxdy = 0.d0
 strs = 0.d0
 
+open(3332, file='check.out_2')
+open(3333, file='check.out_4')
 do ii = 1, nnn
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 !G1 = SUM_j{exp(-alpha*rij**2)*fc(rij)}
@@ -804,6 +814,7 @@ do ii = 1, nnn
                     xx(ii,i)=xx(ii,i)+costheta*expxyz*fcutij*fcutik*fcutjk
                     xx(ii + nnn,i)=xx(ii + nnn,i)+&
                     costheta*expxyz*fcutij*fcutik*fcutjk*weights_j*weights_k
+                    write(3333, '(4I4, X, 4F20.10)') ii , i, j_neighbor, k_neighbor, weights_j, weights_k, xx(ii,i), xx(ii+nnn,i)
                     if (lgrad) then
                         temp1=-alpha*2.0d0*expxyz
                         dexpxyzdxi=(rij*drijdxi+rik*drikdxi+rjk*drjkdxi)*temp1
@@ -920,7 +931,6 @@ do ii = 1, nnn
         print *, 'Unknown function type',ii, ACSF%sf(ii)%ntype
     endif
 enddo  ! types
-END SUBROUTINE
 END SUBROUTINE
 
 SUBROUTINE  write_array_2dim(n,m, a,name)

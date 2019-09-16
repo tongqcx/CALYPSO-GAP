@@ -1,7 +1,8 @@
 SUBROUTINE  FGAP_CALC(NA, SPECIES, LAT, POS, &
                      ENE, FORCE, STRESS, VARIANCE, &
                      nsparseX,des_len, &
-                     theta, MM, qmm, coeff)
+                     theta, MM, qmm, coeff, &
+                     Rcut, lgrad)
 USE GAP_INIT
 
 implicit none
@@ -17,6 +18,8 @@ double precision, intent(in),dimension(des_len)                                :
 double precision, intent(in),dimension(nsparseX,des_len)                       :: MM
 double precision, intent(in),dimension(nsparseX,nsparseX)                      :: QMM
 double precision, intent(in),dimension(nsparseX)                               :: COEFF
+double precision, intent(in)                                                   :: Rcut
+logical         , intent(in)                                                   :: lgrad
 
 double precision, intent(out)                                                  :: ENE
 double precision, intent(out)                                                  :: VARIANCE
@@ -26,8 +29,6 @@ double precision, intent(out),dimension(6)                                     :
 !-- local --
 type(Structure)                                                                :: at
 integer                                                                        :: i,j,k, k1, n
-double precision                                                               :: Rcut
-logical                                                                        :: lgrad
 
 
 !--print*, Na,'Na'
@@ -36,8 +37,6 @@ if (Na > natoms_max) then
                "and you should modify it in gap_init.f90"
     stop
 endif
-Rcut = 6.0
-lgrad = .true.
 at%na = NA
 at%lat = LAT
 do i = 1,at%na
@@ -51,10 +50,10 @@ call FCAR2WACSF(&
                  at%dxdy(1:des_len,1:at%na,1:at%na,:),&
                  at%strs(:,:,1:des_len,1:at%na), &
                  rcut, lgrad)
-print*, 'BEGIN gal_calc'
 do i = 1,at%na
     at%kk(i,1:des_len) = at%xx(1:des_len,i)
 enddo
+call write_array_2dim(at%na, des_len, at%kk, 'kk.dat')
 
 !--print*, 'get_cov'
 call get_cov(at%na,&
@@ -67,6 +66,7 @@ call get_cov(at%na,&
 at%e = matmul(at%ckm(1:at%na,1:nsparseX),coeff(1:nsparseX))
 at%energy_cal = sum(at%e)
 
+call write_array_2dim(at%na, nsparseX, at%ckm(1:at%na,1:nsparseX), 'ckm.dat')
 at%dedg = 0.d0
 !--print*, 'get de/dd'
 do i = 1 , at%na
@@ -76,6 +76,7 @@ do i = 1 , at%na
         enddo
     enddo
 enddo
+call write_array_2dim(at%na, des_len, at%dedg(1:at%na, 1:des_len), 'dedg.dat')
 
 !--print*, 'get force'
 at%force_cal = 0.d0
@@ -103,14 +104,14 @@ do i = 1, 3
     enddo
 enddo
 at%volume = ABS(det(at%lat))
-!at%stress_cal = at%stress_cal * (1.0/GPa2eVPang) * 10.0 / at%volume
+at%stress_cal = at%stress_cal * (1.0/GPa2eVPang) * 10.0 / at%volume
 
 !--print*, 'get variance'
-!VARIANCE = 0.d0
-!do i  = 1,at%na
-!    at%covf(i) = delta - dot_product(at%ckm(i,1:nsparseX),matmul(qmm,at%ckm(i,1:nsparseX)))
-!    VARIANCE = VARIANCE + at%covf(i)/at%na
-!enddo
+VARIANCE = 0.d0
+do i  = 1,at%na
+    at%covf(i) = delta - dot_product(at%ckm(i,1:nsparseX),matmul(qmm,at%ckm(i,1:nsparseX)))
+    VARIANCE = VARIANCE + at%covf(i)/at%na
+enddo
 
 ENE = at%energy_cal
 FORCE = at%force_cal(1:at%na,:)

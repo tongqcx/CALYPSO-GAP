@@ -3,13 +3,14 @@ import sys
 try:
     from libgap  import fgap_read, fgap_calc
 except:
-    print 'ERROR: please install lib gap_calc'
+    print 'ERROR: please install libgap'
     sys.exit(0)
 
-class Gap_calculator(object):
-    def __init__(self):
+class Calculator(object):
+    def __init__(self, rcut = 6.0):
 
         self.gap_read()
+        self.rcut = rcut
 
     def get_elenum(self,x):
         ChemicalSymbols = [ 'X',  'H',  'He', 'Li', 'Be','B',  'C',  'N',  'O',  'F',
@@ -39,7 +40,7 @@ class Gap_calculator(object):
         self.mm,\
         self.invcmm,\
         self.coeff = fgap_read()
-    def gap_calc(self,species, lat, pos):
+    def gap_calc(self,species, lat, pos, lgrad):
         try:
             Species = self.get_elenum(species)
         except:
@@ -50,5 +51,6 @@ class Gap_calculator(object):
                                                  self.theta[0:self.des_len],\
                                                  self.mm[0:self.nsparseX,0:self.des_len],\
                                                  self.invcmm[0:self.nsparseX,0:self.nsparseX],\
-                                                 self.coeff[0:self.nsparseX])
+                                                 self.coeff[0:self.nsparseX],\
+                                                 self.rcut, lgrad)
         return ene, force, stress, variance
