@@ -14,9 +14,9 @@ double precision, intent(in),dimension(NA,3)                                   :
 integer, intent(in)                                                            :: des_len
 integer, intent(in)                                                            :: nsparseX
 double precision, intent(in),dimension(des_len)                                :: THETA
-double precision, intent(in),dimension(nsparseX,des_len)             :: MM
-double precision, intent(in),dimension(nsparseX,nsparseX)  :: QMM
-double precision, intent(in),dimension(nsparseX)                     :: COEFF
+double precision, intent(in),dimension(nsparseX,des_len)                       :: MM
+double precision, intent(in),dimension(nsparseX,nsparseX)                      :: QMM
+double precision, intent(in),dimension(nsparseX)                               :: COEFF
 
 double precision, intent(out)                                                  :: ENE
 double precision, intent(out)                                                  :: VARIANCE

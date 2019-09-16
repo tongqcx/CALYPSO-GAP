@@ -55,7 +55,7 @@ print*, transpose(POS)
 print*, 'weights'
 print* , weights
 print*, 'RCUT',rcut
-print*, 'lgrad', lgrad
+print*, 'lgard', lgard
 
 
 recip_lat = recipvector(lat)
@@ -95,6 +95,11 @@ do i = 1, natoms
 enddo
 call car2acsf(natoms, max_neighbor, nf, pos, neighbor, neighbor_count, xx, dxdy, strs, lgrad)
 call write_array_2dim(na, nf, transpose(xx), 'xx.dat')
+call write_array_2dim(na, 238, neighbor(:,1:238,4), 'neighbor.dat')
+print*, neighbor_count
+print*, 'XXXXXX'
+print*, xx(1:10,1)
+print*, 'XXXXXX'
 deallocate(weights)
 
 contains
@@ -162,11 +167,10 @@ TYPE(ACSF_type)                              :: ACSF
 
 
 !local
-REAL(8),PARAMETER                            :: pi=3.141592654d0
 REAL(8),dimension(3)                         :: xyz, xyz_j, xyz_k
 logical                                      :: alive
 INTEGER                                      :: nspecies
-REAL(8)                                      :: weights, weights_j, weights_k
+REAL(8)                                      :: weights
 REAL(8)                                      :: rij, fcutij, rik, fcutik, rjk, fcutjk
 
 natoms = size(neighbor,1)
@@ -191,13 +195,15 @@ close(2244)
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 rmin = 0.5d0
 nnn = ACSF%nsf
-
+print*, 'NNN', nnn
+print*, 'pi', pi
+print*, 'XXX', size(xx,1), size(xx,2)
 xx = 0.d0
 dxdy = 0.d0
 strs = 0.d0
-
-open(3332, file='check.out_2')
-open(3333, file='check.out_4')
+print*, 'xxx', xx(5,64)
+print *, 'xxx', xx(7,64)
+open(3333, file='check.out')
 do ii = 1, nnn
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 !G1 = SUM_j{exp(-alpha*rij**2)*fc(rij)}
@@ -212,7 +218,10 @@ do ii = 1, nnn
             ! 2019.09.04 STUPID!!!
             ! ******************
             !do i_type = 1, data_c%nspecies
+                print*, 'AAA',neighbor_count(i)
                 do i_neighbor = 1, neighbor_count(i)
+                    write(*, '(3I4, X, F20.10)') ii , i, i_neighbor,xx(7,64)
+                    write(3333,'(4I5, X, F20.10)') ii , ii + nnn, i, i_neighbor,xx(7,64)
                     rij = neighbor(i, i_neighbor, 4)
                     if (rij.gt.cutoff) cycle
                     xyz = neighbor(i, i_neighbor, 1:3)
@@ -220,6 +229,8 @@ do ii = 1, nnn
                     fcutij = 0.5d0 * (dcos(pi*rij/cutoff) + 1.d0)
                     xx(ii,i) = xx(ii,i) + dexp(-1.d0*alpha*rij**2)*fcutij
                     xx(ii + nnn, i) = xx(ii + nnn, i) + dexp(-1.d0*alpha*rij**2)*fcutij * weights !!!!!!! 
+                    write(*, '(3I4, X, 5F20.10,X, 2I4)') ii , i, i_neighbor, rij, weights, xx(ii,i), xx(ii+nnn,i),&
+                    xx(7,64),size(xx,1),size(xx,2)
 
                     if (lgrad) then
                         deltaxj = -1.d0*(pos(i, 1) - xyz(1))
@@ -459,7 +470,6 @@ do ii = 1, nnn
                     xx(ii,i)=xx(ii,i)+costheta*expxyz*fcutij*fcutik*fcutjk
                     xx(ii + nnn,i)=xx(ii + nnn,i)+&
                     costheta*expxyz*fcutij*fcutik*fcutjk*weights_j*weights_k
-
                     if (lgrad) then
                         temp1=(dcosthetadxi*expxyz*fcutij*fcutik*fcutjk&
                               +costheta*dexpxyzdxi*fcutij*fcutik*fcutjk&
@@ -575,7 +585,7 @@ do ii = 1, nnn
                 rij = neighbor(i, i_neighbor,4)
                 if (rij.gt.cutoff) cycle
                 xyz = neighbor(i, i_neighbor,1:3)
-                weights = neighbor(i, i_neighbor, 5)
+                weithts = neighbor(i, i_neighbor, 5)
                 fcutij = 0.5d0 * (dcos(pi*rij/cutoff) + 1.d0)
                 if (lgrad) then
                     deltaxj = -1.d0*(pos(i, 1) - xyz(1))
@@ -671,8 +681,7 @@ do ii = 1, nnn
                 rij = neighbor(i, j_neighbor,4)
                 if (rij.gt.cutoff) cycle
                 xyz_j = neighbor(i, j_neighbor,1:3)
-                weights_j = neighbor(i, j_neighbor, 5)
-
+                weithts_j = neighbor(i, j_neighbor, 5)
                 fcutij=0.5d0*(dcos(pi*rij/cutoff)+1.d0)
                 if (lgrad) then
                     deltaxj = -1.d0*(pos(i, 1) - xyz_j(1))
@@ -687,6 +696,7 @@ do ii = 1, nnn
                     drijdxk = 0.d0
                     drijdyk = 0.d0
                     drijdzk = 0.d0
+
                     temp1=0.5d0*(-dsin(pi*rij/cutoff))*(pi/cutoff)
                     dfcutijdxi=temp1*drijdxi
                     dfcutijdyi=temp1*drijdyi
@@ -705,7 +715,6 @@ do ii = 1, nnn
                     xyz_k = neighbor(i, k_neighbor,1:3)
                     weights_k = neighbor(i, k_neighbor,5)
                     fcutik=0.5d0*(dcos(pi*rik/cutoff)+1.d0)
-
                     if (lgrad) then
                         deltaxk = -1.d0*(pos(i, 1) - xyz_k(1))
                         deltayk = -1.d0*(pos(i, 2) - xyz_k(2))
@@ -732,7 +741,6 @@ do ii = 1, nnn
                     endif
                     rjk = (xyz_j(1) - xyz_k(1))**2 + (xyz_j(2) - xyz_k(2))**2 + (xyz_j(3) - xyz_k(3))**2
                     rjk = dsqrt(rjk)
-
                     if (rjk.gt.cutoff) cycle  ! Be careful STUPID!!!
                     if (rjk < Rmin) then
                         print*, 'Rjk', rjk,' smaller than Rmin'
@@ -808,7 +816,6 @@ do ii = 1, nnn
                     xx(ii,i)=xx(ii,i)+costheta*expxyz*fcutij*fcutik*fcutjk
                     xx(ii + nnn,i)=xx(ii + nnn,i)+&
                     costheta*expxyz*fcutij*fcutik*fcutjk*weights_j*weights_k
-                    write(3333, '(4I4, X, 4F20.10)') ii , i, j_neighbor, k_neighbor, weights_j, weights_k, xx(ii,i), xx(ii+nnn,i)
                     if (lgrad) then
                         temp1=-alpha*2.0d0*expxyz
                         dexpxyzdxi=(rij*drijdxi+rik*drikdxi+rjk*drjkdxi)*temp1
@@ -925,6 +932,8 @@ do ii = 1, nnn
         print *, 'Unknown function type',ii, ACSF%sf(ii)%ntype
     endif
 enddo  ! types
+print*, 'BBBBBBBBBBBBBBBBBBB'
+!print*, 'CCC',at%xx(:,1)
 END SUBROUTINE
 
 SUBROUTINE  write_array_2dim(n,m, a,name)
