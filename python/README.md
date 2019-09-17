@@ -12,7 +12,8 @@ GAPPY
 ## Usages
 * INSTALL PACKAGE libgap
 ```shell
-python setup.py install --fcompiler=intelem
+python setup.py build --fcompiler=intelem
+python setup.py install
 ```
 Intel fortran compiler is recommended, It has been extensively tested and work well
 * USING libgap   
@@ -34,7 +35,7 @@ The aim of this method is to convert cartesian coordinate to wACSF
 which will be used in machin learning.
 ```python
 from libgap import WACSF
-wacsf = WACSF.Wacsf(nf = 33, rcut=6.0, lgrad = False)
+wacsf = WACSF.Wacsf(nf = 66, rcut=6.0, lgrad = False)
 Acsf = wacsf.car2wacsf(Lattice, Elements, Position)
 ```
 __rcut__ define the size of region to calculate ACSF  

@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 try:
-    from libgap  import fgap_read, fgap_calc
+    from libgap  import fcar2wacsf
 except:
     print 'ERROR: please install libgap'
     sys.exit(0)
@@ -37,11 +37,11 @@ class  Wacsf(object):
 
     def car2wacsf(self, lat, elements, pos):
         """
-        acsf = fcar2wacsf(nf, lat, elements, pos, rcut, lgrad, na=shape(pos,0))
+        xx, dxdy, strs = fcar2wacsf(nf, lat, elements, pos, rcut, lgrad, na=shape(pos,0))
         """
         try:
             Elements = self.get_elenum(elements)
         except:
             Elements = elements
-        acsf = fcar2wacsf(self.nf, lat, Elements, pos, self.rcut, self.lgrad)
-        return acsf.T
+        xx, dxdy, strs = fcar2wacsf(self.nf, lat, Elements, pos, self.rcut, self.lgrad)
+        return xx.T
