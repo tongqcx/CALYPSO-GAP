@@ -16,30 +16,34 @@ python setup.py install --fcompiler=intelem
 ```
 Intel fortran compiler is recommended, It has been extensively tested and work well
 * USING libgap   
-The example of using libgap to calculate the properties of materials could be found
-in ./example dir
-* About libgap.so   
-When you installed libgap package in your machine, you could use libgap.so's methods 
-individually. There is some methods in __libgap.so__    
-__fcar2wacsf__ could convert cartesian coordinate to weight atom centered symmetry function(wACSF)
-wACSF could be used in Machine Learning as descriptors  
+There are two methods in libgap
+    * GAP.py 
+This method could calculate the energy atomic force and cell stress for given structure, using as
+``` python
+from libgap import GAP  
+gap = GAP(rcut=6.0)  
+energy, force, stress, _ = gap.gap_calc(species, lat, pos, lgrad)  
+```
+__There must have neural.in and gap_parameters files in WorkDir__
 
-```python   
-xx,dxdy,strs = fcar2wacsf(nf,lat,elements,pos,rcut,lgrad,na=len(elements))   
-```
-
+    * WACSF.py
+ACSF is a well-developmented methods for representation of atomic environment, 
+it was proposed by Behler and Parrinello firstly. For using ACSF in multi-species system,
+each atom is assigned a weight to distinguish their contribution in ACSF, that is called wACSF.
+The aim of this method is to convert cartesian coordinate to wACSF  
+which will be used in machin learning.
 ```python
-write_array_2dim(a,name,n=shape(a,0),m=shape(a,1))   
+from libgap import WACSF
+wacsf = WACSF.Wacsf(nf = 33, rcut=6.0, lgrad = False)
+Acsf = wacsf.car2wacsf(Lattice, Elements, Position)
 ```
-
-fgap_read and fgap_calc will be used at the same time, GAP.py in dir libgap
-give the interface to use this two methods   
-```python
-nsparsex,des_len,theta,mm,invcmm,coeff = fgap_read()  
-```
-```python
-ene,force,stress,variance = fgap_calc(species,lat,pos,theta,mm,qmm,coeff,rcut,lgrad,na=len(species),nsparsex=shape(mm,0),des_len=len(theta))   
-```
+__rcut__ define the size of region to calculate ACSF  
+__nf__ define the number of symmetry function  
+__Lattice__ is the cell matrix shape (3,3)  
+__Position__ is the atomic position in cartesian coordinate shape (natoms,3),
+natoms is the number of atoms in cell, the unit of Lattice and Position is angstrom  
+__Acsf__ is the wacsf matrix shape (natoms, nf)  
+__There must have neural.in and gap_parameters files in WorkDir__
 
 
 ## 2019.01.04
