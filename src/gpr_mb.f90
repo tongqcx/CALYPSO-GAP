@@ -43,6 +43,7 @@ print*, 'The size of globalY:', GAP%nglobalY, DATA_C%nob
 print*, 'sparse_dis_len:', GAP%sparse_dis_len
 print*, 'sparse_method:',GAP%sparse_method
 print*, 'sigma_atom:',GAP%sigma_atom
+if ( .not. data_c%lstress) print*, 'CAUTIONS: Stress is not used in fitting GAP potentials'
 
 CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
@@ -113,11 +114,13 @@ do i = 1, n_config
             GAP%lamda(kf) = sqrt(1.d0/GAP%lamda(kf))
         enddo
     enddo
-    do j = 1,6
-        kf = kf + 1
-        GAP%lamda(kf) = GAP%sigma_s**2
-        GAP%lamda(kf) = sqrt(1.d0/GAP%lamda(kf))
-    enddo
+    if (data_c%lstress) then
+        do j = 1,6
+            kf = kf + 1
+            GAP%lamda(kf) = GAP%sigma_s**2
+            GAP%lamda(kf) = sqrt(1.d0/GAP%lamda(kf))
+        enddo
+    endif
 enddo
 print*, 'GAP INI FINISHED'
 END SUBROUTINE GAP_INI_MB
@@ -360,10 +363,17 @@ do i_sparse = 1, GAP%nsparse
 !    print*, i_sparse
     do i_struc = 1, DATA_C%ne
         call new_COV(GAP%delta, GAP%sparseX(i_sparse,:), GAP%theta, AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov(:))
-        do i_ob = 1, 3*at(i_struc)%natoms + 7
-            GAP%cmo(i_sparse, kf, 1) = cov( i_ob)
-            kf = kf + 1
-        enddo
+        if (data_c%lstress) then
+            do i_ob = 1, 3*at(i_struc)%natoms + 7
+                GAP%cmo(i_sparse, kf, 1) = cov( i_ob)
+                kf = kf + 1
+            enddo
+        else
+            do i_ob = 1, 3*at(i_struc)%natoms + 1
+                GAP%cmo(i_sparse, kf, 1) = cov( i_ob)
+                kf = kf + 1
+            enddo
+        endif
     enddo
 enddo
 !$OMP END PARALLEL 

@@ -1,0 +1,317 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ACSF	constants.f90	/^TYPE(ACSF_/;"	v	module:constants
+ACSF_type	constants.f90	/^TYPE ACSF_type$/;"	t	module:constants
+Atoms	structure.f90	/^type Atoms$/;"	t	module:struct
+BINPATH	makefile	/^BINPATH=.\/$/;"	m
+Build_neighbor	structure.f90	/^SUBROUTINE Build_neighbor(/;"	s	module:struct
+CAR2ACSF	gpr_mb.f90	/^SUBROUTINE CAR2ACSF(/;"	s	module:GPR_MB
+CHOLESKY	linearalgebra.f90	/^  integer, parameter :: CHOLESKY /;"	v	module:linearalgebra
+DATA_C	constants.f90	/^TYPE(data_type)                         :: DATA_C$/;"	v	module:constants
+DP	constants.f90	/^INTEGER,  PARAMETER      :: DP /;"	v	module:constants
+DescriptorX	constants.f90	/^REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: DescriptorX,/;"	k	type:GAP_type
+EXEC	makefile	/^EXEC = ngap.x$/;"	m
+FC	makefile	/^FC = ifort -I \/opt\/intel\/mkl\/include$/;"	m
+FLAGS	makefile	/^FLAGS =  -fopenmp  -c$/;"	m
+GAP_2B	constants.f90	/^TYPE(GAP_type)                          :: GAP_2B,/;"	v	module:constants
+GAP_CMO_MB	gpr_mb.f90	/^SUBROUTINE GAP_CMO_MB(/;"	s	module:GPR_MB
+GAP_COEFF_2B	gpr_2b.f90	/^SUBROUTINE GAP_COEFF_2B(/;"	s	module:GPR_2B
+GAP_COEFF_MB	gpr_mb.f90	/^SUBROUTINE GAP_COEFF_MB(/;"	s	module:GPR_MB
+GAP_INI_2B	gpr_2b.f90	/^SUBROUTINE GAP_INI_2B(/;"	s	module:GPR_2B
+GAP_INI_MB	gpr_mb.f90	/^SUBROUTINE GAP_INI_MB(/;"	s	module:GPR_MB
+GAP_MB	constants.f90	/^TYPE(GAP_type)                          :: GAP_2B, GAP_MB$/;"	v	module:constants
+GAP_PREDICT_MB	gpr_mb.f90	/^SUBROUTINE GAP_PREDICT_MB(/;"	s	module:GPR_MB
+GAP_READ_PARAS_MB	gpr_mb.f90	/^SUBROUTINE GAP_READ_PARAS_MB(/;"	s	module:GPR_MB
+GAP_SET_THETA	gpr_base.f90	/^SUBROUTINE GAP_SET_THETA(/;"	s	module:GPR_BASE
+GAP_SPARSE	gpr_mb.f90	/^SUBROUTINE GAP_SPARSE(/;"	s	module:GPR_MB
+GAP_WRITE_PARAS_2B	gpr_2b.f90	/^SUBROUTINE GAP_WRITE_PARAS_2B(/;"	s	module:GPR_2B
+GAP_WRITE_PARAS_MB	gpr_mb.f90	/^SUBROUTINE GAP_WRITE_PARAS_MB(/;"	s	module:GPR_MB
+GAP_cmo_2B	gpr_2b.f90	/^SUBROUTINE GAP_cmo_2B(/;"	s
+GAP_predict_2B	gpr_2b.f90	/^SUBROUTINE GAP_predict_2B(/;"	s
+GAP_type	constants.f90	/^TYPE GAP_type$/;"	t	module:constants
+GET_COV	gpr_base.f90	/^SUBROUTINE GET_COV(/;"	s	module:GPR_BASE
+GET_RMSE	structure.f90	/^SUBROUTINE GET_RMSE(/;"	s	module:struct
+GPR	gpr_base.f90	/^SUBROUTINE GPR(/;"	s	module:GPR_BASE
+GPR_2B	gpr_2b.f90	/^module GPR_2B$/;"	m
+GPR_BASE	gpr_base.f90	/^module GPR_BASE$/;"	m
+GPR_MB	gpr_mb.f90	/^MODULE GPR_MB$/;"	m
+GPa2eVPang	constants.f90	/^REAL(DP), PARAMETER      :: GPa2eVPang /;"	v	module:constants
+INI_AT_CALC	structure.f90	/^SUBROUTINE INI_AT_CALC(/;"	s	module:struct
+INI_STRUCTURE	structure.f90	/^SUBROUTINE INI_STRUCTURE(/;"	s	module:struct
+Inverse_error_max	constants.f90	/^REAL(DP), PARAMETER      :: Inverse_error_max /;"	v	module:constants
+Inverse_error_min	constants.f90	/^REAL(DP), PARAMETER      :: Inverse_error_min /;"	v	module:constants
+LA_Matrix	linearalgebra.f90	/^  type LA_Matrix$/;"	t	module:linearalgebra
+LA_Matrix_Factorise	linearalgebra.f90	/^  subroutine LA_Matrix_Factorise(/;"	s	module:linearalgebra
+LA_Matrix_Finalise	linearalgebra.f90	/^  subroutine LA_Matrix_Finalise(/;"	s	module:linearalgebra
+LA_Matrix_GetQR	linearalgebra.f90	/^  subroutine LA_Matrix_GetQR(/;"	s	module:linearalgebra
+LA_Matrix_Initialise	linearalgebra.f90	/^  subroutine LA_Matrix_Initialise(/;"	s	module:linearalgebra
+LA_Matrix_PseudoInverse	linearalgebra.f90	/^  subroutine LA_Matrix_PseudoInverse(/;"	s	module:linearalgebra
+LA_Matrix_QR_Factorise	linearalgebra.f90	/^  subroutine LA_Matrix_QR_Factorise(/;"	s	module:linearalgebra
+LA_Matrix_QR_Solve_Matrix	linearalgebra.f90	/^  subroutine LA_Matrix_QR_Solve_Matrix(/;"	s	module:linearalgebra
+LA_Matrix_QR_Solve_Vector	linearalgebra.f90	/^  subroutine LA_Matrix_QR_Solve_Vector(/;"	s	module:linearalgebra
+LA_Matrix_SVD	linearalgebra.f90	/^  subroutine LA_Matrix_SVD(/;"	s	module:linearalgebra
+LA_Matrix_SVD_Allocate	linearalgebra.f90	/^  subroutine LA_Matrix_SVD_Allocate(/;"	s	module:linearalgebra
+LA_c_subYsubY	gpr_base.f90	/^type(LA_Matrix)                       :: LA_c_subYsubY,/;"	v	module:GPR_BASE
+LA_q_subYsubY	gpr_base.f90	/^type(LA_Matrix)                       :: LA_c_subYsubY, LA_q_subYsubY$/;"	v	module:GPR_BASE
+LIB_MKL_ROOT	makefile	/^LIB_MKL_ROOT=\/opt\/intel\/mkl\/lib\/intel64$/;"	m
+MKLLIBS	makefile	/^MKLLIBS= -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_lapack95_lp64 -lmkl_blas95_lp64 -liomp5 -lpthread$/;"	m
+MM	constants.f90	/^REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: DescriptorX, MM$/;"	k	type:GAP_type
+MY_COV	gpr_base.f90	/^FUNCTION  MY_COV(/;"	f	module:GPR_BASE
+MY_DET	math.f90	/^FUNCTION MY_DET(/;"	f	module:math
+NOT_FACTORISED	linearalgebra.f90	/^  integer, parameter :: NOT_FACTORISED /;"	v	module:linearalgebra
+QP	constants.f90	/^INTEGER,  PARAMETER      :: QP /;"	v	module:constants
+QR	linearalgebra.f90	/^  integer, parameter :: QR /;"	v	module:linearalgebra
+READ_ACSF	io.f90	/^SUBROUTINE READ_ACSF(/;"	s	module:io
+RMSE_ENERGY	constants.f90	/^REAL(DP)                               :: RMSE_ENERGY,/;"	v	module:constants
+RMSE_FORCE	constants.f90	/^REAL(DP)                               :: RMSE_ENERGY, RMSE_FORCE,/;"	v	module:constants
+RMSE_STRESS	constants.f90	/^REAL(DP)                               :: RMSE_ENERGY, RMSE_FORCE, RMSE_STRESS$/;"	v	module:constants
+Rcut	constants.f90	/^REAL(DP)                                :: Rcut,/;"	k	type:data_type
+Rmin	constants.f90	/^REAL(DP)                                :: Rcut, Rmin,/;"	k	type:data_type
+SET_GPR_OB	gpr_base.f90	/^SUBROUTINE SET_GPR_OB(/;"	s	module:GPR_BASE
+SET_GPR_OB_2B	gpr_base.f90	/^SUBROUTINE SET_GPR_OB_2B(/;"	s
+SF	constants.f90	/^TYPE SF$/;"	t	module:constants
+SYSTEM_STRING_LENGTH	linearalgebra.f90	/^  integer, parameter, private      :: SYSTEM_STRING_LENGTH /;"	v	module:linearalgebra
+SYSTEM_STRING_LENGTH_LONG	linearalgebra.f90	/^  integer, parameter, private      :: SYSTEM_STRING_LENGTH_LONG /;"	v	module:linearalgebra
+SparseX_index	constants.f90	/^INTEGER,DIMENSION(:),ALLOCATABLE        :: SparseX_index$/;"	k	type:GAP_type
+TOL_SVD	linearalgebra.f90	/^  real(dp), public, parameter :: TOL_SVD /;"	v	module:linearalgebra
+T_2B	main.f90	/^logical            :: alive, T_MB, T_2B$/;"	v	program:test_nGAP
+T_MB	main.f90	/^logical            :: alive, T_MB,/;"	v	program:test_nGAP
+a	gpr_base.f90	/^real/;"	v	module:GPR_BASE
+alive	main.f90	/^logical            :: alive,/;"	v	program:test_nGAP
+alpha	constants.f90	/^REAL(DP)                                :: alpha$/;"	k	type:SF
+at	structure.f90	/^type(Structure),allocata/;"	v	module:struct
+atom	structure.f90	/^    type(Atoms),allocatable,dimension(:)     :: atom$/;"	v	module:struct
+atomic_energy	structure.f90	/^    real(DP),dimension(:),allocatable        :: atomic_energy$/;"	v	module:struct
+atomic_number	structure.f90	/^    integer                            :: atomic_number$/;"	k	type:Atoms
+c_subYY_sqrtInverseLambda	gpr_base.f90	/^real(dp), dimension(:,:), allocatable :: c_subYY_sqrtInverseLambda$/;"	v	module:GPR_BASE
+check_size_complex_dim1	linearalgebra.f90	/^  subroutine check_size_complex_dim1(/;"	s
+check_size_complex_dim1_s	linearalgebra.f90	/^  subroutine check_size_complex_dim1_s(/;"	s
+check_size_complex_dim2	linearalgebra.f90	/^  subroutine check_size_complex_dim2(/;"	s
+check_size_int_dim1	linearalgebra.f90	/^  subroutine check_size_int_dim1(/;"	s	module:linearalgebra
+check_size_int_dim1_s	linearalgebra.f90	/^  subroutine check_size_int_dim1_s(/;"	s	module:linearalgebra
+check_size_int_dim2	linearalgebra.f90	/^  subroutine check_size_int_dim2(/;"	s	module:linearalgebra
+check_size_log_dim1	linearalgebra.f90	/^  subroutine check_size_log_dim1(/;"	s
+check_size_log_dim1_s	linearalgebra.f90	/^  subroutine check_size_log_dim1_s(/;"	s
+check_size_log_dim2	linearalgebra.f90	/^  subroutine check_size_log_dim2(/;"	s
+check_size_real_dim1	linearalgebra.f90	/^  subroutine check_size_real_dim1(/;"	s	module:linearalgebra
+check_size_real_dim1_s	linearalgebra.f90	/^  subroutine check_size_real_dim1_s(/;"	s	module:linearalgebra
+check_size_real_dim2	linearalgebra.f90	/^  subroutine check_size_real_dim2(/;"	s	module:linearalgebra
+check_size_real_dim3	linearalgebra.f90	/^  subroutine check_size_real_dim3(/;"	s	module:linearalgebra
+ckm	structure.f90	/^    REAL(DP),dimension(:,:),allocatable      :: xx, kk, ckm$/;"	v	module:struct
+cmm	constants.f90	/^REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: cmm$/;"	k	type:GAP_type
+cmo	constants.f90	/^REAL(DP),DIMENSION(:,:,:),ALLOCATABLE   :: cmo$/;"	k	type:GAP_type
+coeff	constants.f90	/^REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: coeff$/;"	k	type:GAP_type
+complex_feq	linearalgebra.f90	/^   pure function complex_feq(/;"	f	module:linearalgebra
+constants	constants.f90	/^module constants$/;"	m
+count	structure.f90	/^    integer,allocatable,dimension(:)   :: count$/;"	k	type:Atoms
+covariance_2B	gpr_base.f90	/^FUNCTION  covariance_2B(/;"	f	module:GPR_BASE
+covariance_MB	gpr_base.f90	/^FUNCTION  covariance_MB(/;"	f	module:GPR_BASE
+crossp	math.f90	/^function crossp(/;"	f	module:math
+cur_decomposition	gpr_base.f90	/^  subroutine cur_decomposition(/;"	s	module:GPR_BASE
+cutoff	constants.f90	/^REAL(DP)                                :: cutoff$/;"	k	type:SF
+d_width	constants.f90	/^REAL(DP)                                :: Rcut, Rmin, d_width$/;"	k	type:data_type
+data_type	constants.f90	/^TYPE data_type$/;"	t	module:constants
+dcovdx_2B	gpr_base.f90	/^FUNCTION  dcovdx_2B(/;"	f	module:GPR_BASE
+dd	constants.f90	/^INTEGER                                 :: dd /;"	k	type:GAP_type
+dedg	structure.f90	/^    REAL(DP),dimension(:,:),allocatable      :: dedg$/;"	v	module:struct
+delta	constants.f90	/^REAL(DP)                                :: delta$/;"	k	type:GAP_type
+delta_2b	constants.f90	/^REAL(DP)                                :: delta_2b$/;"	k	type:data_type
+delta_mb	constants.f90	/^REAL(DP)                                :: delta_mb$/;"	k	type:data_type
+dfcut_ij	math.f90	/^FUNCTION dfcut_ij(/;"	f	module:math
+dpos	structure.f90	/^    real(DP),dimension(:,:),allocatable      :: dpos$/;"	v	module:struct
+dxdy	structure.f90	/^    REAL(DP),dimension(:,:,:,:),allocatable  :: dxdy,/;"	v	module:struct
+elements	constants.f90	/^character(2),allocatable,dimension(:)   :: elements$/;"	k	type:data_type
+elements_count	constants.f90	/^INTEGER,allocatable,dimension(:)        :: elements_count$/;"	k	type:data_type
+elements_weight	constants.f90	/^REAL(DP),allocatable,dimension(:)       :: elements_weight$/;"	k	type:data_type
+ene_cons	constants.f90	/^REAL(DP), PARAMETER      :: ene_cons /;"	v	module:constants
+energy_cal	structure.f90	/^    real(DP)                                 :: energy_ref, energy_cal,/;"	v	module:struct
+energy_cal_2b	structure.f90	/^    real(DP)                                 :: energy_ref, energy_cal, energy_cal_mb, energy_cal_2b$/;"	v	module:struct
+energy_cal_mb	structure.f90	/^    real(DP)                                 :: energy_ref, energy_cal, energy_cal_mb,/;"	v	module:struct
+energy_ref	structure.f90	/^    real(DP)                                 :: energy_ref,/;"	v	module:struct
+equilibrated	linearalgebra.f90	/^     logical :: equilibrated /;"	k	type:LA_Matrix
+error	gpr_base.f90	/^integer                               :: error$/;"	v	module:GPR_BASE
+factor	linearalgebra.f90	/^     real(qp), dimension(:,:), allocatable :: matrix, factor$/;"	k	type:LA_Matrix
+factor_c_subYsubY	gpr_base.f90	/^real(dp), dimension(:,:), allocatable :: factor_c_subYsubY$/;"	v	module:GPR_BASE
+factorised	linearalgebra.f90	/^     integer :: factorised /;"	k	type:LA_Matrix
+fc_i	main.f90	/^real(dp)           :: fc_i,/;"	v	program:test_nGAP
+fc_j	main.f90	/^real(dp)           :: fc_i, fc_j,/;"	v	program:test_nGAP
+fcut_ij	math.f90	/^FUNCTION fcut_ij(/;"	f	module:math
+force_cal	structure.f90	/^    real(DP),dimension(:,:),allocatable      :: force_ref, force_cal,/;"	v	module:struct
+force_cal_2b	structure.f90	/^    real(DP),dimension(:,:),allocatable      :: force_ref, force_cal, force_cal_mb, force_cal_2b$/;"	v	module:struct
+force_cal_mb	structure.f90	/^    real(DP),dimension(:,:),allocatable      :: force_ref, force_cal, force_cal_mb,/;"	v	module:struct
+force_ref	structure.f90	/^    real(DP),dimension(:,:),allocatable      :: force_ref,/;"	v	module:struct
+get_default_weights	constants.f90	/^SUBROUTINE get_default_weights(/;"	s	module:constants
+get_elements_count	constants.f90	/^SUBROUTINE get_elements_count(/;"	s	module:constants
+get_read_weights	constants.f90	/^SUBROUTINE get_read_weights(/;"	s	module:constants
+globalY	gpr_base.f90	/^real(dp), dimension(:),   allocatable :: globalY$/;"	v	module:GPR_BASE
+global_cutoff	constants.f90	/^REAL(DP)                                :: global_cutoff$/;"	k	type:ACSF_type
+heap_sort_i	linearalgebra.f90	/^   subroutine heap_sort_i(/;"	s	module:linearalgebra
+heap_sort_i_2dim	linearalgebra.f90	/^   subroutine heap_sort_i_2dim(/;"	s	module:linearalgebra
+heap_sort_r	linearalgebra.f90	/^   subroutine heap_sort_r(/;"	s	module:linearalgebra
+heap_sort_r_2dim	linearalgebra.f90	/^   subroutine heap_sort_r_2dim(/;"	s	module:linearalgebra
+i	main.f90	/^in/;"	v	program:test_nGAP
+ii	main.f90	/^integer            :: i,j,k,ii,/;"	v	program:test_nGAP
+index	structure.f90	/^    integer,allocatable,dimension(:)         :: index$/;"	v	module:struct
+initialised	linearalgebra.f90	/^     logical :: initialised /;"	k	type:LA_Matrix
+int_array_ge	linearalgebra.f90	/^  pure function int_array_ge(/;"	f
+int_array_gt	linearalgebra.f90	/^  pure function int_array_gt(/;"	f
+int_array_le	linearalgebra.f90	/^  pure function int_array_le(/;"	f
+int_array_lt	linearalgebra.f90	/^  pure function int_array_lt(/;"	f
+interaction_index	main.f90	/^integer            :: interaction_index$/;"	v	program:test_nGAP
+interaction_mat	constants.f90	/^INTEGER,allocatable,dimension(:,:)      :: interaction_mat$/;"	k	type:data_type
+interaction_mat	structure.f90	/^    integer,dimension(:,:),allocatable       :: interaction_mat$/;"	v	module:struct
+io	io.f90	/^module io$/;"	m
+it1	constants.f90	/^INTEGER                                :: tt1, tt2, it1,/;"	v	module:constants
+it2	constants.f90	/^INTEGER                                :: tt1, tt2, it1, it2$/;"	v	module:constants
+itype	main.f90	/^integer            :: nconfig, itype$/;"	v	program:test_nGAP
+j	main.f90	/^integer            :: i,j,/;"	v	program:test_nGAP
+jj	main.f90	/^integer            :: i,j,k,ii,jj,/;"	v	program:test_nGAP
+k	main.f90	/^integer            :: i,j,k,/;"	v	program:test_nGAP
+k1	main.f90	/^integer            :: i,j,k,ii,jj,kk,k1,/;"	v	program:test_nGAP
+k2	main.f90	/^integer            :: i,j,k,ii,jj,kk,k1, k2,/;"	v	program:test_nGAP
+k3	main.f90	/^integer            :: i,j,k,ii,jj,kk,k1, k2,k3$/;"	v	program:test_nGAP
+kk	main.f90	/^integer            :: i,j,k,ii,jj,kk,/;"	v	program:test_nGAP
+kk	structure.f90	/^    REAL(DP),dimension(:,:),allocatable      :: xx, kk,/;"	v	module:struct
+lamda	constants.f90	/^REAL(DP),DIMENSION(:),ALLOCATABLE       :: lamda$/;"	k	type:GAP_type
+lamdaobe	constants.f90	/^REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: lamdaobe$/;"	k	type:GAP_type
+lat	structure.f90	/^    real(DP),dimension(3,3)                  :: lat$/;"	v	module:struct
+length	math.f90	/^FUNCTION length(/;"	f	module:math
+linearalgebra	linearalgebra.f90	/^module linearalgebra$/;"	m
+lread_ele_weight	constants.f90	/^LOGICAL                                 :: lread_ele_weight$/;"	k	type:data_type
+lstress	constants.f90	/^logical                                 :: lstress$/;"	k	type:data_type
+ltest	constants.f90	/^logical                                :: ltrain, ltest$/;"	v	module:constants
+ltrain	constants.f90	/^logical                                :: ltrain,/;"	v	module:constants
+ltrain_2b	constants.f90	/^logical                                 :: ltrain_2b$/;"	k	type:data_type
+ltrain_mb	constants.f90	/^logical                                 :: ltrain_mb$/;"	k	type:data_type
+m	linearalgebra.f90	/^     integer :: n, m$/;"	k	type:LA_Matrix
+mass	structure.f90	/^    real(8)                            :: mass$/;"	k	type:Atoms
+math	math.f90	/^module math$/;"	m
+matmuldiag	gpr_base.f90	/^subroutine matmuldiag(/;"	s	module:GPR_BASE
+matmuldiag_T	gpr_base.f90	/^subroutine matmuldiag_T(/;"	s	module:GPR_BASE
+matrix	linearalgebra.f90	/^     real(qp), dimension(:,:), allocatable :: matrix,/;"	k	type:LA_Matrix
+matrix_product_ddd	linearalgebra.f90	/^   function matrix_product_ddd(/;"	f
+matrix_product_int_vect	linearalgebra.f90	/^  function matrix_product_int_vect(/;"	f
+matrix_product_sub_ddd	linearalgebra.f90	/^   subroutine matrix_product_sub_ddd(/;"	s
+matrix_product_sub_zzz	linearalgebra.f90	/^   subroutine matrix_product_sub_zzz(/;"	s
+matrix_product_vect	linearalgebra.f90	/^  function matrix_product_vect(/;"	f
+matrix_product_vect_asdiagonal_sub_ddd	linearalgebra.f90	/^   subroutine matrix_product_vect_asdiagonal_sub_ddd(/;"	s
+matrix_product_vect_asdiagonal_sub_zdz	linearalgebra.f90	/^   subroutine matrix_product_vect_asdiagonal_sub_zdz(/;"	s
+matrix_product_vect_asdiagonal_sub_zzd	linearalgebra.f90	/^   subroutine matrix_product_vect_asdiagonal_sub_zzd(/;"	s
+matrix_product_vect_asdiagonal_sub_zzz	linearalgebra.f90	/^   subroutine matrix_product_vect_asdiagonal_sub_zzz(/;"	s
+matrix_product_vect_asdiagonal_zz	linearalgebra.f90	/^   function matrix_product_vect_asdiagonal_zz(/;"	f
+matrix_product_zzz	linearalgebra.f90	/^   function matrix_product_zzz(/;"	f
+matrix_vector_product_sub_ddd	linearalgebra.f90	/^   subroutine matrix_vector_product_sub_ddd(/;"	s
+max_atoms	constants.f90	/^INTEGER, PARAMETER       :: max_atoms /;"	v	module:constants
+max_mm_len	constants.f90	/^INTEGER, PARAMETER       :: max_mm_len /;"	v	module:constants
+max_neighbor	structure.f90	/^integer,parameter                      :: max_neighbor /;"	v	module:struct
+mlp_weights	structure.f90	/^    real(DP),allocatable,dimension(:)        :: mlp_weights$/;"	v	module:struct
+n	linearalgebra.f90	/^     int/;"	k	type:LA_Matrix
+n_globalSparseX	gpr_base.f90	/^integer                               :: n_globalSparseX /;"	v	module:GPR_BASE
+n_globalY	gpr_base.f90	/^integer                               :: n_globalSparseX , n_globalY$/;"	v	module:GPR_BASE
+na	main.f90	/^integer            :: na$/;"	v	program:test_nGAP
+name	structure.f90	/^    character(2)                       :: name$/;"	k	type:Atoms
+natoms	constants.f90	/^INTEGER                                 :: natoms$/;"	k	type:data_type
+natoms	structure.f90	/^    integer                                  :: natoms$/;"	v	module:struct
+nconfig	main.f90	/^integer            :: nconfig,/;"	v	program:test_nGAP
+ncross	constants.f90	/^INTEGER                                 :: ncross$/;"	k	type:data_type
+ne	constants.f90	/^INTEGER                                 :: ne,/;"	k	type:data_type
+neighbor	structure.f90	/^    real(8),allocatable,dimension(:,:,:) :: neighbor$/;"	k	type:Atoms
+new_cov	gpr_mb.f90	/^SUBROUTINE   new_cov(/;"	s	module:GPR_MB
+nf	constants.f90	/^INTEGER                                 :: ne, nf,/;"	k	type:data_type
+nforce	constants.f90	/^INTEGER                                :: nforce$/;"	v	module:constants
+nglobalY	constants.f90	/^INTEGER                                 :: nglobalY$/;"	k	type:GAP_type
+ninteraction	constants.f90	/^INTEGER                                 :: ninteraction$/;"	k	type:GAP_type
+ninteraction	constants.f90	/^integer                                 :: ninteraction$/;"	k	type:data_type
+nneighbor	structure.f90	/^    integer                            :: nneighbor$/;"	k	type:Atoms
+nob	constants.f90	/^INTEGER                                 :: nob$/;"	k	type:data_type
+ns	constants.f90	/^INTEGER                                 :: ne, nf, ns$/;"	k	type:data_type
+nsf	constants.f90	/^INTEGER                                 :: nsf$/;"	k	type:ACSF_type
+nsparse	constants.f90	/^INTEGER                                 :: nsparse$/;"	k	type:GAP_type
+nsparse_2b	constants.f90	/^integer                                 :: nsparse_2b$/;"	k	type:data_type
+nsparse_mb	constants.f90	/^integer                                 :: nsparse_mb$/;"	k	type:data_type
+nspecies	constants.f90	/^integer                                 :: nspecies /;"	k	type:data_type
+nspecies	structure.f90	/^    integer                                  :: nspecies$/;"	v	module:struct
+ntype	constants.f90	/^INTEGER                                 :: ntype$/;"	k	type:SF
+ob	constants.f90	/^REAL(DP),dimension(:),allocatable       :: obe/;"	k	type:data_type
+obe	constants.f90	/^REAL(DP),DIMENSION(:),ALLOCATABLE       :: obe$/;"	k	type:GAP_type
+obe	constants.f90	/^REAL(DP),dimension(:),allocatable       :: obe,/;"	k	type:data_type
+obj	makefile	/^obj =  constants.o math.o structure.o io.o linearalgebra.o gpr_base.o gpr_mb.o gpr_2b.o  main.o$/;"	m
+optional_default_c	linearalgebra.f90	/^  pure function optional_default_c(/;"	f
+optional_default_ca	linearalgebra.f90	/^  pure function optional_default_ca(/;"	f
+optional_default_i	linearalgebra.f90	/^  pure function optional_default_i(/;"	f
+optional_default_ia	linearalgebra.f90	/^  pure function optional_default_ia(/;"	f
+optional_default_l	linearalgebra.f90	/^  pure function optional_default_l(/;"	f
+optional_default_r	linearalgebra.f90	/^  pure function optional_default_r(/;"	f
+optional_default_ra	linearalgebra.f90	/^  pure function optional_default_ra(/;"	f
+optional_default_z	linearalgebra.f90	/^  pure function optional_default_z(/;"	f
+pi	constants.f90	/^REAL(DP), PARAMETER      :: pi=/;"	v	module:constants
+pos	structure.f90	/^    real(8)                            :: pos(/;"	k	type:Atoms
+pos	structure.f90	/^    real(DP),dimension(:,:),allocatable      :: pos$/;"	v	module:struct
+pos_index	structure.f90	/^    integer,allocatable,dimension(:,:)       :: pos_index$/;"	v	module:struct
+pseudo_inverse	linearalgebra.f90	/^  subroutine pseudo_inverse(/;"	s	module:linearalgebra
+ran_seed	main.f90	/^integer            :: ran_seed(/;"	v	program:test_nGAP
+ran_uniform	linearalgebra.f90	/^  function ran_uniform(/;"	f
+read_input	io.f90	/^subroutine read_input(/;"	s	module:io
+read_structure	io.f90	/^SUBROUTINE read_structure(/;"	s	module:io
+real_array_ge	linearalgebra.f90	/^  pure function real_array_ge(/;"	f	module:linearalgebra
+real_array_gt	linearalgebra.f90	/^  pure function real_array_gt(/;"	f	module:linearalgebra
+real_array_lt	linearalgebra.f90	/^  pure function real_array_lt(/;"	f	module:linearalgebra
+real_feq	linearalgebra.f90	/^   pure function real_feq(/;"	f	module:linearalgebra
+recip_lat	structure.f90	/^    real(DP),dimension(3,3)                  :: recip_lat$/;"	v	module:struct
+recipvector	math.f90	/^function recipvector(/;"	f	module:math
+rij	main.f90	/^real(dp)           :: fc_i, fc_j, rij$/;"	v	program:test_nGAP
+s	linearalgebra.f90	/^     real(qp), dimensi/;"	k	type:LA_Matrix
+sf	constants.f90	/^type(SF),dimension(:),allocatable       :: sf$/;"	k	type:ACSF_type
+siftdown	linearalgebra.f90	/^     subroutine siftdown(/;"	s	subroutine:heap_sort_i
+siftdown	linearalgebra.f90	/^     subroutine siftdown(/;"	s	subroutine:heap_sort_i_2dim
+siftdown	linearalgebra.f90	/^     subroutine siftdown(/;"	s	subroutine:heap_sort_r
+siftdown	linearalgebra.f90	/^     subroutine siftdown(/;"	s	subroutine:heap_sort_r_2dim
+sigma_atom	constants.f90	/^REAL(DP)                                :: sparse_dis_len, sigma_atom$/;"	k	type:GAP_type
+sigma_atom	constants.f90	/^REAL(DP)                                :: sparse_dis_len, sigma_atom$/;"	k	type:data_type
+sigma_e	constants.f90	/^REAL(DP)                                :: sigma_e,/;"	k	type:GAP_type
+sigma_e	structure.f90	/^    real(DP)                                 :: sigma_e$/;"	v	module:struct
+sigma_e_2b	constants.f90	/^REAL(DP)                                :: sigma_e_2b,/;"	k	type:data_type
+sigma_e_mb	constants.f90	/^REAL(DP)                                :: sigma_e_mb,/;"	k	type:data_type
+sigma_f	constants.f90	/^REAL(DP)                                :: sigma_e, sigma_f,/;"	k	type:GAP_type
+sigma_f_2b	constants.f90	/^REAL(DP)                                :: sigma_e_2b, sigma_f_2b,/;"	k	type:data_type
+sigma_f_mb	constants.f90	/^REAL(DP)                                :: sigma_e_mb, sigma_f_mb,/;"	k	type:data_type
+sigma_jitter	constants.f90	/^REAL(DP)                                :: sigma_jitter$/;"	k	type:data_type
+sigma_s	constants.f90	/^REAL(DP)                                :: sigma_e, sigma_f, sigma_s$/;"	k	type:GAP_type
+sigma_s_2b	constants.f90	/^REAL(DP)                                :: sigma_e_2b, sigma_f_2b, sigma_s_2b$/;"	k	type:data_type
+sigma_s_mb	constants.f90	/^REAL(DP)                                :: sigma_e_mb, sigma_f_mb, sigma_s_mb$/;"	k	type:data_type
+sparseX	constants.f90	/^REAL(DP),DIMENSION(:,:),ALLOCATABLE     :: sparseX$/;"	k	type:GAP_type
+sparse_dis_len	constants.f90	/^REAL(DP)                                :: sparse_dis_len,/;"	k	type:GAP_type
+sparse_dis_len	constants.f90	/^REAL(DP)                                :: sparse_dis_len,/;"	k	type:data_type
+sparse_method	constants.f90	/^INTEGER                                 :: sparse_method$/;"	k	type:GAP_type
+sparse_method	constants.f90	/^integer                                 :: sparse_method$/;"	k	type:data_type
+sparsecut	constants.f90	/^REAL(DP),DIMENSION(:),ALLOCATABLE       :: sparsecut$/;"	k	type:GAP_type
+stress	structure.f90	/^    real(DP),dimension(3,3)                  :: stress /;"	v	module:struct
+stress_cal	structure.f90	/^    real(DP),dimension(6)                    :: stress_ref, stress_cal,/;"	v	module:struct
+stress_cal_2b	structure.f90	/^    real(DP),dimension(6)                    :: stress_ref, stress_cal, stress_cal_mb, stress_cal_2b$/;"	v	module:struct
+stress_cal_mb	structure.f90	/^    real(DP),dimension(6)                    :: stress_ref, stress_cal, stress_cal_mb,/;"	v	module:struct
+stress_ref	structure.f90	/^    real(DP),dimension(6)                    :: stress_ref,/;"	v	module:struct
+strs	structure.f90	/^    REAL(DP),dimension(:,:,:,:),allocatable  :: dxdy, strs$/;"	v	module:struct
+struct	structure.f90	/^module struct$/;"	m
+symbols	structure.f90	/^    character(2),allocatable,dimension(:)    :: symbols$/;"	v	module:struct
+tau	linearalgebra.f90	/^     real(qp), dimension(:), allocatable :: s, tau$/;"	k	type:LA_Matrix
+test_nGAP	main.f90	/^Program  test_nGAP$/;"	p
+theta	constants.f90	/^REAL(DP),DIMENSION(:),ALLOCATABLE       :: theta$/;"	k	type:GAP_type
+theta_2b	constants.f90	/^REAL(DP)                                :: theta_2b$/;"	k	type:data_type
+tt1	constants.f90	/^INTEGER                                :: tt1,/;"	v	module:constants
+tt2	constants.f90	/^INTEGER                                :: tt1, tt2,/;"	v	module:constants
+u2l	io.f90	/^subroutine u2l(/;"	s	module:io
+use_intrinsic_blas	linearalgebra.f90	/^  logical, parameter, private      :: use_intrinsic_blas /;"	v	module:linearalgebra
+vect_asdiagonal_product_matrix_sub_ddd	linearalgebra.f90	/^   subroutine vect_asdiagonal_product_matrix_sub_ddd(/;"	s
+vect_asdiagonal_product_matrix_sub_zdz	linearalgebra.f90	/^   subroutine vect_asdiagonal_product_matrix_sub_zdz(/;"	s
+vect_asdiagonal_product_matrix_sub_zzd	linearalgebra.f90	/^   subroutine vect_asdiagonal_product_matrix_sub_zzd(/;"	s
+vect_asdiagonal_product_matrix_sub_zzz	linearalgebra.f90	/^   subroutine vect_asdiagonal_product_matrix_sub_zzz(/;"	s
+vectorlength	math.f90	/^function vectorlength(/;"	f	module:math
+volume	math.f90	/^function volume(/;"	f	module:math
+volume	structure.f90	/^    real(DP)                                 :: volume$/;"	v	module:struct
+write_array_1dim	math.f90	/^SUBROUTINE  write_array_1dim(/;"	s	module:math
+write_array_2dim	math.f90	/^SUBROUTINE  write_array_2dim(/;"	s	module:math
+xx	structure.f90	/^    REAL(DP),dimension(:,:),allocatable      :: xx,/;"	v	module:struct

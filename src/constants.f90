@@ -56,21 +56,23 @@ END TYPE ACSF_type
 
 !
 TYPE data_type
-!{
+!===========================================
+! for 2-body calculation
 integer                                 :: nsparse_2b
 REAL(DP)                                :: delta_2b
 REAL(DP)                                :: theta_2b
 REAL(DP)                                :: sigma_e_2b, sigma_f_2b, sigma_s_2b
 logical                                 :: ltrain_2b
-!}
-!{
+!===========================================
+! for many-body calculation
 integer                                 :: nsparse_mb
 REAL(DP)                                :: sparse_dis_len, sigma_atom
 integer                                 :: sparse_method
 REAL(DP)                                :: sigma_e_mb, sigma_f_mb, sigma_s_mb
 REAL(DP)                                :: delta_mb
 logical                                 :: ltrain_mb
-!}
+logical                                 :: lstress
+
 integer                                 :: nspecies  ! this nspecies is global
 integer                                 :: ninteraction
 REAL(DP)                                :: sigma_jitter

@@ -37,6 +37,7 @@ integer :: lv1,lv2
     DATA_C%delta_MB = 1.d0
     DATA_C%sparse_method = 1
     DATA_C%sigma_atom = 1.6d0
+    DATA_C%lstress = .true.
 !}
     
 !>>>                         <<<
@@ -103,6 +104,8 @@ do while(.not.eof(60))
         read(rtp(lv2:),*) DATA_C%sigma_atom
     case('ltrain_mb')
         read(rtp(lv2:),*) DATA_C%ltrain_mb
+    case('lstress')
+        read(rtp(lv2:),*) DATA_C%lstress
 !}
     case('rcut')
         read(rtp(lv2:),*) DATA_C%rcut

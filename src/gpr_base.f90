@@ -323,10 +323,12 @@ do i = 1, n_config
                 data_c%ob(kf) = at(i)%force_ref(j,k1)
             enddo
         enddo
-        do j = 1, 6
-            kf = kf + 1
-            data_c%ob(kf) = at(i)%stress_ref(j)
-        enddo
+        if (data_c%lstress) then
+            do j = 1, 6
+                kf = kf + 1
+                data_c%ob(kf) = at(i)%stress_ref(j)
+            enddo
+        endif
     endif
 enddo
 print*, 'Number of structures/energy/stress:', data_c%ne, data_c%ne, data_c%ns
@@ -350,10 +352,12 @@ do i = 1, n_config
             data_c%ob(kf) = at(i)%force_ref(j,k1) - at(i)%force_cal_2b(j,k1)
         enddo
     enddo
-    do j = 1, 6
-        kf = kf + 1
-        data_c%ob(kf) = at(i)%stress_ref(j) - at(i)%stress_cal_2b(j)
-    enddo
+    if (data_c%lstress) then
+        do j = 1, 6
+            kf = kf + 1
+            data_c%ob(kf) = at(i)%stress_ref(j) - at(i)%stress_cal_2b(j)
+        enddo
+    endif
 enddo
 ENDSUBROUTINE SET_GPR_OB_MB
 
