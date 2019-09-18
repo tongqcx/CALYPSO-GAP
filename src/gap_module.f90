@@ -66,42 +66,9 @@ double precision                                           :: Rcut
 logical                                                    :: lgrad
 
 private   at_test, des_len, nsparseX, THETA, MM, QMM, COEFF, Rcut, lgrad, GPa2eVPang, delta, maxele, atsym
-private   get_ele_weights, GET_COV,  Det, FCAR2WACSF, write_array_2dim, set_elements
+private   GET_COV,  Det, FCAR2WACSF, write_array_2dim, set_elements
 
 contains
-SUBROUTINE  get_ele_weights(cc,nw)!{{{
-implicit none
-integer           ::  cc
-double precision  ::  nw
-select case(cc)
-case (1)
-    nw = -1.0
-case (3)
-    nw = 1.0
-case (5)
-    nw = -1.0
-case (6)
-    nw = 1.0
-case (8)
-    nw = 2.0
-case (12)
-    nw = -1.0
-case (13)
-    nw = 1.0
-case (15)
-    nw = 2.0
-case (16)
-    nw = -1.0
-case (14)
-    nw = -2.0
-case (20)
-    nw = -1.0
-case (28)
-    nw = -1.0
-case (55)
-    nw = 1.0
-end select
-END SUBROUTINE!}}}
 SUBROUTINE  GET_COV(n,m,xx,yy,theta, cov)!{{{
     integer i,j,k
     integer,intent(in)       ::  n,m
@@ -259,11 +226,11 @@ STRESS = at%stress_cal
 END SUBROUTINE!}}}
 SUBROUTINE  FGAP_INIT(nat)!{{{
 implicit none
-Integer, intent(in)                 :: nat(:)
+Integer, optional, intent(in)                 :: nat(:)
 
 !-- local--
-logical                             :: alive
-integer                             :: i
+logical                                       :: alive
+integer                                       :: i
 
 inquire(file="gap_parameters",exist=alive)
 if(.not.alive) then
@@ -288,7 +255,8 @@ do i = 1,nsparseX
 enddo
 read(111,*) COEFF(1:nsparseX)
 close(111)
-call SET_ELEMENTS(nat)
+if (present(nat)) call SET_ELEMENTS(nat)
+
 END SUBROUTINE!}}}
 SUBROUTINE  FCAR2WACSF(na, nf, lat, elements, pos, xx, dxdy, strs, rcut, lgrad)!{{{
 
