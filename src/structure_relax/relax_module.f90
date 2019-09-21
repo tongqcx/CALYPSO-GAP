@@ -2,6 +2,7 @@
 ! 2019.09.19
 module relax_module
 implicit none
+use gap_module
 
 
 private   struct2relaxv, relaxv2struct, lat2matrix, upper, lower, lat_inv
