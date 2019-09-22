@@ -66,7 +66,7 @@ double precision                                           :: Rcut
 logical                                                    :: lgrad
 
 private   at_test, des_len, nsparseX, THETA, MM, QMM, COEFF, Rcut, lgrad, GPa2eVPang, delta, maxele, atsym
-private   GET_COV,  Det, FCAR2WACSF, write_array_2dim, set_elements
+private   GET_COV, FCAR2WACSF, write_array_2dim, set_elements
 
 contains
 SUBROUTINE  GET_COV(n,m,xx,yy,theta, cov)!{{{
@@ -163,6 +163,7 @@ call get_cov(at%na,&
              mm(1:nsparseX,1:des_len),theta(1:des_len), &
              at%ckm(1:at%na,1:nsparseX))
 
+!call write_array_2dim(at%na, nsparseX, at%ckm, 'ckm.dat')
 !--print*, 'get energy'
 at%e = matmul(at%ckm(1:at%na,1:nsparseX),coeff(1:nsparseX))
 at%energy_cal = sum(at%e)
@@ -215,7 +216,7 @@ do i  = 1,at%na
     VARIANCE = VARIANCE + at%covf(i)/at%na
 enddo
 
-ENE = at%energy_cal
+ENE = at%energy_cal 
 FORCE = at%force_cal(1:at%na,:)
 STRESS = at%stress_cal
 !print *, ENE

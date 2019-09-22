@@ -31,6 +31,7 @@ double precision                              :: f
 double precision                              :: dsave(29)
 integer,  allocatable,dimension(:)            :: nbd, iwa
 double precision, allocatable,dimension(:)    :: x, l, u, g, wa
+double precision                              :: f_bak
 
 
 n = 3*NA + 6
@@ -45,26 +46,32 @@ task = 'START'
 call  FGAP_INIT()
 call  FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
 
+f_bak = 0
 ! begin lbfgs loop
 do while(task(1:2).eq.'FG'.or.task.eq.'NEW_X'.or.task.eq.'START') 
  
     call struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, x, f, g)
-    print*, 'n'
-    print*, n
+    !print*, 'n'
+    !print*, n
     print*, 'x'
     print*, x
-    print*, 'f'
-    print*, f
-    print*, 'g'
-    print*, g
-    stop
+    !print*, 'f'
+    !print*, f
+    !print*, 'g'
+    !print*, g
     call setulb ( n, m, x, l, u, nbd, f, g, factor, pgtol, &
                        wa, iwa, task, iprint,&
                        csave, lsave, isave, dsave )
     if (task(1:2) .eq. 'FG') then
         call relaxv2struct(n, x, NA, LAT, POS)
+        print*, 'new x'
+        print *, x
+        print*, LAT
+        print * , POS
         call FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
     endif
+    print *, '|DE|:', f - f_bak
+    f_bak = f
 enddo
 ! end of lbfgs loop
 
@@ -74,6 +81,7 @@ SUBROUTINE  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, xc, fc
 implicit none
 
 INTEGER         , intent(in)                           :: NA
+double precision,parameter                             :: cfactor = 6.241460893d-3
 double precision, intent(inout),dimension(3,3)            :: LAT
 double precision, intent(in),dimension(NA,3)           :: POS, FORCE
 double precision, intent(in)                           :: ENE
@@ -92,6 +100,7 @@ if (.not. allocated(POS_FRAC)) allocate(POS_FRAC(NA, 3))
 CALL LAT2MATRIX(cellp, LAT, 2)
 CALL CART2FRAC(NA, LAT, POS, POS_FRAC)
 FORCE_FRAC = matmul(FORCE, transpose(LAT))
+
 strderv(1) = STRESS(1)
 strderv(2) = STRESS(4)
 strderv(3) = STRESS(6)
@@ -100,7 +109,11 @@ strderv(5) = STRESS(3)
 strderv(6) = STRESS(2)
 strderv = strderv - EXTSTRESS
 ! calculating the dev of strain to cell parameters
-CALL CELLDRV(LAT, cellp, strderv, cellderv)
+CALL CELLDRV(transpose(LAT), cellp, strderv, cellderv)
+!print*, 'strderv'
+!print*, strderv
+!print*, 'cellderv'
+!print*, cellderv
 k = 0
 do i = 1, 6
     k = k + 1
@@ -114,7 +127,9 @@ do i = 1, NA
         gc(k) = FORCE_FRAC(i,j)
     enddo
 enddo
-fc = ENE
+fc = ENE + SUM(EXTSTRESS(1:3))/3.d0 * ABS(DET(LAT)) * cfactor
+!print *, 'fc',fc
+!stop
 END SUBROUTINE!}}}
 
 SUBROUTINE  relaxv2struct(n, xc, NA, LAT, POS)!{{{
@@ -193,8 +208,11 @@ double precision, intent(inout)     :: lat(6),matrix(3,3)
 double precision                    :: ra,rb,rc,&
                                        cosinea, cosineb,cosinec,&
                                        anglea,angleb,anglec
+double precision, parameter         :: radtodeg = 57.29577951d0
+double precision, parameter         :: degtorad = 1.0/radtodeg
 
 if (iflag==1) then
+   lat(4:6) = lat(4:6) * degtorad
    matrix=0.0
    matrix(1,1) = lat(1)
    matrix(2,1) = lat(2)*cos(lat(6))
@@ -217,9 +235,9 @@ else
    lat(1)=ra
    lat(2)=rb
    lat(3)=rc
-   lat(4)=anglea
-   lat(5)=angleb
-   lat(6)=anglec
+   lat(4)=anglea * radtodeg
+   lat(5)=angleb * radtodeg
+   lat(6)=anglec * radtodeg
 endif
 end subroutine lat2matrix!}}}
 

@@ -92,6 +92,7 @@
   alpha = cellp(4)
   beta = cellp(5)
   gamma = cellp(6)
+!  print*, a, b,c, alpha, beta, gamma
 
   r1x = lat(1,1)
   r1y = lat(2,1)
@@ -102,6 +103,8 @@
   r3x = lat(1,3)
   r3y = lat(2,3)
   r3z = lat(3,3)
+!  print*, r1x, r1y, r1z, r2x, r2y, r2z, r3x, r3y, r3z
+!  stop
 
   ra = 1.0_dp/a
   rb = 1.0_dp/b

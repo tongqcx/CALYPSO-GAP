@@ -5,7 +5,7 @@ use relax_module
 
 
 double precision, dimension(6)                  :: EXTSTRESS
-data extstress/100.0, 100.0, 100.0, 0.0, 0.0, 0.0/
+data extstress/300.0, 300.0, 300.0, 0.0, 0.0, 0.0/
 call read_gap()
 !print *, SPECIES
 !print *, transpose(lat)
