@@ -31,16 +31,37 @@ double precision                              :: f
 double precision                              :: dsave(29)
 integer,  allocatable,dimension(:)            :: nbd, iwa
 double precision, allocatable,dimension(:)    :: x, l, u, g, wa
-double precision                              :: f_bak
+
+double precision                              :: f_bak, d
+integer                                       :: i
+double precision, allocatable,dimension(:)    :: x_save, dmax
 
 
 n = 3*NA + 6
 m = 5
 iprint = 1
 if (.not. allocated(FORCE))  allocate(FORCE(NA, 3))
-allocate ( nbd(n), x(n), l(n), u(n), g(n) )
+allocate ( nbd(n), x(n), l(n), u(n), g(n), x_save(n), dmax(n))
 allocate ( iwa(3*n) )
 allocate ( wa(2*m*n + 5*n + 11*m*m + 8*m) )
+
+do i = 1, 3
+    nbd(i) = 1
+    l(i) = 0.d0
+    dmax(i) = 0.2d0
+enddo
+do i = 4, 6
+    nbd(i) = 2
+    l(i) = 0.d0
+    u(i) = 360.d0
+    dmax(i) = 60.d0
+enddo
+do i = 7, n
+    nbd(i) = 2
+    l(i) = 0.d0
+    u(i) = 1.d0
+    dmax(i) = 0.1d0
+enddo
 
 task = 'START'
 call  FGAP_INIT()
@@ -53,24 +74,30 @@ do while(task(1:2).eq.'FG'.or.task.eq.'NEW_X'.or.task.eq.'START')
     call struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, x, f, g)
     !print*, 'n'
     !print*, n
-    print*, 'x'
-    print*, x
+!    print*, 'x'
+!    print*, x(1:12)
     !print*, 'f'
     !print*, f
-    !print*, 'g'
-    !print*, g
+!    print*, 'g'
+!    print*, g(1:12)
+    x_save = x
     call setulb ( n, m, x, l, u, nbd, f, g, factor, pgtol, &
                        wa, iwa, task, iprint,&
                        csave, lsave, isave, dsave )
+    do i = 1, n
+        d = x(i) - x_save(i)
+        if (abs(d) > dmax(i))  x(i) = x(i) + d/abs(d)*dmax(i)
+    enddo
+
     if (task(1:2) .eq. 'FG') then
         call relaxv2struct(n, x, NA, LAT, POS)
-        print*, 'new x'
-        print *, x
-        print*, LAT
-        print * , POS
+!        print*, 'new x'
+!        print *, x
+!        print*, LAT
+!        print * , POS
         call FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
     endif
-    print *, '|DE|:', f - f_bak
+    print *, '|DE|:', f - f_bak, gnorm(n, g)
     f_bak = f
 enddo
 ! end of lbfgs loop
@@ -128,6 +155,7 @@ do i = 1, NA
     enddo
 enddo
 fc = ENE + SUM(EXTSTRESS(1:3))/3.d0 * ABS(DET(LAT)) * cfactor
+gc = -1.d0*gc
 !print *, 'fc',fc
 !stop
 END SUBROUTINE!}}}
@@ -298,5 +326,21 @@ do i=1,3
    matrix2(i,:)=matrix2(i,:)/matrix1(i,i)
 end do
 end subroutine!}}}
+
+function gnorm(n,x)!{{{
+implicit none
+
+integer, intent(in)                        :: n
+double precision, intent(in), dimension(n) :: x
+double precision                           :: gnorm
+
+! local 
+integer                                    :: i
+gnorm = 0.d0
+do i = 1, n
+    gnorm = gnorm + x(i)**2/n
+enddo
+gnorm = dsqrt(gnorm)
+end function gnorm!}}}
 
 END MODULE

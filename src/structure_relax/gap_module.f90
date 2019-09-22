@@ -207,7 +207,11 @@ do i = 1, 3
 enddo
 at%volume = ABS(det(at%lat))
 gap_volume = at%volume
+print*, 'lat'
+print*, transpose(lat)
+print *, 'stress'
 at%stress_cal = at%stress_cal * (1.0/GPa2eVPang) / at%volume
+print*, at%stress_cal
 
 !--print*, 'get variance'
 VARIANCE = 0.d0
