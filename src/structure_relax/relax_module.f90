@@ -42,12 +42,22 @@ allocate ( iwa(3*n) )
 allocate ( wa(2*m*n + 5*n + 11*m*m + 8*m) )
 
 task = 'START'
+call  FGAP_INIT()
 call  FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
 
 ! begin lbfgs loop
 do while(task(1:2).eq.'FG'.or.task.eq.'NEW_X'.or.task.eq.'START') 
  
     call struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, x, f, g)
+    print*, 'n'
+    print*, n
+    print*, 'x'
+    print*, x
+    print*, 'f'
+    print*, f
+    print*, 'g'
+    print*, g
+    stop
     call setulb ( n, m, x, l, u, nbd, f, g, factor, pgtol, &
                        wa, iwa, task, iprint,&
                        csave, lsave, isave, dsave )

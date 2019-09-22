@@ -423,6 +423,7 @@ REAL(8)                                      :: weights, weights_j, weights_k
 REAL(8)                                      :: rij, fcutij, rik, fcutik, rjk, fcutjk
 
 natoms = size(neighbor,1)
+!print*, 'NA, NF' , NA, NF
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 inquire(file="neural.in",exist=alive)
 if(.not.alive) then
