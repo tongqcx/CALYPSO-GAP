@@ -1,12 +1,16 @@
 module read_module
 implicit none
+INTEGER                                         :: NA
+INTEGER, ALLOCATABLE, DIMENSION(:)              :: SPECIES
+double precision, DIMENSION(3,3)                :: LAT
+double precision, ALLOCATABLE, DIMENSION(:,:)   :: POS
 
 contains
-SUBROUTINE  READ_POSCAR(NA, SPECIES, LAT, POS)
-INTEGER, intent(inout)                                    :: NA
-INTEGER, intent(inout), DIMENSION(:)                      :: SPECIES
-double precision, intent(inout), DIMENSION(3,3)           :: LAT
-double precision, intent(inout), DIMENSION(:,:)           :: POS
+SUBROUTINE  READ_POSCAR()
+!INTEGER, intent(inout)                                    :: NA
+!INTEGER, intent(inout), DIMENSION(:)                      :: SPECIES
+!double precision, intent(inout), DIMENSION(3,3)           :: LAT
+!double precision, intent(inout), DIMENSION(:,:)           :: POS
 
 ! local
 integer                                                   :: i
@@ -25,11 +29,7 @@ do i = 1, NA
 enddo
 END SUBROUTINE READ_POSCAR
 
-SUBROUTINE READ_GAP(NA, SPECIES, LAT, POS)
-INTEGER, intent(inout)                                    :: NA
-INTEGER, intent(inout), DIMENSION(:)                      :: SPECIES
-double precision, intent(inout), DIMENSION(3,3)           :: LAT
-double precision, intent(inout), DIMENSION(:,:)           :: POS
+SUBROUTINE READ_GAP()
 
 ! local
 integer                                                   :: i,j
@@ -62,8 +62,8 @@ enddo
 READ(2233,*)
 do i = 1, NA
     read(2233, *) ctemp, POS(i,:)
-    do j = 1, size(asym)
-        if (ctemp == asym(j)) SPECIES(i) = j
+    do j = 1, size(atsym)
+        if (ctemp == atsym(j)) SPECIES(i) = j
     enddo
 enddo
 READ(2233,*)

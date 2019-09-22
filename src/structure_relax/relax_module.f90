@@ -1,19 +1,19 @@
 ! this module perform structure optimization task
 ! 2019.09.19
 module relax_module
-implicit none
 use gap_module
+implicit none
 
 
 private   struct2relaxv, relaxv2struct, lat2matrix, upper, lower, lat_inv
 contains
 SUBROUTINE  relax_main(NA, SPECIES, LAT, POS, EXTSTRESS)!{{{
 implicit none
-double precision, intent(in)                  :: NA
-double precision, intent(in),dimension(NA)    :: SPECIES
-double precision, intent(in),dimension(3,3)   :: LAT
-double precision, intent(in),dimension(Na,3)  :: POS
-double precision, intent(in),dimension(6)     :: EXTSTRESS
+INTEGER,          intent(in)                     :: NA
+INTEGER,          intent(in),dimension(NA)       :: SPECIES
+double precision, intent(inout),dimension(3,3)   :: LAT
+double precision, intent(inout),dimension(Na,3)  :: POS
+double precision, intent(in),dimension(6)        :: EXTSTRESS
 
 !local
 double precision                              :: ENE, VARIANCE
@@ -36,48 +36,48 @@ double precision, allocatable,dimension(:)    :: x, l, u, g, wa
 n = 3*NA + 6
 m = 5
 iprint = 1
-if (.not. allocate(FORCE))  allocate(FORCE(NA, 3))
+if (.not. allocated(FORCE))  allocate(FORCE(NA, 3))
 allocate ( nbd(n), x(n), l(n), u(n), g(n) )
 allocate ( iwa(3*n) )
 allocate ( wa(2*m*n + 5*n + 11*m*m + 8*m) )
 
 task = 'START'
-call  FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FOECE, STRESS, VARIANCE)
+call  FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
 
 ! begin lbfgs loop
 do while(task(1:2).eq.'FG'.or.task.eq.'NEW_X'.or.task.eq.'START') 
  
-    call struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, x, f, g)
-    call setulb ( n, m, x, l, u, nbd, f, g, factr, pgtol, &
+    call struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, x, f, g)
+    call setulb ( n, m, x, l, u, nbd, f, g, factor, pgtol, &
                        wa, iwa, task, iprint,&
                        csave, lsave, isave, dsave )
     if (task(1:2) .eq. 'FG') then
-        call relaxv2struct(x, LAT, POS)
-        call  FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FOECE, STRESS, VARIANCE)
+        call relaxv2struct(n, x, NA, LAT, POS)
+        call FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
     endif
 enddo
 ! end of lbfgs loop
 
 END SUBROUTINE!}}}
 
-SUBROUTINE  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, x, f, g)!{{{
+SUBROUTINE  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, xc, fc, gc)!{{{
 implicit none
 
 INTEGER         , intent(in)                           :: NA
-double precision, intent(in),dimension(3,3)            :: LAT
+double precision, intent(inout),dimension(3,3)            :: LAT
 double precision, intent(in),dimension(NA,3)           :: POS, FORCE
 double precision, intent(in)                           :: ENE
 double precision, intent(in),dimension(6)              :: STRESS, EXTSTRESS
 INTEGER         , intent(in)                           :: n
-double precision, intent(inout),dimension(n)           :: x, g
-double precision, intent(inout) i                      :: f
+double precision, intent(inout),dimension(n)           :: xc, gc
+double precision, intent(inout)                        :: fc
 ! local
 integer                                                :: i,j,k
 double precision, dimension(6)                         :: cellp, strderv, cellderv
 double precision, allocatable, dimension(:,:)          :: POS_FRAC, FORCE_FRAC
 
-if (.not. allocate(FORCE_FRAC)) allocate(FORCE_FRAC(NA, 3))
-if (.not. allocate(POS_FRAC)) allocate(POS_FRAC(NA, 3))
+if (.not. allocated(FORCE_FRAC)) allocate(FORCE_FRAC(NA, 3))
+if (.not. allocated(POS_FRAC)) allocate(POS_FRAC(NA, 3))
 
 CALL LAT2MATRIX(cellp, LAT, 2)
 CALL CART2FRAC(NA, LAT, POS, POS_FRAC)
@@ -90,7 +90,7 @@ strderv(5) = STRESS(3)
 strderv(6) = STRESS(2)
 strderv = strderv - EXTSTRESS
 ! calculating the dev of strain to cell parameters
-CALL DEVCELL(strderv, cellderv)
+CALL CELLDRV(LAT, cellp, strderv, cellderv)
 k = 0
 do i = 1, 6
     k = k + 1
@@ -104,7 +104,7 @@ do i = 1, NA
         gc(k) = FORCE_FRAC(i,j)
     enddo
 enddo
-f = ENE
+fc = ENE
 END SUBROUTINE!}}}
 
 SUBROUTINE  relaxv2struct(n, xc, NA, LAT, POS)!{{{
@@ -113,12 +113,15 @@ implicit none
 INTEGER         , intent(in)                           :: n
 double precision, intent(in),dimension(n)              :: xc
 INTEGER         , intent(in)                           :: NA
-double precision, intent(inout),dimension(3,3)         :: LAT
-double precision, intent(inout),dimension(NA,3)        :: POS
+double precision, intent(out),dimension(3,3)         :: LAT
+double precision, intent(out),dimension(NA,3)        :: POS
 
 ! local
 integer                                                :: i,j
 double precision, dimension(6)                         :: cellp
+double precision, allocatable, dimension(:,:)          :: POS_FRAC
+
+if (.not. allocated(POS_FRAC)) allocate(POS_FRAC(NA, 3))
 cellp(1:6) = xc(1:6)
 CALL LAT2MATRIX(cellp, LAT, 1)
 do i = 1, NA
@@ -129,7 +132,7 @@ enddo
 CALL FRAC2CART(NA, LAT, POS_FRAC, POS)
 END SUBROUTINE!}}}
     
-SUBROUTINE  CART2FRAC(NA, LAT, POS, POS_FCAR)!{{{
+SUBROUTINE  CART2FRAC(NA, LAT, POS, POS_FRAC)!{{{
 implicit none
 
 INTEGER         , intent(in)                           :: NA
@@ -155,8 +158,10 @@ implicit none
 
 INTEGER         , intent(in)                           :: NA
 double precision, intent(in),dimension(3,3)            :: LAT
-double precision, intent(in),dimension(NA,3)           :: POS_FRAC
+double precision, intent(inout),dimension(NA,3)        :: POS_FRAC
 double precision, intent(inout),dimension(NA,3)        :: POS
+! loca
+integer                                                :: i,j
 do i = 1, NA
     do j = 1,3
         if (POS_FRAC(i,j) < 0.d0) POS_FRAC(i,j) = POS_FRAC(i,j) + 1.d0
