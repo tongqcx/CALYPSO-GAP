@@ -1,6 +1,7 @@
 ! this module perform structure optimization task
 ! 2019.09.19
 module relax_module
+use element, ONLY: atsym
 use gap_module
 implicit none
 
@@ -115,13 +116,14 @@ enddo
 
 END SUBROUTINE!}}}
 
-SUBROUTINE  relax_main_conj(NA, SPECIES, LAT, POS, EXTSTRESS)
+SUBROUTINE  relax_main_conj(NA, SPECIES, LAT, POS, EXTSTRESS, maxcycle)
 implicit none
 INTEGER,          intent(in)                     :: NA
 INTEGER,          intent(in),dimension(NA)       :: SPECIES
 double precision, intent(inout),dimension(3,3)   :: LAT
 double precision, intent(inout),dimension(Na,3)  :: POS
 double precision, intent(in),dimension(6)        :: EXTSTRESS
+INTEGER,          intent(in)                     :: maxcycle
 
 !local
 double precision                              :: ENE, VARIANCE
@@ -137,35 +139,25 @@ double precision                              :: pnorm, gsca, ggg, dggg, gam, pn
 logical                                       :: okf
 integer                                       :: imode, jcyc, iflag
 
-double precision                              :: f_bak, d, volume
+double precision                              :: f_bak, d, volume, df, norm_g
 integer                                       :: i
 double precision, allocatable,dimension(:)    :: x_save, dmax
 logical                                       :: lfirst
 integer                                       :: tt1, tt2
 
 
+
 n = 3*NA + 6
 if (.not. allocated(FORCE))  allocate(FORCE(NA, 3))
 allocate (x(n), g(n), pvect(n), gg(n), glast(n), xlast(n))
-gg = 0.d0
+print*, '***************************************************'
+print*, '***            GEOMETRY OPTIMIZATION            ***' 
+print*, '***************************************************'
+write(*, '(A17, I8)'), 'Number of atoms =',NA
+write(*, '(A21, I8)'), 'Number of variables =',n
+write(*, '(A27, 6F8.3)'), 'Pressure of configuration =', EXTSTRESS 
 
-!do i = 1, 3
-!    nbd(i) = 1
-!    l(i) = 0.d0
-!    dmax(i) = 0.2d0
-!enddo
-!do i = 4, 6
-!    nbd(i) = 2
-!    l(i) = 0.d0
-!    u(i) = 360.d0
-!    dmax(i) = 60.d0
-!enddo
-!do i = 7, n
-!    nbd(i) = 2
-!    l(i) = 0.d0
-!    u(i) = 1.d0
-!    dmax(i) = 0.1d0
-!enddo
+gg = 0.d0
 nmin = 1
 gsca = 0.001d0
 volume = abs(det(lat))
@@ -183,7 +175,6 @@ call  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, x, f, g)
 f_bak = f
 ! begin lbfgs loop
 CALL  SYSTEM_CLOCK(tt1)
-print *, pnlast, 'pnlast'
 do while(.true.) 
     if (lfirst) then
         do i = 1, n
@@ -200,7 +191,7 @@ do while(.true.)
         dggg = dggg + (glast(i) + gsca*g(i)) * g(i) * gsca
     enddo
     gam = dggg/ggg
-    print*, 'gam',gam
+    !print*, 'gam',gam
     do i = 1, n
         xlast(i) = x(i)
         glast(i) = -1.d0 * gsca * g(i)
@@ -212,24 +203,31 @@ do while(.true.)
         pnorm = 1.5d0 * pnlast
     endif
     pnlast = pnorm
-    print *, 'pnorm', pnorm
-    print*, 'x'
-    print*, x
+    !print *, 'pnorm', pnorm
+    !print*, 'x'
+    !print*, x
     !print*, 'pvect', pvect
     call olinmin(x, alp, pvect, n, nmin, f, okf, gg, imode, NA, SPECIES, EXTSTRESS)
     call funct(iflag, n, x, f, g, NA, SPECIES, EXTSTRESS)
     jcyc = jcyc + 1
+    df = f - f_bak
+    norm_g = gnorm(n, g)
     CALL  SYSTEM_CLOCK(tt2)
-    write(*,'(''  Cycle: '',i6,''  Energy:'',f17.6,'' d E:'', f17.6,''  Gnorm:'',f14.6, '' CPU:'',f8.3)') jcyc,f,f-f_bak, gnorm(n, g), (tt2-tt1)/10000.0
+    write(*,'(''  Cycle: '',i6,''  Energy:'',f17.6,''  DE:'', f17.6,''  Gnorm:'',f14.6, ''  CPU:'',f8.3)') jcyc, f, df, norm_g, (tt2-tt1)/10000.0
     f_bak = f
     !print*, 'xc best'
     !print *, x
     !print*, 'f'
     !print*, f
     !stop
-    if (jcyc == 8) exit
+    if (abs(df) < 0.001d0) exit
+    if (norm_g < 0.005d0) exit
+    if (jcyc == maxcycle) exit
  
 enddo
+call relaxv2struct(n, x, NA, LAT, POS)
+call FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
+call write_vasp(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS)
 ! end of lbfgs loop
 
 END SUBROUTINE
@@ -496,5 +494,100 @@ do i = 1, n
 enddo
 gnorm = dsqrt(gnorm)/n
 end function gnorm!}}}
+
+SUBROUTINE WRITE_VASP(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS)
+IMPLICIT NONE
+
+integer, intent(in)                         :: NA
+integer, intent(in), dimension(NA)          :: SPECIES
+double precision,intent(in),dimension(3,3)  :: LAT
+double precision,intent(in),dimension(NA,3) :: POS, FORCE
+double precision,intent(in),dimension(6)    :: STRESS, EXTSTRESS
+double precision,intent(in)                 :: ENE
+! loca
+integer                                     :: NS
+integer, allocatable, dimension(:)          :: nele, ele_number
+character,allocatable, dimension(:)         :: ele
+integer                                     :: i, j, k, i_temp, count
+double precision                            :: press
+double precision,parameter                             :: cfactor = 6.241460893d-3
+
+i_temp = SPECIES(1)
+NS = 1
+do i = 2, NA
+    if (SPECIES(i) .ne. i_temp) then
+        NS = NS + 1
+        i_temp = SPECIES(i)
+    endif
+enddo
+if (.not. allocated(ele)) allocate(ele(ns))
+if (.not. allocated(nele)) allocate(nele(ns))
+if (.not. allocated(ele_number)) allocate(ele_number(ns))
+ele_number(1) = SPECIES(1)
+ele(1) = atsym(ele_number(1))
+i_temp = SPECIES(1)
+k = 1
+count = 1
+do i = 2, NA
+    if (SPECIES(i) .ne. i_temp) then
+        i_temp = SPECIES(i)
+        k = k + 1
+        ele_number(k) = i_temp
+        ele(k) = atsym(ele_number(k))
+    endif
+enddo
+
+nele = 0
+
+do i = 1, NS
+    do j = 1, NA
+        if (SPECIES(j) == ele_number(i)) nele(i) = nele(i) + 1
+    enddo
+enddo
+open(1123, file = 'CONTCAR')
+write(1123,*) 'written by GAP'
+write(1123,*) '1.0'
+DO i = 1, 3
+    write(1123,'(3F20.10)') LAT(i,:)
+ENDDO
+write(1123,'(3A5)') ele
+write(1123,'(3I5)') nele
+write(1123,'(A9)') 'Cartesian'
+DO i = 1, NA
+    write(1123,'(3F20.10)') POS(i,:)
+ENDDO
+close(1123)
+
+press = SUM(EXTSTRESS(1:3))/3.0
+
+open(212, file = 'OUTCAR')
+do i = 1, ns
+    write(212,*) 'VRHFIN ='//trim(ele(i))
+enddo
+write(212,*) 'ions per type', ' = ', nele
+write(212,*) 'direct lattice vectors'
+write(212,*) 'volume of cell :'
+write(212,*) 'Direction    XX          YY          ZZ          XY          YZ          ZX'
+write(212,'(A6, 6F15.6)') 'in kB', stress(1)*10, stress(4)*10, stress(6)*10, stress(2)*10, stress(5)*10, stress(3)*10
+write(212,'(A20,F15.6, A5, A20, F15.6, A5)') 'external pressure =', (stress(1) + stress(4) + stress(6))*10.0/3.0 - press*10.0, &
+'kB', 'Pullay stress =', press*10.0 ,'kB'
+write(212,*) 'volume of cell :', abs(det(lat))
+write(212,*) 'direct lattice vectors'
+do i = 1,3
+   write(212,'(6F15.6)') lat(i,:)
+enddo
+write(212,*) 'POSITION                                       TOTAL-FORCE(eV/Angst)'
+write(212,*) '-------------------------------------------------------------------'
+do i = 1, na
+   write(212,'(6F15.6)') pos(i,:), force(i,:)
+enddo
+write(212,*) '-------------------------------------------------------------------'
+write(212,'(A31, F15.6)') 'energy  without entropy=', ene
+write(212,'(A30, F15.6)') 'enthalpy is  TOTEN    =', ene + press * ABS(DET(LAT)) * cfactor
+close(212)
+
+deallocate(ele, nele, ele_number)
+
+END SUBROUTINE
 
 END MODULE

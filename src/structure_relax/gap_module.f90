@@ -252,9 +252,9 @@ read(111,*) theta(1:des_len)
 do i = 1,nsparseX
     read(111,*) MM(i,1:des_len)
 enddo
-do i = 1,nsparseX
-    read(111,*) QMM(i,1:nsparseX)
-enddo
+!do i = 1,nsparseX
+!    read(111,*) QMM(i,1:nsparseX)
+!enddo
 read(111,*) COEFF(1:nsparseX)
 close(111)
 if (present(nat)) call SET_ELEMENTS(nat)

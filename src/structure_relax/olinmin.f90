@@ -95,6 +95,7 @@
 !
 !  Allocate local memory
 !
+  nconnect = 0
   allocate(xsave(nvar),stat=status)
 !  if (status/=0) call outofmemory('olinmin','xsave')
   allocate(xstor(nvar),stat=status)

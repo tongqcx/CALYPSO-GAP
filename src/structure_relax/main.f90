@@ -4,11 +4,10 @@ use gap_module
 use relax_module
 
 
-double precision, dimension(6)                  :: EXTSTRESS
-data extstress/300.0, 300.0, 300.0, 0.0, 0.0, 0.0/
-call read_gap()
+call read_gulp()
+!call read_gap()
 !print *, SPECIES
 !print *, transpose(lat)
 !print *, transpose(pos)
-call relax_main_conj(NA, SPECIES, LAT, POS, EXTSTRESS)
+call relax_main_conj(NA, SPECIES, LAT, POS, STRESS, maxcycle)
 end program
