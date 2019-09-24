@@ -10,5 +10,5 @@ call read_gap()
 !print *, SPECIES
 !print *, transpose(lat)
 !print *, transpose(pos)
-call relax_main(NA, SPECIES, LAT, POS, EXTSTRESS)
+call relax_main_conj(NA, SPECIES, LAT, POS, EXTSTRESS)
 end program

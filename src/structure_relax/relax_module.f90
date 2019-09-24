@@ -35,10 +35,11 @@ double precision, allocatable,dimension(:)    :: x, l, u, g, wa
 double precision                              :: f_bak, d
 integer                                       :: i
 double precision, allocatable,dimension(:)    :: x_save, dmax
+logical                                       :: lfirst
 
 
 n = 3*NA + 6
-m = 5
+m = 3
 iprint = 1
 if (.not. allocated(FORCE))  allocate(FORCE(NA, 3))
 allocate ( nbd(n), x(n), l(n), u(n), g(n), x_save(n), dmax(n))
@@ -63,6 +64,7 @@ do i = 7, n
     dmax(i) = 0.1d0
 enddo
 
+lfirst = .true.
 task = 'START'
 call  FGAP_INIT()
 call  FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
@@ -74,35 +76,187 @@ do while(task(1:2).eq.'FG'.or.task.eq.'NEW_X'.or.task.eq.'START')
     call struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, x, f, g)
     !print*, 'n'
     !print*, n
-!    print*, 'x'
-!    print*, x(1:12)
-    !print*, 'f'
-    !print*, f
-!    print*, 'g'
-!    print*, g(1:12)
+    print*, 'f'
+    print*, f
+    print*, 'x'
+    print*, x
+    print*, 'g'
+    print*, g
     x_save = x
     call setulb ( n, m, x, l, u, nbd, f, g, factor, pgtol, &
                        wa, iwa, task, iprint,&
                        csave, lsave, isave, dsave )
+    print*, 'new x'
+    print *, x
     do i = 1, n
         d = x(i) - x_save(i)
-        if (abs(d) > dmax(i))  x(i) = x(i) + d/abs(d)*dmax(i)
+        if (abs(d) > dmax(i))  x(i) = x_save(i) + d/abs(d)*dmax(i)
     enddo
+    print*, task(1:2)
 
     if (task(1:2) .eq. 'FG') then
         call relaxv2struct(n, x, NA, LAT, POS)
-!        print*, 'new x'
-!        print *, x
-!        print*, LAT
-!        print * , POS
+        print*, 'lat'
+        print*, transpose(LAT)
+        print* , 'pos'
+        print * , transpose(POS)
         call FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
     endif
-    print *, '|DE|:', f - f_bak, gnorm(n, g)
-    f_bak = f
+    if (lfirst) then
+        lfirst = .false.
+        f_bak = f
+    else
+        print *, '|DE|:', f, f - f_bak, gnorm(n, g)
+        f_bak = f
+    endif
+    print*, '***************************************************'
 enddo
 ! end of lbfgs loop
 
 END SUBROUTINE!}}}
+
+SUBROUTINE  relax_main_conj(NA, SPECIES, LAT, POS, EXTSTRESS)
+implicit none
+INTEGER,          intent(in)                     :: NA
+INTEGER,          intent(in),dimension(NA)       :: SPECIES
+double precision, intent(inout),dimension(3,3)   :: LAT
+double precision, intent(inout),dimension(Na,3)  :: POS
+double precision, intent(in),dimension(6)        :: EXTSTRESS
+
+!local
+double precision                              :: ENE, VARIANCE
+double precision, allocatable,dimension(:,:)  :: FORCE
+double precision,             dimension(6)    :: STRESS
+
+!variables for lbfgs
+integer                                       :: n, nmin
+double precision, allocatable,dimension(:)    :: x, g, xlast
+double precision                              :: f
+double precision, allocatable,dimension(:)    :: pvect, gg, glast
+double precision                              :: pnorm, gsca, ggg, dggg, gam, pnlast, alp
+logical                                       :: okf
+integer                                       :: imode, jcyc, iflag
+
+double precision                              :: f_bak, d, volume
+integer                                       :: i
+double precision, allocatable,dimension(:)    :: x_save, dmax
+logical                                       :: lfirst
+integer                                       :: tt1, tt2
+
+
+n = 3*NA + 6
+if (.not. allocated(FORCE))  allocate(FORCE(NA, 3))
+allocate (x(n), g(n), pvect(n), gg(n), glast(n), xlast(n))
+gg = 0.d0
+
+!do i = 1, 3
+!    nbd(i) = 1
+!    l(i) = 0.d0
+!    dmax(i) = 0.2d0
+!enddo
+!do i = 4, 6
+!    nbd(i) = 2
+!    l(i) = 0.d0
+!    u(i) = 360.d0
+!    dmax(i) = 60.d0
+!enddo
+!do i = 7, n
+!    nbd(i) = 2
+!    l(i) = 0.d0
+!    u(i) = 1.d0
+!    dmax(i) = 0.1d0
+!enddo
+nmin = 1
+gsca = 0.001d0
+volume = abs(det(lat))
+pnorm = 1.d0/volume**(1.d0/3.d0)
+pnlast = pnorm
+jcyc = 0
+alp = 1.d0
+imode = 1
+
+lfirst = .true.
+call  FGAP_INIT()
+call  FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
+call  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, x, f, g)
+
+f_bak = f
+! begin lbfgs loop
+CALL  SYSTEM_CLOCK(tt1)
+print *, pnlast, 'pnlast'
+do while(.true.) 
+    if (lfirst) then
+        do i = 1, n
+            xlast(i) = x(i)
+            glast(i) = -1.d0 * gsca * g(i)
+            pvect(i) = glast(i)
+            lfirst = .false.
+        enddo
+    endif
+    ggg = 0.d0
+    dggg = 0.d0
+    do i = 1, n
+        ggg = ggg + glast(i)*glast(i)
+        dggg = dggg + (glast(i) + gsca*g(i)) * g(i) * gsca
+    enddo
+    gam = dggg/ggg
+    print*, 'gam',gam
+    do i = 1, n
+        xlast(i) = x(i)
+        glast(i) = -1.d0 * gsca * g(i)
+        pvect(i) = glast(i) + gam * pvect(i)
+    enddo
+    pnorm = gnorm(n, pvect) * n
+    if (pnorm > 1.5d0 * pnlast) then
+        pvect = pvect * 1.5d0* pnlast/pnorm
+        pnorm = 1.5d0 * pnlast
+    endif
+    pnlast = pnorm
+    print *, 'pnorm', pnorm
+    print*, 'x'
+    print*, x
+    !print*, 'pvect', pvect
+    call olinmin(x, alp, pvect, n, nmin, f, okf, gg, imode, NA, SPECIES, EXTSTRESS)
+    call funct(iflag, n, x, f, g, NA, SPECIES, EXTSTRESS)
+    jcyc = jcyc + 1
+    CALL  SYSTEM_CLOCK(tt2)
+    write(*,'(''  Cycle: '',i6,''  Energy:'',f17.6,'' d E:'', f17.6,''  Gnorm:'',f14.6, '' CPU:'',f8.3)') jcyc,f,f-f_bak, gnorm(n, g), (tt2-tt1)/10000.0
+    f_bak = f
+    !print*, 'xc best'
+    !print *, x
+    !print*, 'f'
+    !print*, f
+    !stop
+    if (jcyc == 8) exit
+ 
+enddo
+! end of lbfgs loop
+
+END SUBROUTINE
+
+SUBROUTINE funct(iflag, n, xc, fc, gc, NA, SPECIES, EXTSTRESS)
+implicit none
+
+integer, intent(inout)                       :: iflag
+integer, intent(in)                          :: n
+integer, intent(in)                          :: NA
+integer, intent(in),           dimension(NA) :: SPECIES
+double precision,intent(in),   dimension(6)  :: EXTSTRESS
+double precision,intent(inout),dimension(n)  :: xc, gc
+double precision,intent(inout)               :: fc
+
+! local 
+double precision, allocatable, dimension(:,:) :: POS, FORCE
+double precision,              dimension(3,3) :: LAT
+double precision,              dimension(6)   :: STRESS
+double precision                              :: ENE, VARIANCE
+
+if (.not. allocated(POS)) allocate(POS(NA, 3))
+if (.not. allocated(FORCE)) allocate(FORCE(NA, 3))
+call  relaxv2struct(n, xc, NA, LAT, POS)
+call  FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
+call  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, xc, fc, gc)
+END SUBROUTINE
 
 SUBROUTINE  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, xc, fc, gc)!{{{
 implicit none
@@ -155,12 +309,12 @@ do i = 1, NA
     enddo
 enddo
 fc = ENE + SUM(EXTSTRESS(1:3))/3.d0 * ABS(DET(LAT)) * cfactor
-gc = -1.d0*gc
+!gc = gc * -1.d0
 !print *, 'fc',fc
 !stop
 END SUBROUTINE!}}}
 
-SUBROUTINE  relaxv2struct(n, xc, NA, LAT, POS)!{{{
+SUBROUTINE  relaxv2struct(n, xc, NA, LAT, POS)
 implicit none
 
 INTEGER         , intent(in)                           :: n
@@ -183,7 +337,7 @@ do i = 1, NA
     enddo
 enddo
 CALL FRAC2CART(NA, LAT, POS_FRAC, POS)
-END SUBROUTINE!}}}
+END SUBROUTINE
     
 SUBROUTINE  CART2FRAC(NA, LAT, POS, POS_FRAC)!{{{
 implicit none
@@ -338,9 +492,9 @@ double precision                           :: gnorm
 integer                                    :: i
 gnorm = 0.d0
 do i = 1, n
-    gnorm = gnorm + x(i)**2/n
+    gnorm = gnorm + x(i)**2
 enddo
-gnorm = dsqrt(gnorm)
+gnorm = dsqrt(gnorm)/n
 end function gnorm!}}}
 
 END MODULE
