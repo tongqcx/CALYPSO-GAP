@@ -5,7 +5,8 @@ INTEGER,  PARAMETER      :: QP = KIND(1.0D0)
 REAL(DP), PARAMETER      :: pi=3.141592654d0
 REAL(DP), PARAMETER      :: ene_cons = -90.040530764400003
 REAL(DP), PARAMETER      :: GPa2eVPang = 6.24219D-3
-REAL(DP), PARAMETER      :: Inverse_error = 1.0D-2
+REAL(DP), PARAMETER      :: Inverse_error_min = 1.0D-4
+REAL(DP), PARAMETER      :: Inverse_error_max = 1.0D0
 INTEGER, PARAMETER       :: max_mm_len = 4000
 INTEGER, PARAMETER       :: max_atoms = 500
 
@@ -55,26 +56,31 @@ END TYPE ACSF_type
 
 !
 TYPE data_type
-!{
+!===========================================
+! for 2-body calculation
 integer                                 :: nsparse_2b
 REAL(DP)                                :: delta_2b
 REAL(DP)                                :: theta_2b
 REAL(DP)                                :: sigma_e_2b, sigma_f_2b, sigma_s_2b
 logical                                 :: ltrain_2b
-!}
-!{
+!===========================================
+! for many-body calculation
 integer                                 :: nsparse_mb
 REAL(DP)                                :: sparse_dis_len, sigma_atom
 integer                                 :: sparse_method
 REAL(DP)                                :: sigma_e_mb, sigma_f_mb, sigma_s_mb
 REAL(DP)                                :: delta_mb
 logical                                 :: ltrain_mb
-!}
+logical                                 :: lstress
+
 integer                                 :: nspecies  ! this nspecies is global
 integer                                 :: ninteraction
 REAL(DP)                                :: sigma_jitter
 REAL(DP)                                :: Rcut, Rmin, d_width
 character(2),allocatable,dimension(:)   :: elements
+REAL(DP),allocatable,dimension(:)       :: elements_weight
+LOGICAL                                 :: lread_ele_weight
+INTEGER,allocatable,dimension(:)        :: elements_count
 INTEGER                                 :: ncross
 INTEGER,allocatable,dimension(:,:)      :: interaction_mat
 
@@ -90,7 +96,24 @@ TYPE(data_type)                         :: DATA_C
 
 CONTAINS
 
-SUBROUTINE get_ele_weights(cc,nw)
+SUBROUTINE get_elements_count(DATA_C, cc)
+type(data_type),intent(inout)              :: DATA_C
+character(2),intent(in)                 :: cc
+do i = 1, DATA_C%nspecies
+    if (cc==DATA_C%elements(i)) DATA_C%elements_count(i) = DATA_C%elements_count(i) + 1
+enddo
+END SUBROUTINE get_elements_count
+
+SUBROUTINE get_read_weights(DATA_C, cc,nw)
+type(data_type),intent(in)              :: DATA_C
+character(2),intent(in)                 :: cc
+real(DP),intent(inout)                  :: nw
+do i = 1, DATA_C%nspecies
+    if (cc==DATA_C%elements(i)) nw = DATA_C%elements_weight(i)
+enddo
+END SUBROUTINE get_read_weights
+
+SUBROUTINE get_default_weights(cc,nw)
 implicit none
 character(2),intent(in)          ::  cc
 real(DP),intent(inout)           ::  nw
@@ -102,7 +125,7 @@ case ('Li')
 case ('B')
     nw = -1.0
 case ('C')
-    nw = 4.0
+    nw = 1.0
 case ('O')
     nw = 2.0
 case ('Mg')
@@ -119,6 +142,8 @@ case ('Ca')
     nw = -1.0
 case ('Ni')
     nw = -1.0
+case ('Sr')
+    nw = 3.0
 case ('Y')
     nw = 4.0
 case ('Cs')

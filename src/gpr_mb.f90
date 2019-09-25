@@ -43,11 +43,12 @@ print*, 'The size of globalY:', GAP%nglobalY, DATA_C%nob
 print*, 'sparse_dis_len:', GAP%sparse_dis_len
 print*, 'sparse_method:',GAP%sparse_method
 print*, 'sigma_atom:',GAP%sigma_atom
+if ( .not. data_c%lstress) print*, 'CAUTIONS: Stress is not used in fitting GAP potentials'
 
 CALL  SYSTEM_CLOCK(it1)
 !$OMP parallel do schedule(dynamic) default(shared) private(i)
 do i = 1, n_config
-    call car2acsf(at(i), GAP, ACSF)
+    call car2acsf(at(i), GAP, ACSF, DATA_C)
 enddo
 CALL  SYSTEM_CLOCK(it2)
 print*, "CPU time used (sec) For convert COORD: ",(it2 - it1)/10000.0
@@ -89,7 +90,7 @@ if (GAP%sparse_method == 1) then
             GAP%cmm(j,i) = GAP%cmm(i,j)
         enddo
     enddo
-elseif (GAP%sparse_method == 2) then
+elseif (GAP%sparse_method == 2 .or. GAP%sparse_method == 3) then
     call GAP_SPARSE(GAP,AT)
 else
     print*, 'Unknow sparse_method'
@@ -113,11 +114,13 @@ do i = 1, n_config
             GAP%lamda(kf) = sqrt(1.d0/GAP%lamda(kf))
         enddo
     enddo
-    do j = 1,6
-        kf = kf + 1
-        GAP%lamda(kf) = GAP%sigma_s**2
-        GAP%lamda(kf) = sqrt(1.d0/GAP%lamda(kf))
-    enddo
+    if (data_c%lstress) then
+        do j = 1,6
+            kf = kf + 1
+            GAP%lamda(kf) = GAP%sigma_s**2
+            GAP%lamda(kf) = sqrt(1.d0/GAP%lamda(kf))
+        enddo
+    endif
 enddo
 print*, 'GAP INI FINISHED'
 END SUBROUTINE GAP_INI_MB
@@ -130,10 +133,24 @@ type(Structure),intent(inout),dimension(:)  :: at
 REAL(DP),dimension(:),allocatable           :: theta_temp
 REAL(DP),dimension(:,:),allocatable         :: MM
 REAL(DP),dimension(:,:),allocatable         :: calc_det
-logical                                     :: lexit
+logical                                     :: lexit, has_upper_bound
 REAL(DP)                                    :: my_length
 
 !spaese_dis_len = 1.d0
+!open(3310, file='ddd.dat')
+!do i1 = 1, size(AT)
+!    write(3310,*), i1
+!    do i2 = 1, at(i1)%natoms
+!        do j = 1, GAP%dd
+!            write(3310,'(F20.10,$)') at(i1)%xx(j,i2)
+!        enddo
+!        write(3310,*)
+!    enddo
+!enddo
+!close(3310)
+!stop
+
+
 n_config = size(AT)
 allocate(theta_temp(GAP%dd))
 allocate(MM(max_mm_len,GAP%dd))
@@ -158,6 +175,8 @@ enddo
 deallocate(MM)
 allocate(MM(max_mm_len,GAP%dd))
 theta_temp = 1.d0
+has_upper_bound = .FALSE.
+CALL  SYSTEM_CLOCK(it1)
 do while (.true.)
     lexit = .false.
     mm = 0.d0
@@ -176,14 +195,16 @@ do while (.true.)
             endif
             if (k == max_mm_len) then
                 lexit = .true.
-                print*, i1,'nconfig',i2,'atom'
-                print*, k,"is large than max_mm_len",max_mm_len
+                !print*, i1,'nconfig',i2,'atom'
+                !print*, k,"is large than max_mm_len",max_mm_len
                 exit
             endif
         enddo
         if (lexit) exit
     enddo
     call GAP_SET_THETA(mm(1:k,:), GAP%theta)
+!call write_array(GAP%theta, 'theta,dat')
+!call write_array(mm(1:k,:),'MM.dat')
     GAP%nsparse = k
     GAP%theta = GAP%theta * GAP%sigma_atom
     if (.not. allocated(GAP%cmm))  allocate(GAP%cmm(GAP%nsparse, GAP%nsparse))
@@ -197,19 +218,55 @@ do while (.true.)
             GAP%cmm(j,i) = GAP%cmm(i,j)
         enddo
     enddo
+!    call write_array(GAP%cmm, 'cmm.datx')
     calc_det = GAP%cmm
     det_cmm = my_det(calc_det)**(1.d0/GAP%nsparse)
-    if (det_cmm > Inverse_error) then
-        write(*,*) "The number of atomic environment in Sparse set:",GAP%nsparse
-        print*, 'Det of CMM:',det_cmm
-        exit
+    if (GAP%sparse_method == 2) then
+        !if (det_cmm > Inverse_error_min .and. det_cmm < Inverse_error_max) then
+        if (GAP%nsparse > 120 .and. GAP%nsparse < 200) then
+            print*, "The number of atomic environment in Sparse set:",GAP%nsparse
+            print*, 'sparse_dis_len:', GAP%sparse_dis_len
+            print*, 'Det of CMM:',det_cmm
+            exit
+        !elseif (det_cmm <= Inverse_error_min) then
+        elseif (GAP%nsparse >= 200) then
+
+            if (has_upper_bound) then
+                GAP%sparse_dis_len = (GAP%sparse_dis_len + upper_bound)/2.d0
+            else
+                GAP%sparse_dis_len = GAP%sparse_dis_len * 2.d0
+            endif
+            print *,'Increasing sparse_dis_cut to:',GAP%sparse_dis_len
+
+            if (allocated(GAP%cmm))  deallocate(GAP%cmm)
+            if (allocated(calc_det))  deallocate(calc_det)
+        !elseif (det_cmm >= Inverse_error_max )then
+        elseif (GAP%nsparse <= 120 )then
+
+            has_upper_bound = .TRUE.
+            upper_bound = GAP%sparse_dis_len
+            GAP%sparse_dis_len = GAP%sparse_dis_len * 0.75d0
+            print *,'*Decreasing sparse_dis_cut to:',GAP%sparse_dis_len
+
+            if (allocated(GAP%cmm))  deallocate(GAP%cmm)
+            if (allocated(calc_det))  deallocate(calc_det)
+        endif
     else
-        print *,'Increasing sparse_dis_cut',GAP%sparse_dis_len, '------>',GAP%sparse_dis_len + 0.2d0
-        GAP%sparse_dis_len = GAP%sparse_dis_len + 0.2d0
-        if (allocated(GAP%cmm))  deallocate(GAP%cmm)
-        if (allocated(calc_det))  deallocate(calc_det)
+        if (det_cmm > Inverse_error_min) then
+            print*, "The number of atomic environment in Sparse set:",GAP%nsparse
+            print*, 'sparse_dis_len:', GAP%sparse_dis_len
+            print*, 'Det of CMM:',det_cmm
+            exit
+        else
+            GAP%sparse_dis_len = GAP%sparse_dis_len + 0.2d0
+            print *,'Increasing sparse_dis_cut',GAP%sparse_dis_len, GAP%nsparse
+            if (allocated(GAP%cmm))  deallocate(GAP%cmm)
+            if (allocated(calc_det))  deallocate(calc_det)
+        endif
     endif
 enddo
+CALL  SYSTEM_CLOCK(it2)
+print*, 'Sparsing FINISHED',(it2 - it1)/10000.0,'Seconds'
 allocate(GAP%cmo(GAP%nsparse, GAP%nglobalY, 1))
 allocate(GAP%sparseX(GAP%nsparse, GAP%dd))
 allocate(GAP%coeff(GAP%nsparse, 1))
@@ -306,10 +363,17 @@ do i_sparse = 1, GAP%nsparse
 !    print*, i_sparse
     do i_struc = 1, DATA_C%ne
         call new_COV(GAP%delta, GAP%sparseX(i_sparse,:), GAP%theta, AT(i_struc)%xx, AT(i_struc)%dxdy, AT(i_struc)%strs, cov(:))
-        do i_ob = 1, 3*at(i_struc)%natoms + 7
-            GAP%cmo(i_sparse, kf, 1) = cov( i_ob)
-            kf = kf + 1
-        enddo
+        if (data_c%lstress) then
+            do i_ob = 1, 3*at(i_struc)%natoms + 7
+                GAP%cmo(i_sparse, kf, 1) = cov( i_ob)
+                kf = kf + 1
+            enddo
+        else
+            do i_ob = 1, 3*at(i_struc)%natoms + 1
+                GAP%cmo(i_sparse, kf, 1) = cov( i_ob)
+                kf = kf + 1
+            enddo
+        endif
     enddo
 enddo
 !$OMP END PARALLEL 
@@ -320,12 +384,13 @@ CALL  SYSTEM_CLOCK(it2)
 print*, 'GAP_MB CMO FINISHED',(it2 - it1)/10000.0,'Seconds'
 END SUBROUTINE GAP_CMO_MB
 
-SUBROUTINE GAP_PREDICT_MB(GAP,AT, lcar2acsf)
+SUBROUTINE GAP_PREDICT_MB(GAP,AT, DATA_C, lcar2acsf)
 type(GAP_type),intent(in)                   :: GAP
 type(Structure),intent(inout)               :: at
+type(DATA_type),intent(in)                  :: DATA_C
 logical,intent(in)                          :: lcar2acsf
 
-if (lcar2acsf)  call car2acsf(at, GAP, ACSF)
+if (lcar2acsf)  call car2acsf(at, GAP, ACSF, DATA_C)
 
 if (.not. allocated(at%kk))   allocate(at%kk(at%natoms, GAP%dd))
 if (.not. allocated(at%ckm))  allocate(at%ckm(at%natoms, GAP%nsparse))
@@ -434,13 +499,14 @@ enddo
 deallocate(for)
 end subroutine new_cov
 
-SUBROUTINE CAR2ACSF(at, GAP, ACSF)
+SUBROUTINE CAR2ACSF(at, GAP, ACSF, DATA_C)
 
 implicit real(DP) (a-h,o-z)
 
 type(Structure),intent(inout)          :: at
 type(GAP_type),intent(in)              :: GAP
 type(ACSF_type),intent(in)             :: acsf
+type(DATA_type),intent(in)             :: DATA_C
 
 !local
 REAL(DP),dimension(3)                  :: xyz, xyz_j, xyz_k
@@ -464,7 +530,12 @@ do ii = 1, nnn
         cutoff = ACSF%sf(ii)%cutoff
         alpha = ACSF%sf(ii)%alpha
         do i = 1, at%natoms
-            do i_type = 1, at%nspecies
+            ! ******************
+            ! Be careful!!!
+            ! i_type loop from 1 to data_c%nspecies not at%nspecies
+            ! 2019.09.04 STUPID!!!
+            ! ******************
+            do i_type = 1, data_c%nspecies
                 do i_neighbor = 1, at%atom(i)%count(i_type)
                     rij = at%atom(i)%neighbor(i_type,i_neighbor,4)
                     if (rij.gt.cutoff) cycle
@@ -491,6 +562,7 @@ do ii = 1, nnn
         !            if (i==2 .and. ii==2) print*, dexp(-1.d0*alpha*rij**2)*fcutij
                     at%xx(ii,i) = at%xx(ii,i) + dexp(-1.d0*alpha*rij**2)*fcutij
                     at%xx(ii + nnn, i) = at%xx(ii + nnn, i) + dexp(-1.d0*alpha*rij**2)*fcutij * weights !!!!!!! 
+                    !write(*,'(I4X4F25.10)') i, rij, at%xx(ii,i),at%xx(ii + nnn,i)  , weights
 
                     !dxx/dx
                     temp1=-2.d0*alpha*rij*dexp(-1.d0*alpha*rij**2)*fcutij
@@ -562,7 +634,7 @@ do ii = 1, nnn
 !        print*, 'cutoff',cutoff,'alpha',alpha
         do i = 1, at%natoms
 !            lllll = 0
-            do j_type = 1, at%nspecies
+            do j_type = 1, data_c%nspecies
                 do j_neighbor = 1, at%atom(i)%count(j_type)
                     rij = at%atom(i)%neighbor(j_type,j_neighbor,4)
                     if (rij.gt.cutoff) cycle
@@ -593,7 +665,7 @@ do ii = 1, nnn
                     dfcutijdxk=0.0d0
                     dfcutijdyk=0.0d0
                     dfcutijdzk=0.0d0
-                    do k_type = 1, at%nspecies
+                    do k_type = 1, data_c%nspecies
                         do k_neighbor = 1, at%atom(i)%count(k_type)
                             !if ((k_type <= j_type) .and. (k_neighbor <= j_neighbor)) cycle
                             ! ******************
@@ -827,7 +899,7 @@ do ii = 1, nnn
         rshift = ACSF%sf(ii)%alpha
         alpha = 4.d0
         do i = 1, at%natoms
-            do i_type = 1, at%nspecies
+            do i_type = 1, data_c%nspecies
                 do i_neighbor = 1, at%atom(i)%count(i_type)
                     rij = at%atom(i)%neighbor(i_type,i_neighbor,4)
 
@@ -923,7 +995,7 @@ do ii = 1, nnn
         cutoff = ACSF%sf(ii)%cutoff
         alpha = ACSF%sf(ii)%alpha
         do i = 1, at%natoms
-            do j_type = 1, at%nspecies
+            do j_type = 1, data_c%nspecies
                 do j_neighbor = 1, at%atom(i)%count(j_type)
                     rij = at%atom(i)%neighbor(j_type,j_neighbor,4)
                     if (rij.gt.cutoff) cycle
@@ -954,7 +1026,7 @@ do ii = 1, nnn
                     dfcutijdxk=0.0d0
                     dfcutijdyk=0.0d0
                     dfcutijdzk=0.0d0
-                    do k_type = 1, at%nspecies
+                    do k_type = 1, data_c%nspecies
                         do k_neighbor = 1, at%atom(i)%count(k_type)
                             !if ((k_type <= j_type) .and. (k_neighbor <= j_neighbor)) cycle
                             if (k_type < j_type) cycle

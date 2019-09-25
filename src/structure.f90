@@ -140,6 +140,7 @@ do i = 1, at%natoms
             enddo
         enddo
     enddo
+    !print*, at%atom(i)%count(:)
 enddo
 end SUBROUTINE
 
@@ -266,7 +267,11 @@ do i = 1, n_config
 enddo
 data_c%ns = n_config*6
 data_c%ne = n_config
-data_c%nob = data_c%ne + data_c%nf + data_c%ns
+if (data_c%lstress) then
+    data_c%nob = data_c%ne + data_c%nf + data_c%ns
+else
+    data_c%nob = data_c%ne + data_c%nf
+endif
 
 if (data_c%ltrain_mb .and. .not. data_c%ltrain_2b) then
     allocate(data_c%ob(data_c%nob))

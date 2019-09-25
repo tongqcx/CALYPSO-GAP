@@ -15,6 +15,7 @@ integer :: lv1,lv2
     DATA_C%rmin = 0.5d0
     DATA_C%rcut = 6.d0
     DATA_C%ncross = 3
+    DATA_C%lread_ele_weight = .false.
     sigma_jitter = 1.0d-8
     ltrain = .true.
     ltest = .true.
@@ -36,6 +37,7 @@ integer :: lv1,lv2
     DATA_C%delta_MB = 1.d0
     DATA_C%sparse_method = 1
     DATA_C%sigma_atom = 1.6d0
+    DATA_C%lstress = .true.
 !}
     
 !>>>                         <<<
@@ -65,6 +67,8 @@ do while(.not.eof(60))
     !    print*, 'DATA_C%ninteraction',DATA_C%ninteraction
     !    stop
         if (.not. allocated(DATA_C%elements)) allocate(DATA_C%elements(DATA_C%nspecies))
+        if (.not. allocated(DATA_C%elements_weight)) allocate(DATA_C%elements_weight(DATA_C%nspecies))
+        if (.not. allocated(DATA_C%elements_count)) allocate(DATA_C%elements_count(DATA_C%nspecies))
 !{
     case('nsparse_2b')
         read(rtp(lv2:),*) DATA_C%nsparse_2b
@@ -100,6 +104,8 @@ do while(.not.eof(60))
         read(rtp(lv2:),*) DATA_C%sigma_atom
     case('ltrain_mb')
         read(rtp(lv2:),*) DATA_C%ltrain_mb
+    case('lstress')
+        read(rtp(lv2:),*) DATA_C%lstress
 !}
     case('rcut')
         read(rtp(lv2:),*) DATA_C%rcut
@@ -113,6 +119,11 @@ do while(.not.eof(60))
         read(rtp(lv2:),*) DATA_C%sigma_jitter
     case('elements')
         read(rtp(lv2:),*) DATA_C%elements
+    case('elements_weight')
+        DATA_C%lread_ele_weight = .TRUE.
+        read(rtp(lv2:),*) DATA_C%elements_weight
+        !print *, DATA_C%lread_ele_weight
+        !print*, DATA_C%elements_weight
     case('training')
         read(rtp(lv2:),*) ltrain
     case('testing')
@@ -158,6 +169,7 @@ open(2244,file=trim(adjustl(filename)))
 read(2244,*)
 data_c%nf = 0
 data_c%natoms = 0
+DATA_C%elements_count = 0
 do i = 1, n_config
 !    print *, i
     read(2244,*)  at(i)%natoms, at(i)%nspecies
@@ -173,12 +185,23 @@ do i = 1, n_config
     at(i)%stress_ref = at(i)%stress_ref * GPa2eVPang * at(i)%volume ! to virial stress
     do j = 1, at(i)%natoms
         read(2244,*) at(i)%symbols(j), at(i)%pos(j,:), at(i)%force_ref(j,:)
-        call get_ele_weights(at(i)%symbols(j),at(i)%mlp_weights(j))
+        if (DATA_C%lread_ele_weight) then
+            call get_read_weights(DATA_C, at(i)%symbols(j), at(i)%mlp_weights(j))
+        else
+            call get_default_weights(at(i)%symbols(j),at(i)%mlp_weights(j))
+        endif
+        call get_elements_count(DATA_C, at(i)%symbols(j))
     enddo
     read(2244,*) at(i)%energy_ref
     call build_neighbor(at(i), data_c)
 enddo
 close(2244)
+
+print*, '*********'
+do i = 1, DATA_C%nspecies
+    print*, DATA_C%elements(i), DATA_C%elements_count(i), DATA_C%elements_weight(i)
+enddo
+print*, '*********'
 
 END SUBROUTINE read_structure
 
