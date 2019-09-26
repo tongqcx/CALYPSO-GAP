@@ -8,6 +8,7 @@ implicit none
 
 private   struct2relaxv, relaxv2struct, lat2matrix, upper, lower, lat_inv
 contains
+! BFGS
 SUBROUTINE  relax_main(NA, SPECIES, LAT, POS, EXTSTRESS)!{{{
 implicit none
 INTEGER,          intent(in)                     :: NA
@@ -144,6 +145,7 @@ integer                                       :: i
 double precision, allocatable,dimension(:)    :: x_save, dmax
 logical                                       :: lfirst
 integer                                       :: tt1, tt2
+integer                                       :: lm_err
 
 
 
@@ -176,6 +178,7 @@ f_bak = f
 ! begin lbfgs loop
 CALL  SYSTEM_CLOCK(tt1)
 do while(.true.) 
+    okf = .true.
     if (lfirst) then
         do i = 1, n
             xlast(i) = x(i)
@@ -208,6 +211,16 @@ do while(.true.)
     !print*, x
     !print*, 'pvect', pvect
     call olinmin(x, alp, pvect, n, nmin, f, okf, gg, imode, NA, SPECIES, EXTSTRESS)
+    if (.not. okf) then
+        print *, 'can not locate minimum, use default step'
+        alp = 1.d0
+        lm_err = lm_err + 1
+        if (lm_err > 3) then
+            print*, '**Optimization failure**'
+            exit
+        endif
+    endif
+        
     call funct(iflag, n, x, f, g, NA, SPECIES, EXTSTRESS)
     jcyc = jcyc + 1
     df = f - f_bak
@@ -220,9 +233,18 @@ do while(.true.)
     !print*, 'f'
     !print*, f
     !stop
-    if (abs(df) < 0.001d0) exit
-    if (norm_g < 0.005d0) exit
-    if (jcyc == maxcycle) exit
+    if (abs(df) < 0.001d0) then
+        write(*, *) '** Energy convergence**', 0.001
+        exit
+    endif
+    if (norm_g < 0.005d0) then
+        print*, '**Gtol satisfied**',0.005
+        exit
+    endif
+    if (jcyc == maxcycle) then
+        print*, '**Reach maxcycle**', maxcycle
+        exit
+    endif
  
 enddo
 call relaxv2struct(n, x, NA, LAT, POS)
