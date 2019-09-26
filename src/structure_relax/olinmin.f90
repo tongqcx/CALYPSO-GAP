@@ -302,7 +302,7 @@
 !  If line minimisation has failed then return initial vector
 !
   if (.not.okf) then
-     print*, 'Minimisation Wrong!!! '
+!     print*, 'Minimisation Wrong!!! '
     xparam(nmin:nvar) = xsave(nmin:nvar)
     nconnectind(1:nconnect) = nconindsave(1:nconnect)
   endif
