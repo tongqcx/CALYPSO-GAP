@@ -158,7 +158,7 @@ print*, '***            GEOMETRY OPTIMIZATION            ***'
 print*, '***************************************************'
 write(*, '(A17, I8)'), 'Number of atoms =',NA
 write(*, '(A21, I8)'), 'Number of variables =',n
-write(*, '(A27, 6F8.3)'), 'Pressure of configuration =', EXTSTRESS 
+write(*, '(A27, F8.3)'), 'Pressure of configuration =', SUM(EXTSTRESS(1:3))/3.d0
 
 gg = 0.d0
 nmin = 1
@@ -171,6 +171,8 @@ alp = 1.d0
 imode = 1
 ftol = 0.0005d0
 gtol = 0.005d0
+write(*, '(A10, F15.10)'), 'ftol =', ftol
+write(*, '(A10, F15.10)'), 'gtol =', gtol
 
 lfirst = .true.
 lerror = .false.
@@ -182,7 +184,6 @@ f_bak = f
 ! begin lbfgs loop
 CALL  SYSTEM_CLOCK(tt1)
 do while(.true.) 
-    lerror = .false.
     okf = .true.
     if (lfirst) then
         do i = 1, n
@@ -223,7 +224,7 @@ do while(.true.)
         lm_err = lm_err + 1
         if (lm_err > 3) then
             print*, '**Optimization failure**'
-            lerror = .true.
+            call write_fake_vasp(NA, SPECIES)
             exit
         endif
     endif
@@ -236,14 +237,9 @@ do while(.true.)
     write(*,'(''  Cycle: '',i6,''  Energy:'',f17.6,''  DE:'', f17.6,''  Gnorm:'',f14.6, ''  CPU:'',f8.3)') jcyc, f, df, norm_g, (tt2-tt1)/10000.0
     f_bak = f
 
-
-    if (lerror) then
-        call write_fake_vasp(NA, SPECIES)
-    else
-        call relaxv2struct(n, x, NA, LAT, POS)
-        call FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
-        call write_vasp(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS)
-    endif
+    call relaxv2struct(n, x, NA, LAT, POS)
+    call FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
+    call write_vasp(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS)
 
     if (abs(df) < ftol) then
         write(*, *) '** Energy convergence**',ftol
@@ -259,7 +255,8 @@ do while(.true.)
     endif
  
 enddo
-! end of lbfgs loop
+print*, '' 
+print*, 'END OF STRUCTURE OPTIMIZATION'
 
 END SUBROUTINE
 
