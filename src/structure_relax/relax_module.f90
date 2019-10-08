@@ -6,7 +6,7 @@ use gap_module
 implicit none
 
 
-private   struct2relaxv, relaxv2struct, lat2matrix, upper, lower, lat_inv
+private   struct2relaxv, relaxv2struct, lat2matrix, inv_33
 contains
 ! BFGS
 SUBROUTINE  relax_main(NA, SPECIES, LAT, POS, EXTSTRESS)!{{{
@@ -143,9 +143,10 @@ integer                                       :: imode, jcyc, iflag
 double precision                              :: f_bak, d, volume, df, norm_g
 integer                                       :: i
 double precision, allocatable,dimension(:)    :: x_save, dmax
-logical                                       :: lfirst
+logical                                       :: lfirst, lerror
 integer                                       :: tt1, tt2
 integer                                       :: lm_err
+double precision                              :: ftol, gtol
 
 
 
@@ -157,7 +158,7 @@ print*, '***            GEOMETRY OPTIMIZATION            ***'
 print*, '***************************************************'
 write(*, '(A17, I8)'), 'Number of atoms =',NA
 write(*, '(A21, I8)'), 'Number of variables =',n
-write(*, '(A27, 6F8.3)'), 'Pressure of configuration =', EXTSTRESS 
+write(*, '(A27, F8.3)'), 'Pressure of configuration =', SUM(EXTSTRESS(1:3))/3.d0
 
 gg = 0.d0
 nmin = 1
@@ -168,8 +169,13 @@ pnlast = pnorm
 jcyc = 0
 alp = 1.d0
 imode = 1
+ftol = 0.0005d0
+gtol = 0.005d0
+write(*, '(A10, F15.10)'), 'ftol =', ftol
+write(*, '(A10, F15.10)'), 'gtol =', gtol
 
 lfirst = .true.
+lerror = .false.
 call  FGAP_INIT()
 call  FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
 call  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, x, f, g)
@@ -210,6 +216,7 @@ do while(.true.)
     !print*, 'x'
     !print*, x
     !print*, 'pvect', pvect
+
     call olinmin(x, alp, pvect, n, nmin, f, okf, gg, imode, NA, SPECIES, EXTSTRESS)
     if (.not. okf) then
         print *, 'can not locate minimum, use default step'
@@ -217,6 +224,7 @@ do while(.true.)
         lm_err = lm_err + 1
         if (lm_err > 3) then
             print*, '**Optimization failure**'
+            call write_fake_vasp(NA, SPECIES)
             exit
         endif
     endif
@@ -228,17 +236,17 @@ do while(.true.)
     CALL  SYSTEM_CLOCK(tt2)
     write(*,'(''  Cycle: '',i6,''  Energy:'',f17.6,''  DE:'', f17.6,''  Gnorm:'',f14.6, ''  CPU:'',f8.3)') jcyc, f, df, norm_g, (tt2-tt1)/10000.0
     f_bak = f
-    !print*, 'xc best'
-    !print *, x
-    !print*, 'f'
-    !print*, f
-    !stop
-    if (abs(df) < 0.001d0) then
-        write(*, *) '** Energy convergence**', 0.001
+
+    call relaxv2struct(n, x, NA, LAT, POS)
+    call FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
+    call write_vasp(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS)
+
+    if (abs(df) < ftol) then
+        write(*, *) '** Energy convergence**',ftol
         exit
     endif
-    if (norm_g < 0.005d0) then
-        print*, '**Gtol satisfied**',0.005
+    if (norm_g < gtol) then
+        print*, '**Gtol satisfied**',gtol
         exit
     endif
     if (jcyc == maxcycle) then
@@ -247,10 +255,8 @@ do while(.true.)
     endif
  
 enddo
-call relaxv2struct(n, x, NA, LAT, POS)
-call FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
-call write_vasp(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS)
-! end of lbfgs loop
+print*, '' 
+print*, 'END OF STRUCTURE OPTIMIZATION'
 
 END SUBROUTINE
 
@@ -278,7 +284,7 @@ call  FGAP_CALC(NA, SPECIES, LAT, POS, ENE, FORCE, STRESS, VARIANCE)
 call  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, xc, fc, gc)
 END SUBROUTINE
 
-SUBROUTINE  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, xc, fc, gc)!{{{
+SUBROUTINE  struct2relaxv(NA, LAT, POS, ENE, FORCE, STRESS, EXTSTRESS, n, xc, fc, gc)
 implicit none
 
 INTEGER         , intent(in)                           :: NA
@@ -329,10 +335,11 @@ do i = 1, NA
     enddo
 enddo
 fc = ENE + SUM(EXTSTRESS(1:3))/3.d0 * ABS(DET(LAT)) * cfactor
+
 !gc = gc * -1.d0
 !print *, 'fc',fc
 !stop
-END SUBROUTINE!}}}
+END SUBROUTINE
 
 SUBROUTINE  relaxv2struct(n, xc, NA, LAT, POS)
 implicit none
@@ -359,7 +366,7 @@ enddo
 CALL FRAC2CART(NA, LAT, POS_FRAC, POS)
 END SUBROUTINE
     
-SUBROUTINE  CART2FRAC(NA, LAT, POS, POS_FRAC)!{{{
+SUBROUTINE  CART2FRAC(NA, LAT, POS, POS_FRAC)
 implicit none
 
 INTEGER         , intent(in)                           :: NA
@@ -370,7 +377,8 @@ double precision, intent(inout),dimension(NA,3)        :: POS_FRAC
 ! local
 integer                                                :: i,j
 double precision, dimension(3,3)                       :: INV_LAT
-call lat_inv(LAT, INV_LAT)
+!call lat_inv(LAT, INV_LAT)
+INV_LAT = inv_33(LAT)
 POS_FRAC = matmul(POS, INV_LAT)
 do i = 1, NA
     do j = 1,3
@@ -378,9 +386,9 @@ do i = 1, NA
         if (POS_FRAC(i,j) > 1.d0) POS_FRAC(i,j) = POS_FRAC(i,j) - 1.d0
     enddo
 enddo
-END SUBROUTINE CART2FRAC!}}}
+END SUBROUTINE CART2FRAC
 
-SUBROUTINE  FRAC2CART(NA, LAT, POS_FRAC, POS)!{{{
+SUBROUTINE  FRAC2CART(NA, LAT, POS_FRAC, POS)
 implicit none
 
 INTEGER         , intent(in)                           :: NA
@@ -396,7 +404,7 @@ do i = 1, NA
     enddo
 enddo
 POS = matmul(POS_FRAC, LAT)
-END SUBROUTINE FRAC2CART!}}}
+END SUBROUTINE FRAC2CART
         
 
 subroutine lat2matrix(lat,matrix,iflag)!{{{
@@ -442,64 +450,6 @@ else
    lat(6)=anglec * radtodeg
 endif
 end subroutine lat2matrix!}}}
-
-subroutine upper(matrix1,matrix2)!{{{
-implicit none
-real(8) :: matrix1(:,:)
-real(8) :: matrix2(:,:)
-integer :: i,j,m,n
-real :: a 
-m=size(matrix1,1)
-n=size(matrix1,2)
-do i=1,n
-   do j=i+1,n
-	  a=matrix1(j,i)/matrix1(i,i)
-	  matrix1(j,:)=matrix1(j,:)-a*matrix1(i,:)
-	  matrix2(j,:)=matrix2(j,:)-a*matrix2(i,:)
-   end do
-end do 
-end subroutine upper!}}}
-
-subroutine lower(matrix1,matrix2)!{{{
-implicit none
-
-real(8) :: matrix1(:,:)
-real(8) :: matrix2(:,:)
-integer :: i,j,m,n
-real :: a
-m=size(matrix1,1)
-n=size(matrix1,2)
-do i=n,2,-1
-   do j=i-1,1,-1
-	  a=matrix1(j,i)/matrix1(i,i)
-	  matrix1(j,:)=matrix1(j,:)-a*matrix1(i,:)
-	  matrix2(j,:)=matrix2(j,:)-a*matrix2(i,:)
-   end do
-end do 
-end subroutine!}}}
-
-subroutine lat_inv(matrix3,matrix2)!{{{
-implicit none
-
-real(8) :: matrix1(3,3)
-real(8) :: matrix2(3,3),matrix3(3,3)
-integer :: i,j
-matrix1=matrix3
-do i=1,3
-   do j=1,3
-	  if(i==j)then
-		 matrix2(i,j)=1
-	  else
-		 matrix2(i,j)=0
-	  end if
-   end do 
-end do
-call upper(matrix1,matrix2)
-call lower(matrix1,matrix2)
-do i=1,3
-   matrix2(i,:)=matrix2(i,:)/matrix1(i,i)
-end do
-end subroutine!}}}
 
 function gnorm(n,x)!{{{
 implicit none
@@ -611,5 +561,113 @@ close(212)
 deallocate(ele, nele, ele_number)
 
 END SUBROUTINE
+
+SUBROUTINE WRITE_FAKE_VASP(NA, SPECIES)
+IMPLICIT NONE
+
+integer, intent(in)                         :: NA
+integer, intent(in), dimension(NA)          :: SPECIES
+! loca
+integer                                     :: NS
+integer, allocatable, dimension(:)          :: nele, ele_number
+character,allocatable, dimension(:)         :: ele
+integer                                     :: i, j, k, i_temp, count
+double precision                            :: fake_cp, fake_fp, fake_e
+
+fake_cp = 1.d0
+fake_fp = 0.d0
+fake_e = 610612509.d0
+i_temp = SPECIES(1)
+NS = 1
+do i = 2, NA
+    if (SPECIES(i) .ne. i_temp) then
+        NS = NS + 1
+        i_temp = SPECIES(i)
+    endif
+enddo
+if (.not. allocated(ele)) allocate(ele(ns))
+if (.not. allocated(nele)) allocate(nele(ns))
+if (.not. allocated(ele_number)) allocate(ele_number(ns))
+ele_number(1) = SPECIES(1)
+ele(1) = atsym(ele_number(1))
+i_temp = SPECIES(1)
+k = 1
+count = 1
+do i = 2, NA
+    if (SPECIES(i) .ne. i_temp) then
+        i_temp = SPECIES(i)
+        k = k + 1
+        ele_number(k) = i_temp
+        ele(k) = atsym(ele_number(k))
+    endif
+enddo
+
+nele = 0
+
+do i = 1, NS
+    do j = 1, NA
+        if (SPECIES(j) == ele_number(i)) nele(i) = nele(i) + 1
+    enddo
+enddo
+open(1123, file = 'CONTCAR')
+write(1123,*) 'written by GAP'
+write(1123,*) '1.0'
+DO i = 1, 3
+    write(1123,'(3F20.10)') fake_cp, fake_cp, fake_cp
+ENDDO
+write(1123,'(3A5)') ele
+write(1123,'(3I5)') nele
+write(1123,'(A9)') 'Cartesian'
+DO i = 1, NA
+    write(1123,'(3F20.10)') fake_fp, fake_fp, fake_fp
+ENDDO
+close(1123)
+
+
+open(212, file = 'OUTCAR')
+do i = 1, ns
+    write(212,*) 'VRHFIN ='//trim(ele(i))
+enddo
+write(212,*) 'ions per type', ' = ', nele
+write(212,*) 'direct lattice vectors'
+write(212,*) 'volume of cell :'
+write(212,*) 'Direction    XX          YY          ZZ          XY          YZ          ZX'
+write(212,'(A6, 6F15.6)') 'in kB',  fake_fp, fake_fp, fake_fp, fake_fp, fake_fp, fake_fp
+write(212,'(A20,F15.6, A5, A20, F15.6, A5)') 'external pressure =', fake_fp, &
+'kB', 'Pullay stress =', fake_fp ,'kB'
+write(212,*) 'volume of cell :', fake_fp
+write(212,*) 'direct lattice vectors'
+do i = 1,3
+   write(212,'(6F15.6)') fake_cp, fake_cp, fake_cp
+enddo
+write(212,*) 'POSITION                                       TOTAL-FORCE(eV/Angst)'
+write(212,*) '-------------------------------------------------------------------'
+do i = 1, na
+   write(212,'(6F15.6)') fake_cp, fake_cp, fake_cp, fake_cp * 10.0, fake_cp * 10.0, fake_cp * 10.0
+enddo
+write(212,*) '-------------------------------------------------------------------'
+write(212,'(A31, F15.6)') 'energy  without entropy=', fake_e
+write(212,'(A30, F15.6)') 'enthalpy is  TOTEN    =', fake_e
+close(212)
+
+deallocate(ele, nele, ele_number)
+END SUBROUTINE
+
+function inv_33(M)
+double precision, intent(in) :: M(3,3)
+double precision             :: Inv(3,3),inv_33(3,3)
+double precision             :: d
+d = Det(M)
+inv(1,1)=M(2,2)*M(3,3) - M(2,3)*M(3,2)
+inv(2,1)=M(2,3)*M(3,1) - M(2,1)*M(3,3)
+inv(3,1)=M(2,1)*M(3,2) - M(2,2)*M(3,1)
+inv(1,2)=M(1,3)*M(3,2) - M(1,2)*M(3,3)
+inv(2,2)=M(1,1)*M(3,3) - M(1,3)*M(3,1)
+inv(3,2)=M(1,2)*M(3,1) - M(1,1)*M(3,2)
+inv(1,3)=M(1,2)*M(2,3) - M(1,3)*M(2,2)
+inv(2,3)=M(1,3)*M(2,1) - M(1,1)*M(2,3)
+inv(3,3)=M(1,1)*M(2,2) - M(1,2)*M(2,1)
+inv_33=inv/d
+end function
 
 END MODULE

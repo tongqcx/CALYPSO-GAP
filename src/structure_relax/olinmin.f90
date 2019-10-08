@@ -199,6 +199,7 @@
   !  write (ioout,'(''centre ...'',f17.8,f17.8)') vt(2),phi(2)
   !  write (ioout,'(''right  ...'',f17.8,f17.8,/)') vt(3),phi(3)
   !endif
+
   nlinmin = 8  
   do 180 ictr = 3,nlinmin
      alpha = vt(2) - vt(3)
@@ -240,7 +241,7 @@
      else
      !  call deffun(iflag,nvar,xparam,funct1,grad)
      endif
-!     print*, 'funct1',funct1
+
 
      if (funct1.gt.fmax) fmax = funct1
      if (funct1.lt.fmin) fmin = funct1
