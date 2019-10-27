@@ -1,0 +1,14 @@
+SYSTEM = S-R-3m
+EDIFFG = -1e-2
+NSW = 10
+POTIM = 2.0
+#Target Pressure
+#PSTRESS =100
+TEBEG = 300
+ISMEAR =0 
+SIGMA = 0.002
+#Parallelisation
+#Crude optimisation
+LCHARG = .F.
+LWAVE = .F.
+NPAR=4
