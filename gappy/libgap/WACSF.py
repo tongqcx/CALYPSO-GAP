@@ -1,10 +1,15 @@
 import numpy as np
 import sys
-#try:
-from libgap  import fcar2wacsf
-#except:
-#    print 'ERROR: please install libgap'
-#    sys.exit(0)
+try:
+    '''
+    For Python 3+
+    '''
+    from libgap.libgap  import fgap_read, fgap_calc
+except:
+    '''
+    For Python 2+
+    '''
+    from libgap  import fgap_read, fgap_calc
 
 class  Wacsf(object):
 

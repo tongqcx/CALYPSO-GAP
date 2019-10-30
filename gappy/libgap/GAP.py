@@ -1,10 +1,15 @@
 import numpy as np
 import sys
-#try:
-from libgap.libgap  import fgap_read, fgap_calc
-#except:
-#    print 'ERROR: please install libgap'
-#    sys.exit(0)
+try:
+    '''
+    For Python 3+
+    '''
+    from libgap.libgap  import fgap_read, fgap_calc
+except:
+    '''
+    For Python 2+
+    '''
+    from libgap  import fgap_read, fgap_calc
 
 class Calculator(object):
     def __init__(self, rcut = 6.0):
