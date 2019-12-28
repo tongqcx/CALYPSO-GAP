@@ -7,12 +7,14 @@ import glob
 import random
 import re
 import argparse
+from libgap.BOND import Bond
 
 a2b = 1.0/0.529177
 xx = ['X','Y','Z']
+bond = Bond(rcut = 6.0)
 '''
 extract structure from OUTCAR
-Author:tongqunchao
+Author:	tongqunchao
 2017/05/23
 use re module to get lattice
 '''
@@ -126,15 +128,18 @@ def writewyc(volume, energy, nat, ntype, lat, pos, force, stress, nstruct, typp,
     except:
         return
     for i in range(0,nstruct):
-        if i >= 1 and np.abs(energy[i] - ene_last)/nat < 0.05 :
+        if i >= 1 and np.abs(energy[i] - ene_last)/nat < 0.01 :
             #ene_last = energy[i]
             print((i,'canceled',np.abs(energy[i] - ene_last)/nat))
             continue
 
-#        bond_dis = get_bond_min(lat[3*i:3*i+3],pos[i*nat:i*nat + nat])
-#        if bond_dis < 0.5:
-#            print bond_dis,'Bond_dis'
-#            continue
+        #bond_dis = get_bond_min(lat[3*i:3*i+3],pos[i*nat:i*nat + nat])
+        bond_dis = bond.get_min_bond(lat[3*i:3*i+3], elements, pos[i*nat:i*nat + nat])
+        #print('MIN_BOND',xml, bond_dis)
+        if bond_dis < 0.5:
+            #print bond_dis,'Bond_dis'
+            print('MIN_BOND',xml, bond_dis)
+            continue
 
         atomic_force = force[i*nat:(i+1)*nat]
         atomic_force = np.array(atomic_force)
@@ -155,7 +160,8 @@ def writewyc(volume, energy, nat, ntype, lat, pos, force, stress, nstruct, typp,
 
 # >>>>>>>>>> Write structures
         nns += 1
-        f.write(str(nat) + '  ' + str(ntype) + '  ' + str(nns) + '  ' + xml + '   ' + str(volume[i]/nat) + '\n')
+        #f.write(str(nat) + '  ' + str(ntype) + '  ' + str(nns) + '  ' + xml + '   ' + str(volume[i]/nat) + '\n')
+        f.write(str(nat) + '  ' + str(ntype) + '  ' + str(nns) + '  ' + xml + '   ' + '0.1' + '\n')
         for j in range(3):
             f.write('%15.9f %15.9f %15.9f\n' % tuple(lat[3*i+j][0:3]))
 
@@ -172,7 +178,7 @@ def writewyc(volume, energy, nat, ntype, lat, pos, force, stress, nstruct, typp,
 
     f.close()
 
-
+	
 def readxml(split_ratio):
     xmls = glob.glob('OUTCAR_*')
     if len(xmls) == 0:

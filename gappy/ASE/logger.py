@@ -23,8 +23,10 @@ class MDLogger:
     
     This part were added by tqc, 2019.10.27
     pstress:       The target pressure.
+                   Type: float
 
     lgap=False:    Simulation by Gaussian Approximation Potentials (GAPs)?.
+                   Type: logical
     """
     def __init__(self, dyn, atoms, logfile, header=True, stress=False, pstress = 0.0,
                  peratom=False, mode="a", lgap=False):

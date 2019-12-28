@@ -7,7 +7,7 @@ __copyright__ = "Unknown"
 __credits__ = ["XXX"]
 __license__ = "XXX"
 __version__ = "XXX"
-__maintainer__ = "Qunchao Tonf"
+__maintainer__ = "Qunchao Tong"
 __email__ = "Qunchao Tong"
 __status__ = "Beta"
 __description__ = "Calculating total energy, atomic force, cell stress by G(aussian)A(pproximation)P(optential)"
@@ -40,7 +40,7 @@ if any(["intelem" in arg for arg in sys.argv]):
 mytest_module = Extension(name = 'libgap',
                           sources = [
                                 './libgap/wacsf.f90',
-                                './libgap/gap_init.f90',
+                                './libgap/get_bond.f90',
                                 './libgap/gap_calc.f90',
                             ],
                           extra_f90_compile_args = COMPILER_FLAGS,
