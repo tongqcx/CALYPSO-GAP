@@ -19,7 +19,7 @@ CALYPSO-GAP module was integrated in binary calypos.x, it is available free in c
 [CALYPSO](http://www.calypso.cn/)
 
 ## Using CALYPSO-GAP for materials simulation,
-These are two ways to using CALYPSO-GAP potentials,  
+These are two ways to use CALYPSO-GAP potentials,  
 (1) Using CALYPSO-GAP for structure prediction, which is the original intention of developing CALYPSO-GAP.  
 (2) Combining the python package [GAPPY](https://github.com/tongqcx/CALYPSO-GAP/tree/master/gappy) and Atomic Simulation Environment([ASE](https://wiki.fysik.dtu.dk/ase/)) to perform calculation, such as phonon calculation, molecular simulations and geometry optimization.
 
