@@ -1,7 +1,7 @@
 # GAPPY
-GAPPY is a Python2/3-compatible toolkit for calculation total energy, atomic force, cell stress using Gaussian Approximation Potentialsi(GAP).
+GAPPY is a python package based on CALYPSO-GAP for calculation total energy, atomic force, cell stress.
 ## Structure of GAPPY
-GAPPY
+GAPPY  
 |-- ASE   
 |-- example    
 |-- libgap   
@@ -10,41 +10,39 @@ GAPPY
   
 
 ## Usages
-* INSTALL PACKAGE libgap
+* Installing package libgap
 ```shell
 python setup.py build --fcompiler=intelem
 python setup.py install
 ```
 Intel fortran compiler is recommended, It has been extensively tested and work well
-* USING libgap   
-There are two methods in libgap
-    * GAP.py 
-This method could calculate the energy atomic force and cell stress for given structure, using as
-``` python
-from libgap import GAP  
-gap = GAP(rcut=6.0)  
-energy, force, stress, _ = gap.gap_calc(species, lat, pos, lgrad)  
+* Installing ASE interface
+Supposing ASE was installed in dir ${ASEPATH}, usually it looks like that
+```shell
+${somepath}/lib/python3.7/site-packages/ase-3.18.1-py3.7.egg/ase
 ```
-__There must have neural.in and gap_parameters files in WorkDir__
-
-    * WACSF.py
-ACSF is a well-developmented methods for representation of atomic environment, 
-it was proposed by Behler and Parrinello firstly. For using ACSF in multi-species system,
-each atom is assigned a weight to distinguish their contribution in ACSF, that is called wACSF.
-The aim of this method is to convert cartesian coordinate to wACSF  
-which will be used in machin learning.
+so
+```shell
+cp ./ASE/gap_calc.py ${ASEPATH}/calculators
+cp ./ASE/logger.py ${ASEPATH}/md
+```
+* Using ASE with GAPPY
+There are two examples in ./example, 
+(1) BC, this is a sample example to introduce how to use GAPPY
 ```python
-from libgap import WACSF
-wacsf = WACSF.Wacsf(nf = 66, rcut=6.0, lgrad = False)
-Acsf = wacsf.car2wacsf(Lattice, Elements, Position)
+form libgap.GAP import Calculator
+gap = Calculator(rcut = 6.0)
+lgrad = True
+gap.gap_read()
+ene, force, stress, _ = gap.gap_calc(species, lat, pos, lgrad)
 ```
-__rcut__ define the size of region to calculate ACSF  
-__nf__ define the number of symmetry function  
-__Lattice__ is the cell matrix shape (3,3)  
-__Position__ is the atomic position in cartesian coordinate shape (natoms,3),
-natoms is the number of atoms in cell, the unit of Lattice and Position is angstrom  
-__Acsf__ is the wacsf matrix shape (natoms, nf)  
-__There must have neural.in and gap_parameters files in WorkDir__
+rcut: (float, units: angstrom) the  
+species: (python list) the chemical symbol of each atoms
+lat: (numpy array float[3,3], units: angstrom) the cell matrix
+pos: (numpy array float[natoms,3], units: angstrom) the cartesian position of each atoms
+ene: (float, units: eV) the total energy of structure
+force: (numpy array float[natoms,3], units: eV/angstrom) the atomic force components of each atoms along X, Y, Z direction
+stress:(numpy array float[6], units: GPa) the cell stress as VASP OUTCAR format (XX YY ZZ XY YZ  ZX)
 
 
-## 2019.01.04
+
