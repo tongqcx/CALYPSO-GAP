@@ -1,4 +1,4 @@
-Copyright © 2010-2018 CALYPSO Developers Group. All Rights Reserved.  
+Copyright © 210-2018 CALYPSO Developers Group. All Rights Reserved.  
 Structural Prediction software, CALYPSO, is available free of charge for non-commercial use by individuals, 
 academic or research institutions, upon completion and submission of the online registration form available 
 from the CALYPSO web site http://www.calypso.cn/getting-calypso/. 
