@@ -28,7 +28,7 @@ cp ./ASE/logger.py ${ASEPATH}/md
 ```
 ### Using ASE with GAPPY   
 There are two examples in ./example,  
-(1) BC, this is a sample example to introduce how to use GAPPY
+1. BC, this is a sample example to introduce how to use GAPPY
 ```python
 form libgap.GAP import Calculator
 gap = Calculator(rcut = 6.0)
@@ -43,7 +43,8 @@ pos: (numpy array float[natoms,3], units: angstrom) the cartesian position of ea
 ene: (float, units: eV) the total energy of structure  
 force: (numpy array float[natoms,3], units: eV/angstrom) the atomic force components of each atoms along X, Y, Z direction  
 stress:(numpy array float[6], units: GPa) the cell stress as VASP OUTCAR format (XX YY ZZ XY YZ  ZX)  
-(2) ASE-GAPPY, this example introduce how to use GAPPY with ASE  
+   
+2. ASE-GAPPY, this example introduce how to use GAPPY with ASE  
 run_opt.py a python script to run fix cell optimization  
 run_md.py a python script to run molecular simulation
 
