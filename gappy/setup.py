@@ -3,13 +3,9 @@ from numpy.distutils.core import Extension, setup
 
 
 __author__ = "Qunchao Tong"
-__copyright__ = "Unknown"
-__credits__ = ["XXX"]
-__license__ = "XXX"
-__version__ = "XXX"
+__version__ = "v1.0"
 __maintainer__ = "Qunchao Tong"
-__email__ = "Qunchao Tong"
-__status__ = "Beta"
+__email__ = "tqc@calypso.cn"
 __description__ = "Calculating total energy, atomic force, cell stress by G(aussian)A(pproximation)P(optential)"
 __url__ = "XXX"
 
@@ -67,7 +63,7 @@ def setup_pepytools():
         platforms = 'Any',
         description = __description__,
         long_description = readme(),
-        keywords = ['Machine Learning', 'Quantum Chemistry'],
+        keywords = ['Machine Learning', 'guassian approximation potentials'],
         classifiers = [],
         url = __url__,
 
