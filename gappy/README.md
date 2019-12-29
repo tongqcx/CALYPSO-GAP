@@ -10,13 +10,13 @@ GAPPY
   
 
 ## Usages
-* Installing package libgap
+### Installing package libgap
 ```shell
 python setup.py build --fcompiler=intelem
 python setup.py install
 ```
 Intel fortran compiler is recommended, It has been extensively tested and work well
-* Installing ASE interface
+### Installing ASE interface
 Supposing ASE was installed in dir ${ASEPATH}, usually it looks like that
 ```shell
 ${somepath}/lib/python3.7/site-packages/ase-3.18.1-py3.7.egg/ase
@@ -26,7 +26,7 @@ so
 cp ./ASE/gap_calc.py ${ASEPATH}/calculators
 cp ./ASE/logger.py ${ASEPATH}/md
 ```
-* Using ASE with GAPPY   
+### Using ASE with GAPPY   
 There are two examples in ./example,  
 (1) BC, this is a sample example to introduce how to use GAPPY
 ```python
