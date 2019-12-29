@@ -14,8 +14,8 @@ atomic force and cell stress, for more information about GPR, please read the pa
 
 # Using CALYPSO-GAP
 ## Fitting CALYPSO-GAP potentials,
-CALYPSO-GAP module had been intergred in binary calypos.x, it is available free in charge for non-commerical use by individuals and academic or research institutions. Please register in
-[CALYPSO](https://www.calypso.cn/getting-calypso)
+CALYPSO-GAP module had been integrated in binary calypos.x, it is available free in charge for non-commerical use by individuals and academic or research institutions. Please register in
+[CALYPSO](http://www.calypso.cn/getting-calypso/)
 
 ## Using CALYPSO-GAP for materials simulation,
 These are two ways to using CALYPSO-GAP potentials,  
