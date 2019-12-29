@@ -26,7 +26,7 @@ so
 cp ./ASE/gap_calc.py ${ASEPATH}/calculators
 cp ./ASE/logger.py ${ASEPATH}/md
 ```
-* Using ASE with GAPPY
+* Using ASE with GAPPY   
 There are two examples in ./example,  
 (1) BC, this is a sample example to introduce how to use GAPPY
 ```python
@@ -36,13 +36,16 @@ lgrad = True
 gap.gap_read()
 ene, force, stress, _ = gap.gap_calc(species, lat, pos, lgrad)
 ```
-rcut: (float, units: angstrom) defining the size of sphere region to calculate ACSF
+rcut: (float, units: angstrom) defining the size of sphere region to calculate wACSF  
 species: (python list) the chemical symbol of each atoms  
 lat: (numpy array float[3,3], units: angstrom) the cell matrix   
 pos: (numpy array float[natoms,3], units: angstrom) the cartesian position of each atoms   
 ene: (float, units: eV) the total energy of structure  
 force: (numpy array float[natoms,3], units: eV/angstrom) the atomic force components of each atoms along X, Y, Z direction  
 stress:(numpy array float[6], units: GPa) the cell stress as VASP OUTCAR format (XX YY ZZ XY YZ  ZX)  
+(2) ASE-GAPPY, this example introduce how to use GAPPY with ASE  
+run_opt.py a python script to run fix cell optimization  
+run_md.py a python script to run molecular simulation
 
 
 
